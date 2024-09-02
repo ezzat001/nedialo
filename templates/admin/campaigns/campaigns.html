@@ -20,6 +20,8 @@
         width: 120px;
     }
 </style>
+
+
 {% endblock %}
 
 {% block body %}
@@ -29,7 +31,7 @@
 <div class="container-fluid py-4">
   <div class="d-sm-flex justify-content-between">
     <div>
-      <a href="client-create" class="btn btn-icon bg-gradient-info">
+      <a href="campaign-create" class="btn btn-icon bg-gradient-info">
         New Campaign
       </a>
     </div>
@@ -74,7 +76,7 @@
                 <th>Weekly Hours</th>
                 <th>Type</th>
                 <th>Lead Points</th>
-                <th>Logins</th>
+                <th>Credentials</th>
                 <th>Status</th>
                 <th>Action</th>
 
@@ -111,11 +113,14 @@
                 <td class="text-xs font-weight-normal">
                   <div class="d-flex align-items-center">
 
-                    <a href="client-modify/{{account.user}}" class="mx-3" data-bs-toggle="tooltip" data-bs-original-title="Dialer Logins">
+                    <a href="dialercredentials/{{camp.id}}" class="mx-3" 
+                      data-tippy-content="Dialer Credentials: {{ camp|get_dialer_credentials }}" data-tippy-placement="top">
                       <i class="material-icons text-secondary position-relative text-lg">phone</i>
                     </a>
-                    <a href="javascript:;" data-bs-toggle="tooltip" data-bs-original-title="Data Sources"  onclick= "showDeleteConfirmation('{{account}}','{{account.full_name}}','{{account.user}}')">
-                      <i class="material-icons text-secondary position-relative text-lg">find_in_page</i>
+                    <a href="sourcecredentials/{{camp.id}}" 
+                    data-tippy-content="Sources Credentials: {{ camp|get_source_credentials }}" data-tippy-placement="top">
+
+                    <i class="material-icons text-secondary position-relative text-lg">find_in_page</i>
                     </a>
                   </div>
                 </td>
@@ -141,13 +146,18 @@
 
                 <td class="text-sm">
                   <div class="d-flex align-items-center">
-                    <a href="account-reports/{{account.id}}" data-bs-toggle="tooltip" data-bs-original-title="Preview User">
+                    <a href="account-reports/{{account.id}}"
+                    data-tippy-content="Preview Campaign" data-tippy-placement="top">
                       <i class="material-icons text-secondary position-relative text-lg">visibility</i>
                     </a>
-                    <a href="client-modify/{{account.user}}" class="mx-3" data-bs-toggle="tooltip" data-bs-original-title="Edit User">
+                    <a href="campaign-modify/{{camp.id}}" class="mx-3" 
+                    data-tippy-content="Modify Campaign" data-tippy-placement="top">
+
                       <i class="material-icons text-secondary position-relative text-lg">drive_file_rename_outline</i>
                     </a>
-                    <a href="javascript:;" data-bs-toggle="tooltip" data-bs-original-title="Delete User"  onclick= "showDeleteConfirmation('{{account}}','{{account.full_name}}','{{account.user}}')">
+                    <a href="javascript:;" 
+                    data-tippy-content="Delete Campaign" data-tippy-placement="top"
+                      onclick= "showDeleteConfirmation('{{account}}','{{camp.name}}','{{camp.id}}')">
                       <i class="material-icons text-secondary position-relative text-lg">delete</i>
                     </a>
                   </div>
@@ -167,13 +177,38 @@
 
 
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  
+
+  <script>
+
+    const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
+      searchable: true,
+      fixedHeight: false,
+      
+    });
+  
+  
+    document.querySelectorAll(".export").forEach(function(el) {
+      el.addEventListener("click", function(e) {
+        var type = el.dataset.type;
+  
+        var data = {
+          type: type,
+          filename: "agents-" + type,
+        };
+  
+        if (type === "csv") {
+          data.columnDelimiter = "|";
+        }
+  
+        dataTableSearch.export(data);
+      });
+    });
+  </script>
 
 
-<script src="../static/js/plugins/choices.min.js"></script>
-<script src="../static/js/plugins/multistep-form.js"></script>
 
-<script src="../static/js/plugins/datatables.js"></script>
 
 
 <script>
@@ -193,7 +228,7 @@
     return cookieValue;
   }
 
-  function showDeleteConfirmation(account, fullName, username) {
+  function showDeleteConfirmation(account, campName, camp_id) {
     const swalWithBootstrapButtons = Swal.mixin({
       customClass: {
         confirmButton: 'btn bg-gradient-danger',
@@ -203,7 +238,7 @@
     });
 
     swalWithBootstrapButtons.fire({
-      title: `Delete ${fullName}`,
+      title: `Delete ${campName}`,
       html: `
         <div class="card border-0 shadow-sm input-group input-group-static">
           <form id="passwordForm" class="text-center p-3">
@@ -228,7 +263,7 @@
         const csrftoken = getCookie('csrftoken');
 
         // Send POST request to delete user
-        return fetch(`/agent-delete/${username}/`, {
+        return fetch(`/campaign-delete/${camp_id}/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -257,7 +292,7 @@
     }).then((result) => {
       if (result.isConfirmed) {
         Swal.fire({
-          title: 'Account Deleted!',
+          title: 'Campaign Deleted!',
           icon: 'success'
         });
       } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -283,32 +318,8 @@
 
 
 
-<script>
-
-  const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
-    searchable: true,
-    fixedHeight: false,
-    
-  });
 
 
-  document.querySelectorAll(".export").forEach(function(el) {
-    el.addEventListener("click", function(e) {
-      var type = el.dataset.type;
-
-      var data = {
-        type: type,
-        filename: "agents-" + type,
-      };
-
-      if (type === "csv") {
-        data.columnDelimiter = "|";
-      }
-
-      dataTableSearch.export(data);
-    });
-  });
-</script>
 <script>
   var win = navigator.platform.indexOf('Win') > -1;
   if (win && document.querySelector('#sidenav-scrollbar')) {
@@ -320,37 +331,18 @@
 </script>
 
 
-<script src="static/js/plugins/dropzone.min.js"></script>
-<script src="static/js/core/popper.min.js"></script>
-<script src="static/js/core/bootstrap.min.js"></script>
-<script src="static/js/plugins/perfect-scrollbar.min.js"></script>
-<script src="static/js/plugins/smooth-scrollbar.min.js"></script>
-<!-- Kanban scripts -->
-<script src="static/js/plugins/dragula/dragula.min.js"></script>
-<script src="static/js/plugins/jkanban/jkanban.js"></script>
-<script src="static/js/plugins/sweetalert.min.js"></script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    tippy('[data-tippy-content]', {
+      placement: 'top', // Default placement
+      fallbackPlacements: ['top', 'right', 'bottom', 'left'], // Fallbacks if top doesn't fit
+      boundary: 'window', // Consider the window as the boundary for fitting
+      animation: 'scale', // Optional: Define animation style
+      theme: 'light', // Optional: Define theme
+    });
+  });
+</script>
 
-
-<script src="static/js/material-dashboard.js"></script>
-
-<script src="static/js/plugins/chartjs.min.js"></script>
-<script src="static/js/plugins/world.js"></script>
-<!-- Github buttons -->
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-<!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="static/js/plugins/choices.min.js"></script>
-<script src="static/js/plugins/multistep-form.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-
-
-<script src="https://demos.creative-tim.com/argon-dashboard-pro-bs4/assets/vendor/jquery/dist/jquery.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/soft-ui-design-system-pro/assets/js/core/popper.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/soft-ui-design-system-pro/assets/js/core/bootstrap.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/argon-dashboard-pro-bs4/assets/vendor/prismjs/prism.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/argon-design-system-pro/assets/demo/docs.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/argon-design-system-pro/assets/demo/vendor/holder.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/soft-ui-design-system-pro/assets/js/plugins/moment.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/test/material-dashboard-pro/assets/js/material-dashboard.min.js?v=1.0.0" type="text/javascript"></script>
 
 {% endblock %}

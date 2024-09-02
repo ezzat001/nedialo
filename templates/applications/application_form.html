@@ -33,13 +33,13 @@
                     <div class="row mt-4">
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>Full Name</label>
+                                <label>Name *</label>
                                 <input type="text" class="form-control" name="full_name" id="full_name" required>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>Position</label>
+                                <label>Position *</label>
                                 <select class="form-control" name="position" id="position" required>
                                     <option value="" disabled selected>Select Position</option>
                                     <option value="cold_caller">Cold Caller</option>
@@ -54,13 +54,13 @@
                     <div class="row mt-4">
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>Phone Number</label>
+                                <label>Phone Number *</label>
                                 <input type="text" class="form-control" name="phone_number" id="phone_number" required>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>Email</label>
+                                <label>Email *</label>
                                 <input type="email" class="form-control" name="email" id="email" required>
                             </div>
                         </div>
@@ -68,7 +68,7 @@
                     <div class="row mt-4">
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>Education</label>
+                                <label>Education *</label>
                                 <select class="form-control" name="education" id="education" required>
                                     <option value="" disabled selected>Select Education</option>
                                     <option value="highschool">Highschool</option>
@@ -80,7 +80,7 @@
                         </div>
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>When Can You Start?</label>
+                                <label>When Can You Start? *</label>
                                 <input type="date" class="form-control" name="start_date" id="start_date" required>
                             </div>
                         </div>
@@ -88,7 +88,7 @@
                     <div class="row mt-4">
                         <div class="col-sm-6">
                             <div class="input-group input-group-static">
-                                <label>Shift Type</label>
+                                <label>Shift Type *</label>
                                 <select class="form-control" name="shift" id="shift" required>
                                     <option value="" disabled selected>Select Shift</option>
                                     <option value="full_time">Full-Time (8 Hours)</option>
@@ -101,13 +101,13 @@
                     <div class="row mt-4">
                         <div class="col-sm-12">
                             <div class="input-group input-group-static">
-                                <label>Previous Experience</label>
+                                <label>Previous Experience *</label>
                                 <textarea class="form-control" rows="3" name="previous_experience" id="previous_experience"></textarea>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <br>
-                            <label for="audioRecording">Introduction and Experience Recording</label><br>
+                            <label for="audioRecording">Introduction and Experience Recording *</label><br>
 
                             <div class="input-group input-group-static">
                                 <button id="startRecording" type="button" class="btn btn-info btn-sm">Start Recording</button>
@@ -129,6 +129,7 @@
     </div>
 </div>
 </div>
+
 <script>
     let chunks = [];
     let mediaRecorder;

@@ -57,7 +57,7 @@
                     <!--single form panel-->
                     <div class="multisteps-form__panel border-radius-xl bg-white js-active" data-animation="FadeIn">
                       <h5 class="font-weight-bolder mb-0">Account Info</h5>
-                      <p class="mb-0 text-sm">Mandatory informations</p>
+                      <p class="mb-0 text-sm">Mandatory information</p>
                       <div class="multisteps-form__content" id="pageone">
                         <div class="row mt-3">
                           <div class="col-12 col-sm-6">
@@ -154,7 +154,7 @@
 
                              <label class="form-label">Services *</label>
                             <div class="input-group input-group-dynamic">
-                              <select class="form-control" id="choices-services" name="services" multiple>
+                              <select class="form-control" id="choices-services" name="services" multiple required>
                                 {% for service in services %}
                                   <option value={{service.id}}>{{service.name}}</option>
                                 {% endfor %}
@@ -193,42 +193,6 @@
 
 
 
-
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-
-<script src="../static/js/plugins/flatpickr.min.js"></script>
-
-<script src="../static/js/plugins/choices.min.js"></script>
-<script src="../static/js/plugins/multistep-form.js"></script>
-
-<script src="../static/js/plugins/datatables.js"></script>
-
-
-
-<script src="../static/js/plugins/dropzone.min.js"></script>
-<script src="../static/js/core/popper.min.js"></script>
-<script src="../static/js/plugins/perfect-scrollbar.min.js"></script>
-<script src="../static/js/plugins/smooth-scrollbar.min.js"></script>
-<!-- Kanban scripts -->
-<script src="../static/js/plugins/dragula/dragula.min.js"></script>
-<script src="../static/js/plugins/jkanban/jkanban.js"></script>
-<script src="../static/js/plugins/sweetalert.min.js"></script>
-<script src="static/js/core/bootstrap.min.js"></script>
-
-
-
-<script src="../static/js/material-dashboard.js"></script>
-
-<script src="../static/js/plugins/chartjs.min.js"></script>
-<script src="../static/js/plugins/world.js"></script>
-<!-- Github buttons -->
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-<!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="../static/js/plugins/choices.min.js"></script>
-<script src="../static/js/plugins/multistep-form.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
 
 <script>

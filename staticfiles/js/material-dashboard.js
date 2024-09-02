@@ -1572,73 +1572,179 @@ var material = {
         imageAlt: 'Custom image',
       })
 
-    } else if (type == 'success-message') {
+    }
 
-      Swal.fire(
-        'Good job!',
-        'You clicked the button!',
-        'success'
-      )
 
-    } else if (type == 'warning-message-and-confirmation') {
+    else if (type == 'wow') {
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
           confirmButton: 'btn bg-gradient-success',
           cancelButton: 'btn bg-gradient-danger'
         },
         buttonsStyling: false
-      })
-
+      });
+    
       swalWithBootstrapButtons.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        type: 'warning',
+        title: 'Upload Files',
+        html: `
+          <div class="card border-0 shadow-sm">
+            <form action="upload-profile/" method="POST" enctype="multipart/form-data" id="dropzone" class="text-center p-3">
+              <button type="button" class="btn btn-lg bg-gradient-dark mb-3" onclick="document.getElementById('fileInput').click();">Select Image</button>
+              <input id="fileInput" type="file" style="display: none;" accept="image/*" onchange="handleFiles(this.files)">
+            </form>
+            <div id="fileList" class="mt-3"></div>
+          </div>
+        `,
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!',
-        reverseButtons: true
-      }).then((result) => {
-        if (result.value) {
-          swalWithBootstrapButtons.fire(
-            'Deleted!',
-            'Your file has been deleted.',
-            'success'
-          )
-        } else if (
-          /* Read more about handling dismissals below */
-          result.dismiss === Swal.DismissReason.cancel
-        ) {
-          swalWithBootstrapButtons.fire(
-            'Cancelled',
-            'Your imaginary file is safe :)',
-            'error'
-          )
+        confirmButtonText: 'Upload',
+        confirmButtonColor: '#28a745', // Green color
+        cancelButtonText: 'Cancel',
+        cancelButtonColor: '#dc3545', // Red color
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          const formData = new FormData();
+          const files = document.getElementById('fileInput').files;
+          for (let i = 0; i < files.length; i++) {
+            formData.append('file', files[i]);
+          }
+    
+          // Simulate AJAX request or actual form submission
+          return fetch("upload-profile/", {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRFToken': getCookie('csrftoken')
+            }
+          }).then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          }).catch(error => {
+            Swal.showValidationMessage(
+              `Request failed: ${error}`
+            );
+          });
+        },
+        allowOutsideClick: () => !Swal.isLoading(),
+        didOpen: () => {
+          // Disable the confirm button initially
+          Swal.getConfirmButton().disabled = true;
+    
+          // Add event listener to enable/disable the confirm button based on file selection
+          document.getElementById('fileInput').addEventListener('change', () => {
+            const files = document.getElementById('fileInput').files;
+            Swal.getConfirmButton().disabled = files.length === 0;
+    
+            // Display selected file names
+            const fileListDiv = document.getElementById('fileList');
+            fileListDiv.innerHTML = '';
+            if (files.length > 0) {
+              const fileList = document.createElement('ul');
+              fileList.className = 'list-unstyled mt-3';
+              for (let i = 0; i < files.length; i++) {
+                const listItem = document.createElement('li');
+                listItem.textContent = files[i].name;
+                fileList.appendChild(listItem);
+              }
+              fileListDiv.appendChild(fileList);
+            }
+          });
         }
-      })
-    } else if (type == 'warning-message-and-cancel') {
-      const swalWithBootstrapButtons = Swal.mixin({
-        customClass: {
-          confirmButton: 'btn bg-gradient-success',
-          cancelButton: 'btn bg-gradient-danger'
-        },
-        buttonsStyling: false
-      })
-      swalWithBootstrapButtons.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!'
       }).then((result) => {
         if (result.isConfirmed) {
-          Swal.fire(
-            'Deleted!',
-            'Your file has been deleted.',
-            'success'
-          )
+          Swal.fire({
+            title: 'Files uploaded!',
+            icon: 'success'
+          });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          Swal.fire({
+            title: 'Cancelled',
+            icon: 'error'
+          });
         }
-      })
-    } else if (type == 'custom-html') {
+      });
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    else if (type == 'zzz') {
+      const swalWithBootstrapButtons = Swal.mixin({
+          customClass: {
+              confirmButton: 'btn bg-gradient-success',
+              cancelButton: 'btn bg-gradient-danger'
+          },
+          buttonsStyling: false
+      });
+  
+      swalWithBootstrapButtons.fire({
+          title: 'Password',
+          html: `
+              <div class="card border-0 shadow-sm">
+                  <form id="passwordForm" class="text-center p-3">
+                      <input type="password" id="passwordInput" class="form-control" placeholder="Enter your password">
+                  </form>
+              </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Submit',
+          confirmButtonColor: '#28a745', // Green color
+          cancelButtonText: 'Cancel',
+          cancelButtonColor: '#dc3545', // Red color
+          showLoaderOnConfirm: true,
+          preConfirm: () => {
+              const password = document.getElementById('passwordInput').value;
+              if (!password) {
+                  Swal.showValidationMessage('Please enter your password');
+                  return false;
+              }
+  
+              // Simulate form submission or an AJAX request
+              return new Promise((resolve, reject) => {
+                  setTimeout(() => {
+                      if (password === 'expectedPassword') {
+                          resolve('Success');
+                      } else {
+                          reject('Incorrect password');
+                      }
+                  }, 1000);
+              }).catch(error => {
+                  Swal.showValidationMessage(`Request failed: ${error}`);
+              });
+          },
+          allowOutsideClick: () => !Swal.isLoading(),
+          didOpen: () => {
+              // Disable the confirm button initially
+              Swal.getConfirmButton().disabled = true;
+  
+              // Add event listener to enable/disable the confirm button based on password input
+              document.getElementById('passwordInput').addEventListener('input', () => {
+                  const password = document.getElementById('passwordInput').value;
+                  Swal.getConfirmButton().disabled = password.length === 0;
+              });
+          }
+      }).then((result) => {
+          if (result.isConfirmed) {
+              Swal.fire({
+                  title: 'Password submitted!',
+                  icon: 'success'
+              });
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+              Swal.fire({
+                  title: 'Cancelled',
+                  icon: 'error'
+              });
+          }
+      });
+  }
+  
+   else if (type == 'custom-html') {
       const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
           confirmButton: 'btn bg-gradient-success',
@@ -1749,3 +1855,20 @@ var material = {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

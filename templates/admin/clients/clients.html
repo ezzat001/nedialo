@@ -70,6 +70,7 @@
                 <th>ID</th>
                 <th>Full Name</th>
                 <th>Username</th>
+                <th>Password</th>
                 <th>Residence</th>
                 <th>Joining Date</th>
                 <th>Discovery</th>
@@ -94,7 +95,13 @@
                 <td class="text-xs font-weight-normal">
                   {{account.user}}
                 </td>
-                <td class="text-xs font-weight-normal">
+                <td class="password-cell font-weight-normal">
+                  <span class="password-hidden">*********</span>
+                  <span class="password-visible">{{ account.password }}</span>
+                  <a href="#" class="toggle-password">
+                    <i class="material-icons text-secondary position-relative text-lg">visibility</i>
+                  </a>
+                </td>                <td class="text-xs font-weight-normal">
                     {{account.get_state_display}}
                 </td>
                 <td class="text-xs font-weight-normal">
@@ -227,7 +234,7 @@
         const csrftoken = getCookie('csrftoken');
 
         // Send POST request to delete user
-        return fetch(`/agent-delete/${username}/`, {
+        return fetch(`/client-delete/${username}/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -256,7 +263,7 @@
     }).then((result) => {
       if (result.isConfirmed) {
         Swal.fire({
-          title: 'Account Deleted!',
+          title: 'Client Deleted!',
           icon: 'success'
         });
       } else if (result.dismiss === Swal.DismissReason.cancel) {
@@ -319,37 +326,46 @@
 </script>
 
 
-<script src="static/js/plugins/dropzone.min.js"></script>
-<script src="static/js/core/popper.min.js"></script>
-<script src="static/js/core/bootstrap.min.js"></script>
-<script src="static/js/plugins/perfect-scrollbar.min.js"></script>
-<script src="static/js/plugins/smooth-scrollbar.min.js"></script>
-<!-- Kanban scripts -->
-<script src="static/js/plugins/dragula/dragula.min.js"></script>
-<script src="static/js/plugins/jkanban/jkanban.js"></script>
-<script src="static/js/plugins/sweetalert.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+      toggle.addEventListener('click', function(event) {
+        event.preventDefault();
+  
+        const passwordCell = this.closest('td.password-cell');
+        const passwordHidden = passwordCell.querySelector('.password-hidden');
+        const passwordVisible = passwordCell.querySelector('.password-visible');
+  
+        if (passwordVisible.style.display === 'none') {
+          passwordVisible.style.display = 'inline';
+          passwordHidden.style.display = 'none';
+          this.querySelector('i').textContent = 'visibility_off'; // Change icon to 'visibility_off'
+        } else {
+          passwordVisible.style.display = 'none';
+          passwordHidden.style.display = 'inline';
+          this.querySelector('i').textContent = 'visibility'; // Change icon back to 'visibility'
+        }
+      });
+    });
+  });
+  
+</script>
 
+<style>
+  .password-hidden {
+    display: inline;
+  }
+  
+  .password-visible {
+    display: none;
+  }
+  
+  .toggle-password i {
+    cursor: pointer;
+  }
+  
+</style>
 
-
-<script src="static/js/material-dashboard.js"></script>
-
-<script src="static/js/plugins/chartjs.min.js"></script>
-<script src="static/js/plugins/world.js"></script>
-<!-- Github buttons -->
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-<!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="static/js/plugins/choices.min.js"></script>
-<script src="static/js/plugins/multistep-form.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-
-
-<script src="https://demos.creative-tim.com/argon-dashboard-pro-bs4/assets/vendor/jquery/dist/jquery.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/soft-ui-design-system-pro/assets/js/core/popper.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/soft-ui-design-system-pro/assets/js/core/bootstrap.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/argon-dashboard-pro-bs4/assets/vendor/prismjs/prism.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/argon-design-system-pro/assets/demo/docs.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/argon-design-system-pro/assets/demo/vendor/holder.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/soft-ui-design-system-pro/assets/js/plugins/moment.min.js" type="text/javascript"></script>
-<script src="https://demos.creative-tim.com/test/material-dashboard-pro/assets/js/material-dashboard.min.js?v=1.0.0" type="text/javascript"></script>
 
 {% endblock %}

@@ -416,7 +416,7 @@ function navbarBlurOnScroll(id) {
   const navbar = document.getElementById(id);
   let navbarScrollActive = navbar ? navbar.getAttribute("data-scroll") : false;
   let scrollDistance = 5;
-  let classes = ['blur', 'shadow-blur', 'left-auto'];
+  let classes = ['bg-secondary', 'left-auto']; //['blur', 'shadow-blur', 'left-auto'];
   let toggleClasses = ['shadow-none'];
 
   if (navbarScrollActive == 'true') {

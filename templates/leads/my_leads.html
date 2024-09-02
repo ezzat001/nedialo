@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block head %}
+
+
+<style>
+    
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+
+
+
+    .input-group-static {
+
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group-static .form-control.zip-code {
+        width: 120px;
+    }
+</style>
+
+
+
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-lg-6 col-12">
+        <div class="row">
+          <div class="col-lg-6 col-md-6 col-12 mb-4">
+            <div class="card">
+              <div class="card-header p-3 py-2">
+                <div class="icon icon-lg icon-shape bg-gradient-success shadow text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons text-white opacity-10">
+                    check
+                     </i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Qualified Leads</p>
+                  <h4 class="mb-0">{{qualified}}</h4>
+                </div>
+              </div>
+              <hr class="dark horizontal my-0">
+              <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-success text-sm font-weight-bolder">{{qualified_perc}}% </span>of total leads</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-12 mb-4">
+            <div class="card">
+              <div class="card-header p-3 py-2">
+                <div class="icon icon-lg icon-shape bg-gradient-danger shadow text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons text-white opacity-10">
+                    close 
+                     </i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Disqualified Leads</p>
+                  <h4 class="mb-0">{{disqualified}}</h4>
+                </div>
+              </div>
+              <hr class="dark horizontal my-0">
+              <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-danger text-sm font-weight-bolder">{{disqualified_perc}}% </span>of total leads</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-2">
+          <div class="col-lg-6 col-md-6 col-12">
+            <div class="card">
+              <div class="card-header p-3 py-2">
+                <div class="icon icon-lg icon-shape bg-gradient-info shadow text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons text-white opacity-10">
+                    phone_callback 
+                    </i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Callback Leads</p>
+                  <h4 class="mb-0">{{callback}}</h4>
+                </div>
+              </div>
+              <hr class="dark horizontal my-0">
+              <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-info text-sm font-weight-bolder">{{callback_perc}}% </span>of total leads</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 col-12 mt-4 mt-md-0">
+            <div class="card">
+              <div class="card-header p-3 py-2">
+                <div class="icon icon-lg icon-shape bg-gradient-warning shadow text-center border-radius-xl mt-n4 position-absolute">
+                  <i class="material-icons text-white opacity-10">
+                    schedule     
+                    </i>
+                </div>
+                <div class="text-end pt-1">
+                  <p class="text-sm mb-0 text-capitalize">Pending Leads</p>
+                  <h4 class="mb-0">{{pending}}</h4>
+                </div>
+              </div>
+              <hr class="dark horizontal my-0">
+              <div class="card-footer p-3">
+                <p class="mb-0"><span class="text-warning text-sm font-weight-bolder">{{pending_perc}}% </span>of total leads</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 col-12 mt-4 mt-lg-0">
+        <div class="card h-100">
+          <div class="card-header pb-0 p-3">
+            <h6 class="mb-0">{{month_name}} {{year}}</h6>
+          </div>
+          <div class="card-body pb-0 p-3">
+            <ul class="list-group">
+              <li class="list-group-item border-0 d-flex align-items-center px-0 mb-0">
+                <div class="w-100">
+                  <div class="d-flex mb-2">
+                    <span class="me-2 text-sm text-capitalize">Qualified Leads</span>
+                    <span class="ms-auto text-sm">{{qualified_perc}}%</span>
+                  </div>
+                  <div>
+                    <div class="progress progress-md">
+                      <div class="progress-bar bg-gradient-success " style="width: {{qualified_perc}}%;" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
+                <div class="w-100">
+                  <div class="d-flex mb-2">
+                    <span class="me-2 text-sm text-capitalize">Callback Leads</span>
+                    <span class="ms-auto text-sm">{{callback_perc}}%</span>
+                  </div>
+                  <div>
+                    <div class="progress progress-md">
+                      <div class="progress-bar bg-gradient-dark" style="width: {{callback_perc}}%;" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
+                <div class="w-100">
+                  <div class="d-flex mb-2">
+                    <span class="me-2 text-sm text-capitalize">Disqualified Leads</span>
+                    <span class="ms-auto text-sm">{{disqualified_perc}}%</span>
+                  </div>
+                  <div>
+                    <div class="progress progress-md">
+                      <div class="progress-bar bg-gradient-danger" style="width: {{disqualified_perc}}%;" role="progressbar" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="card-footer pt-0 p-3 d-flex align-items-center">
+            <div class="w-60">
+              <p class="text-sm mb-0">
+                {{month_name}} {{year}}
+              </p>
+            </div>
+            <div class="w-40 text-end">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row my-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table align-items-center mb-0">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-xxs font-weight-bolder opacity-7">ID</th>
+                  <th class="text-uppercase text-xxs font-weight-bolder opacity-7 ps-2">Submitted</th>
+                  <th class="text-uppercase text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                  <th class="text-center text-uppercase text-xxs font-weight-bolder opacity-7">Campaign</th>
+                  <th class="text-center text-uppercase text-xxs font-weight-bolder opacity-7">Owner Name</th>
+                  <th class="text-center text-uppercase text-xxs font-weight-bolder opacity-7">Report</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for lead in leads_list %}
+                <tr>
+                  <td>
+                    <div class="d-flex px-2 py-1">
+                      
+                      <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 font-weight-normal text-sm">#{{lead.lead_id}}</h6>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <p class="text-sm font-weight-normal text-left mb-0">{{lead.pushed}}</p>
+                  </td>
+
+                  <td>
+                    <span class="badge text-center badge-dot me-4">
+                      {% if lead.status == "disqualified" %}
+                        <i class="bg-danger text-center"></i>
+                      {% elif lead.status == "qualified" %}
+                      <i class="bg-success text-center"></i>
+                      {% elif lead.status == "callback" %}
+                      <i class="bg-info text-center"></i>
+                      {% elif lead.status == "pending" %}
+                      <i class="bg-warning text-center"></i>
+                      {% elif lead.duplicated == "duplicated" %}
+                      <i class="bg-info text-center"></i>
+                      {% endif %}
+
+
+                      <span class="text-dark text-xs">{{lead.get_status_display}}</span>
+                    </span>
+
+                  </td>
+                  
+                  <td class="align-middle text-center  text-sm">
+                    <p class="mb-0 font-weight-normal text-sm">{{lead.campaign}}</p>
+                  </td>
+
+
+ 
+
+                  <td class="align-middle text-center text-sm">
+                    <p class="mb-0 font-weight-normal text-sm">{{lead.seller_name}}</p>
+                  </td>
+                  
+                  
+                  <td class="align-middle text-center">
+                    <a href="lead-report/{{lead.lead_id}}" class="text-sm font-weight-normal mb-0">
+                      <i class="material-icons opacity-10">open_in_new</i>
+                    </a>
+                  </td>
+                  
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+{% endblock %}

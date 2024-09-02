@@ -70,6 +70,7 @@
                 <th>ID</th>
                 <th>Full Name</th>
                 <th>Username</th>
+                <th>Password</th>
                 <th>Role</th>
                 <th>Phone</th>
                 <th>Login Time</th>
@@ -95,6 +96,13 @@
                 <td class="text-xs font-weight-normal">
                   {{account.user}}
                 </td>
+                <td class="password-cell font-weight-normal">
+                  <span class="password-hidden">*********</span>
+                  <span class="password-visible">{{ account.password }}</span>
+                  <a href="#" class="toggle-password">
+                    <i class="material-icons text-secondary position-relative text-lg">visibility</i>
+                  </a>
+                </td> 
                 <td class="text-xs font-weight-normal">
                     {{account.role}}
                 </td>
@@ -171,13 +179,6 @@
 
 
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-
-<script src="../static/js/plugins/choices.min.js"></script>
-<script src="../static/js/plugins/multistep-form.js"></script>
-
-<script src="../static/js/plugins/datatables.js"></script>
 
 
 <script>
@@ -324,27 +325,47 @@
 </script>
 
 
-<script src="static/js/plugins/dropzone.min.js"></script>
-<script src="static/js/core/popper.min.js"></script>
-<script src="static/js/core/bootstrap.min.js"></script>
-<script src="static/js/plugins/perfect-scrollbar.min.js"></script>
-<script src="static/js/plugins/smooth-scrollbar.min.js"></script>
-<!-- Kanban scripts -->
-<script src="static/js/plugins/dragula/dragula.min.js"></script>
-<script src="static/js/plugins/jkanban/jkanban.js"></script>
-<script src="static/js/plugins/sweetalert.min.js"></script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    
+    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
+      toggle.addEventListener('click', function(event) {
+        event.preventDefault();
+  
+        const passwordCell = this.closest('td.password-cell');
+        const passwordHidden = passwordCell.querySelector('.password-hidden');
+        const passwordVisible = passwordCell.querySelector('.password-visible');
+  
+        if (passwordVisible.style.display === 'none') {
+          passwordVisible.style.display = 'inline';
+          passwordHidden.style.display = 'none';
+          this.querySelector('i').textContent = 'visibility_off'; // Change icon to 'visibility_off'
+        } else {
+          passwordVisible.style.display = 'none';
+          passwordHidden.style.display = 'inline';
+          this.querySelector('i').textContent = 'visibility'; // Change icon back to 'visibility'
+        }
+      });
+    });
+  });
+  
+</script>
 
+<style>
+  .password-hidden {
+    display: inline;
+  }
+  
+  .password-visible {
+    display: none;
+  }
+  
+  .toggle-password i {
+    cursor: pointer;
+  }
+  
+</style>
 
-<script src="static/js/material-dashboard.js"></script>
-
-<script src="static/js/plugins/chartjs.min.js"></script>
-<script src="static/js/plugins/world.js"></script>
-<!-- Github buttons -->
-<script async defer src="https://buttons.github.io/buttons.js"></script>
-<!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="static/js/plugins/choices.min.js"></script>
-<script src="static/js/plugins/multistep-form.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
 {% endblock %}
