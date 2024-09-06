@@ -65,6 +65,7 @@ def campaign_create(request):
         agents_count = data.get('agents_count')
         agents_rate = data.get('hourly_rate')
         weekly_hours = data.get('weekly_hours')
+        weekly_leads = data.get('weekly_leads')
         lead_points = data.get('lead_points')
         campaign_type = data.get('campaign_type')
         campaign_dialer = data.get('campaign_dialer')
@@ -84,6 +85,7 @@ def campaign_create(request):
             agents_count = agents_count,
             agents_rate = agents_rate,
             weekly_hours = weekly_hours,
+            weekly_leads = weekly_leads,
             lead_points = lead_points,
 
             campaign_type = campaign_type,
@@ -132,6 +134,8 @@ def campaign_modify(request,camp_id):
             agents_count = data.get('agents_count')
             hourly_rate = data.get('hourly_rate')
             weekly_hours = data.get('weekly_hours')
+            weekly_leads = data.get('weekly_leads')
+
             lead_points = data.get('lead_points')
             campaign_type = data.get('campaign_type')
             campaign_dialer = data.get('dialer')
@@ -147,6 +151,7 @@ def campaign_modify(request,camp_id):
             camp.agents_count = agents_count
             camp.agents_rate = hourly_rate
             camp.weekly_hours = weekly_hours
+            camp.weekly_leads = weekly_leads
             camp.lead_points = lead_points
             camp.campaign_type = campaign_type
             camp.dialer = Dialer.objects.get(id=campaign_dialer)

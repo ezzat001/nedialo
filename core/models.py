@@ -6,6 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 import os,uuid
+from django.db.models import Sum, F, ExpressionWrapper, DurationField
+
 
 STATUS_CHOICES = (
     ('active','Active'),
@@ -390,6 +392,7 @@ class Campaign(models.Model): # Client Campaigns
     agents_count = models.PositiveIntegerField(default=0)
     agents_rate = models.PositiveIntegerField(default=0)
     weekly_hours = models.PositiveIntegerField(default=0)
+    weekly_leads = models.PositiveIntegerField(default=0)
     datasources = models.ManyToManyField(DataSource, related_name='datasources_campaign', blank=True)
 
     campaign_type = models.CharField(max_length=50, choices=SERVICE_TYPES, null=True, blank=True)
@@ -407,6 +410,77 @@ class Campaign(models.Model): # Client Campaigns
 
     def __str__(self):
         return self.name
+    
+
+    def get_accumulated_durations(self, start_date=None, end_date=None):
+        """
+        Calculate the accumulated durations for all seats associated with this campaign
+        within a specific date range.
+        """
+        # Filter SeatAssignmentLogs based on the campaign ID through the related DialerCredentials
+        seat_logs = SeatAssignmentLog.objects.filter(dialer_credentials__campaign=self)
+
+        # Apply date range filter if start_date and end_date are provided
+        if start_date:
+            seat_logs = seat_logs.filter(start_time__gte=start_date)
+        if end_date:
+            seat_logs = seat_logs.filter(end_time__lte=end_date)
+
+        # Calculate the duration for each log entry using an annotation, and then sum them up
+        total_duration = seat_logs.annotate(
+            duration=ExpressionWrapper(
+                F('end_time') - F('start_time'),
+                output_field=DurationField()
+            )
+        ).aggregate(total_duration=Sum('duration'))['total_duration']
+
+        # Return total duration in seconds or 0 if no logs
+        return total_duration.total_seconds() if total_duration else 0
+
+    def get_total_hours_per_account(self, start_date, end_date):
+        """Calculate total hours and unique agents for each account within the date range."""
+        account_data = {}
+
+        # Fetch all DialerCredentials related to this campaign
+        dialer_credentials = DialerCredentials.objects.filter(campaign=self)
+
+        for dialer in dialer_credentials:
+            # Calculate total accumulated duration and count unique agents for each dialer in the specified date range
+            seat_logs = SeatAssignmentLog.objects.filter(
+                dialer_credentials=dialer,
+                start_time__lte=end_date,
+                end_time__gte=start_date
+            )
+
+            total_seconds = 0
+            unique_agents = set()
+
+            for log in seat_logs:
+                # Calculate overlap between log and date range
+                overlap_start = max(start_date, log.start_time)
+                overlap_end = min(end_date, log.end_time) if log.end_time else end_date
+                
+                if overlap_start < overlap_end:
+                    total_seconds += (overlap_end - overlap_start).total_seconds()
+                    unique_agents.add(log.agent_profile.id)
+
+            # Convert seconds to hours
+            total_hours = total_seconds / 3600
+
+            # Format time in HH:MM:SS
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            formatted_time = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+            account_data[dialer] = {
+                'total_hours': total_hours,
+                'formatted_time': formatted_time,
+                'unique_agents_count': len(unique_agents)
+            }
+
+        return account_data
+    
+
 
 class DialerCredentials(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, null=True, blank=True)
@@ -810,3 +884,32 @@ class WorkStatus(models.Model):
 
 
 
+class SeatAssignmentLog(models.Model):
+    agent_profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    dialer_credentials = models.ForeignKey(DialerCredentials, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(default=timezone.now)  # When the seat was assigned
+    end_time = models.DateTimeField(null=True, blank=True)  # When the seat was released
+    created_time = models.DateTimeField(auto_now_add=True)  # Time when the log entry was created
+
+    def __str__(self):
+        return f"Agent {self.agent_profile.id} on Seat {self.dialer_credentials.id} from {self.start_time} to {self.end_time}"
+
+    def duration(self):
+        """Calculate the duration of seat usage."""
+        if self.end_time:
+            return (self.end_time - self.start_time).total_seconds()
+        return (timezone.now() - self.start_time).total_seconds()
+    
+
+    def duration_formatted(self):
+        """Calculate the duration of seat usage."""
+        if self.end_time:
+            duration_seconds = (self.end_time - self.start_time).total_seconds()
+        else:
+            duration_seconds = (timezone.now() - self.start_time).total_seconds()
+        
+        # Convert seconds to HH:MM:SS format
+        hours, remainder = divmod(int(duration_seconds), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        return f"{hours:02}:{minutes:02}:{seconds:02}"

@@ -77,7 +77,7 @@ class ContactListAdmin(admin.ModelAdmin):
 
 @admin.register(Lead)
 class LeadAdmin(admin.ModelAdmin):
-    list_display = ('agent_user', 'lead_id','pushed','seller_name','status','handled_by')
+    list_display = ('agent_user', 'lead_id','campaign','pushed','seller_name','status','handled_by')
 
 
 @admin.register(LeadHandlingDB)
@@ -102,3 +102,5 @@ admin.site.register(WorkStatus)
 
 
 admin.site.register(Absence)
+
+admin.site.register(SeatAssignmentLog)

@@ -1,4 +1,4 @@
-from core.models import Team, ServerSetting, WorkStatus
+from core.models import Team, ServerSetting, WorkStatus, Campaign
 from django.utils import timezone as tz
 def global_context_processor(request):
     
@@ -17,13 +17,21 @@ def global_context_processor(request):
     except:
         work_status = None
 
-      
+    callers_campaigns = Campaign.objects.filter(campaign_type="calling")
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    current_day = now.day
 
 
     context = {
                 'callers_teams': teams,
                 'settings':settings,
                 "work_status":work_status,
+                'callers_campaigns':callers_campaigns,
+                'current_year':current_year,
+                'current_month':current_month,
+                'current_day':current_day,
                
                }
     return context

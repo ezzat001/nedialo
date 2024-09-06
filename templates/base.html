@@ -78,6 +78,16 @@ crossorigin=""/>
             const secs = Math.floor(seconds % 60); // Ensure seconds are an integer
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
+
+        function formatDurationToHoursMinutes(seconds) {
+          if (isNaN(seconds) || seconds < 0) {
+              return '00:00'; // Return default value if input is invalid
+          }
+          const hours = Math.floor(seconds / 3600);
+          const minutes = Math.floor((seconds % 3600) / 60);
+          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+      
     
         const companyName = "{{ settings.company_name }}";
         const breakPaid = {{ settings.break_paid|yesno:"true,false" }}; // Convert Django boolean to JS boolean
@@ -107,8 +117,8 @@ crossorigin=""/>
     
                 const duration = Math.floor((now - lastStatusChange) / 1000); // Duration in seconds
     
-                document.getElementById('working-hours').innerText = formatDuration(duration);
-                document.title = `${document.getElementById('current-status').innerText} - ${formatDuration(duration)}`;
+                document.getElementById('working-hours').innerText = formatDurationToHoursMinutes(duration);
+                document.title = `${document.getElementById('current-status').innerText} - ${formatDurationToHoursMinutes(duration)}`;
             } else {
                 console.error('Last status change date is missing');
                 document.getElementById('working-hours').innerText = '00:00:00';
@@ -135,9 +145,17 @@ crossorigin=""/>
                     document.getElementById('ready-time').innerText = formatDuration(data.ready_time);
                     document.getElementById('meeting-time').innerText = formatDuration(data.meeting_time);
                     document.getElementById('break-time').innerText = formatDuration(data.break_time);
-                    document.getElementById('ready-time-av').innerText = formatDuration(data.ready_time);
-                    document.getElementById('meeting-time-av').innerText = formatDuration(data.meeting_time);
-                    document.getElementById('break-time-av').innerText = formatDuration(data.break_time);
+                    if (document.getElementById('ready-time-av')) {
+                      document.getElementById('ready-time-av').innerText = formatDuration(data.ready_time);
+                    }
+                    
+                    if (document.getElementById('meeting-time-av')) {
+                        document.getElementById('meeting-time-av').innerText = formatDuration(data.meeting_time);
+                    }
+                    
+                    if (document.getElementById('break-time-av')) {
+                        document.getElementById('break-time-av').innerText = formatDuration(data.break_time);
+                    }
                     // Update the title with the new status
                     document.title = `${formattedStatus} - 00:00:00`;
     
@@ -146,6 +164,7 @@ crossorigin=""/>
     
                     // Trigger the clock update
                     updateClock();
+                    fetchWorkStatusData();
                 } else {
                     console.error('Failed to update status:', data.error);
                 }
@@ -242,7 +261,7 @@ crossorigin=""/>
         fetchWorkStatusData();
     
         // Fetch updated work status data every 30 seconds, only if status is not offline
-        setInterval(fetchWorkStatusData, 1000); // Adjust the interval as needed
+        setInterval(fetchWorkStatusData, 30000); // Adjust the interval as needed
     
         // Add event listener to the select field
         document.getElementById('work_status').addEventListener('change', handleStatusChange);
@@ -250,6 +269,7 @@ crossorigin=""/>
         function handleStatusChange() {
             const selectedStatus = document.getElementById('work_status').value;
             updateWorkStatus(selectedStatus);
+
         }
     });
     
@@ -443,12 +463,8 @@ crossorigin=""></script>
                   <span class="sidenav-normal  ms-2  ps-1"> Inactive Campaigns </span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/campaign-performance" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> trending_up </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Campaign Performance </span>
-                </a>
-              </li>
+              
+               
               
             </ul>
           </div>
@@ -603,6 +619,101 @@ crossorigin=""></script>
         </li>
 
 
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#campaignhours" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">timer</i>
+            <span class="nav-link-text ms-2 ps-1">Campaign Hours</span>
+          </a>
+          <div class="collapse " id="campaignhours">
+            <ul class="nav ">
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="/seats" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> group </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Seats </span>
+                </a>
+              </li>
+              
+
+              {% for caller_camp in callers_campaigns %}
+              <li class="nav-item ">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#camphours-{{caller_camp}}">
+                  <span class="sidenav-mini-icon material-icons">  </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> {{caller_camp}} <b class="caret"></b></span>
+                </a>
+                <div class="collapse " id="camphours-{{caller_camp}}">
+                  <ul class="nav nav-sm flex-column">
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/camphours-daily/{{caller_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Daily Reports </span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/camphours-monthly/{{caller_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Monthly Reports </span>
+                      </a>
+                    </li>   
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/camphours-yearly/{{caller_camp.id}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Yearly Reports </span>
+                      </a>
+                    </li>   
+                  </ul>
+                </div>
+              </li>
+              {% endfor %}
+
+              
+            </ul>
+          </div>
+        </li>
+
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#campaignleads" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">trending_up</i>
+            <span class="nav-link-text ms-2 ps-1">Campaign Leads</span>
+          </a>
+          <div class="collapse " id="campaignleads">
+            <ul class="nav ">
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="/seats" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> bar_chart </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Overall Performance </span>
+                </a>
+              </li>
+              
+
+              {% for caller_camp in callers_campaigns %}
+              <li class="nav-item ">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#campleads-{{caller_camp}}">
+                  <span class="sidenav-mini-icon material-icons">  </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> {{caller_camp}} <b class="caret"></b></span>
+                </a>
+                <div class="collapse " id="campleads-{{caller_camp}}">
+                  <ul class="nav nav-sm flex-column">
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/campleads-daily/{{caller_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Daily Reports </span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/campleads-monthly/{{caller_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Monthly Reports </span>
+                      </a>
+                    </li>   
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/campleads-yearly/{{caller_camp.id}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Yearly Reports </span>
+                      </a>
+                    </li>   
+                  </ul>
+                </div>
+              </li>
+              {% endfor %}
+
+              
+            </ul>
+          </div>
+        </li>
 
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#agentscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">

@@ -1,4 +1,4 @@
-{% extends 'base-admin.html' %}
+{% extends 'base.html' %}
 {% load custom_filters %}
 {% block head %}
 
@@ -31,9 +31,7 @@
 <div class="container-fluid py-4">
   <div class="d-sm-flex justify-content-between">
     <div>
-      <a href="campaign-create" class="btn btn-icon bg-gradient-info">
-        New Campaign
-      </a>
+     
     </div>
     <div class="d-flex">
       <div class="dropdown d-inline">
@@ -60,104 +58,59 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">Campaigns Table</h5>
+          <h5 class="mb-0">{{agent_profile.full_name}} #{{agent_profile.id}}</h5>
           <p class="text-sm mb-0">
-            View all Campaigns.
+            Seats Breakdown Reports
           </p>
         </div>
         <div class="table-responsive">
           <table class="table table-flush" id="datatable-search">
             <thead class="thead-light">
               <tr>
-                <th>ID</th>
+                <th>Date</th>
                 <th>Campaign</th>
-                <th>Client</th>
-                <th>Type</th>
-                <th>Agents Count</th>
-                <th>Weekly Hours</th>
-                <th>Lead Points</th>
-                <th>Credentials</th>
-                <th>Status</th>
+                <th>Seat ID</th>
+                <th>Seat</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Duration</th>
                 <th>Action</th>
 
               </tr>
             </thead>
             <tbody>
-              {% for camp in campaigns %}
+              {% for log in seat_logs %}
               <tr>
                 <td>
                   <div class="d-flex align-items-center">
 
-                    <p class="text-xs font-weight-normal ms-2 mb-0">#{{camp.id}}</p>
+                    <p class="text-xs font-weight-normal ms-2 mb-0">{{log.created_time|date:"Y-m-d"}}</p>
                   </div>
                 </td>
                 <td class="font-weight-normal">
-                  <span class="my-2 text-xs">{{camp.name}}</span>
+                  <span class="my-2 text-xs">{{log.campaign}}</span>
+                </td>
+                <td class="font-weight-normal">
+                  <span class="my-2 text-xs">#{{log.seat_id}}</span>
                 </td>
                 <td class="text-xs font-weight-normal">
-                  {{camp.client}}
+                  {{log.seat_username}}
                 </td>
                 <td class="text-xs font-weight-normal">
-                  {{camp.get_campaign_type_display}}
+                  {{log.start_time|date:"g:i A"}}
                 </td>
                 <td class="text-xs font-weight-normal">
-                  {{camp.agents_count}}
+                    {{log.end_time|date:"g:i A"}}
                 </td>
                 <td class="text-xs font-weight-normal">
-                    {{camp.weekly_hours}}
-                </td>
-                <td class="text-xs font-weight-normal">
-                  {{camp.weekly_leads}}
-                </td>
-
-                <td class="text-xs font-weight-normal">
-                  {{camp.lead_points}} /Lead
-                </td>
-                <td class="text-xs font-weight-normal">
-                  <div class="d-flex align-items-center">
-
-                    <a href="dialercredentials/{{camp.id}}" class="mx-3" 
-                      data-tippy-content="Dialer Credentials: {{ camp|get_dialer_credentials }}" data-tippy-placement="top">
-                      <i class="material-icons text-secondary position-relative text-lg">phone</i>
-                    </a>
-                    <a href="sourcecredentials/{{camp.id}}" 
-                    data-tippy-content="Sources Credentials: {{ camp|get_source_credentials }}" data-tippy-placement="top">
-
-                    <i class="material-icons text-secondary position-relative text-lg">find_in_page</i>
-                    </a>
-                  </div>
+                  {{log.duration_formatted}}
                 </td>
 
                 
 
-
-
-                <td class="text-xs font-weight-normal">
-                  {% if camp.status == "active" %}
-                  <span class="badge filter bg-gradient-success" data-color="success" >Active</span>
-                  {% elif camp.status == "hold" %}
-                  <span class="badge filter bg-gradient-warning" data-color="warning" >Hold</span>
-                  {% elif camp.status == "pending" %}
-                  <span class="badge filter bg-gradient-warning" data-color="warning" >Pending</span>
-                  {% elif camp.status == "inactive" %}
-                  <span class="badge filter bg-gradient-danger" data-color="warning" >Inactive</span>
-                  {% endif %}
-                  
-
-
-                </td>
-
                 <td class="text-sm">
                   <div class="d-flex align-items-center">
-                    <a href="account-reports/{{account.id}}"
-                    data-tippy-content="Preview Campaign" data-tippy-placement="top">
-                      <i class="material-icons text-secondary position-relative text-lg">visibility</i>
-                    </a>
-                    <a href="campaign-modify/{{camp.id}}" class="mx-3" 
-                    data-tippy-content="Modify Campaign" data-tippy-placement="top">
-
-                      <i class="material-icons text-secondary position-relative text-lg">drive_file_rename_outline</i>
-                    </a>
+                    
                     <a href="javascript:;" 
                     data-tippy-content="Delete Campaign" data-tippy-placement="top"
                       onclick= "showDeleteConfirmation('{{account}}','{{camp.name}}','{{camp.id}}')">

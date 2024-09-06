@@ -128,7 +128,23 @@ urlpatterns = [
 
 
     path('seats', seats),
+    path('seat-breakdown/<int:seat_id>', seat_breakdown),
+    path('agent-seat-breakdown/<int:agent_id>', agent_seat_breakdown),
+
     path('update-seat-agent/<int:seat_id>/', update_seat_agent_profile, name='update_seat_agent_profile'),
+    path('unseat/<int:agent_id>/', unseat_agent, name='unseat_agent'),
+
+
+    path('camphours-daily/<int:camp_id>-<int:month>-<int:year>', camp_hours_daily),
+
+    path('camphours-monthly/<int:camp_id>-<int:month>-<int:year>', camp_hours_monthly),
+    path('camphours-yearly/<int:camp_id>-<int:year>', camp_hours_yearly),
+
+    path('campleads-daily/<int:camp_id>-<int:month>-<int:year>', camp_leads_daily),
+
+    path('campleads-monthly/<int:camp_id>-<int:month>-<int:year>', camp_leads_monthly),
+    path('campleads-yearly/<int:camp_id>-<int:year>', camp_leads_yearly),
+
 
     path('working-hours/company', working_hours_company),
     path('working-hours/<int:team_id>', working_hours_team),
@@ -139,6 +155,9 @@ urlpatterns = [
     path('attendance-monitor/<int:team_id>',attendance_team),
 
     path('report-absence',report_absence),
+
+
+
 
 
 

@@ -74,11 +74,14 @@
           <tr>
             <th>Agent ID</th>
             <th>Name</th>
-            <th>Status</th>
+            <th>Agent Status</th>
+            <th>Seat Status</th>
+            <th>Team</th>
             <th>Campaign</th>
             <th>Seat</th>
-            <th>Duration</th>
-            
+            <th>Breakdown Reports</th>
+            <th>Unseat</th>
+
 
           </tr>
         </thead>
@@ -96,18 +99,35 @@
             </td>
             <td class="text-xs font-weight-normal">
               {% if agent|agent_status %}
-                {% if agent.assigned_credentials%}
-                  <span class="badge filter bg-gradient-success" data-color="success" >Seated</span>
+                  {% if agent|agent_status == "ready" %}
+                    <span class="badge filter bg-gradient-success" data-color="success" >{{agent|agent_status}}</span>
+                  {% elif agent|agent_status == "meeting" %}
+                    <span class="badge filter bg-gradient-primary" data-color="success" >{{agent|agent_status}}</span>
+                  {% elif agent|agent_status == "break" %}
+                    <span class="badge filter bg-gradient-warning" data-color="success" >{{agent|agent_status}}</span>
+
+                  {% endif %}
                 {% else %}
-                  <span class="badge filter bg-gradient-warning" data-color="warning" >Lobby</span>
-                {% endif %}
-              {% else %}
 
               <span class="badge filter bg-gradient-danger" data-color="danger" >Offline</span>
 
               {% endif %}
                 
             </td>
+
+
+            <td class="text-xs font-weight-normal">
+                {% if agent.assigned_credentials%}
+                  <span class="badge filter bg-gradient-info" data-color="info" >Seated</span>
+                {% else %}
+                  <span class="badge filter bg-gradient-warning" data-color="warning" >Lobby</span>
+                {% endif %}
+            </td>
+
+            <td class="text-xs font-weight-normal">
+              {{agent.team}}
+            </td>
+
             <td class="text-xs font-weight-normal">
               {{agent.assigned_credentials.campaign}}
             </td>
@@ -115,14 +135,25 @@
               {{agent.assigned_credentials.username}}
             </td>
             
-            <td class="text-xs font-weight-normal">
-              Time
+
+
+            <td  class="text-xs font-weight-normal">
+              
+              <a href="agent-seat-breakdown/{{agent.id}}" class="mx-3" >
+
+                      <i class="material-icons text-secondary position-relative text-lg">description</i>
+               </a>
             </td>
 
-          
-            
-
-            
+            <td class="text-sm">
+              <div class="d-flex align-items-center">
+                
+                <a href="javascript:;" 
+                  onclick="confirmDeletionWithSwal('{{agent.id}}')">
+                  <i class="material-icons text-secondary position-relative text-lg"> cancel</i>
+                </a>
+              </div>
+            </td>
 
 
 
@@ -197,7 +228,11 @@
                 {% else %}
                 <span class="badge filter bg-gradient-warning" data-color="warning" >Empty</span>
                 {% endif %}
-                <span class="text-sm text-secondary" data-tippy-content="Dialer Username" data-tippy-placement="right">{{ seat.username }}</span>
+                <a href="seat-breakdown/{{seat.id}}" class="text-sm text-secondary" data-tippy-content="Breakdown Reports" data-tippy-placement="right">{{ seat.username }}
+                  <i class="material-icons text-small" style="vertical-align: middle;">
+                    description
+                  </i>
+                </a>
               </div>
               <!-- Second Line: Select Dropdown and Password -->
               <div class="col-12 d-flex justify-content-between align-items-center mt-2">
@@ -327,5 +362,62 @@
   });
 
 </script>
+
+<script>
+  function confirmDeletionWithSwal(agentId) {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "Click on yes to remove the agent from the seat.",
+        icon: "info",
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, remove it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/unseat/${agentId}/`, {
+                method: 'POST', // Changed to POST to match the view method
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'action': 'unseat' }) // Sending a payload to the server
+            })
+            .then(response => {
+                if (response.ok) {
+                    Swal.fire(
+                        'Removed!',
+                        'The agent has been removed from the seat.',
+                        'success'
+                    ).then(() => {
+                        location.reload(); // Optionally refresh the page
+                    });
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        'Failed to remove the agent.',
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                Swal.fire(
+                    'Error!',
+                    'There was a problem removing the agent.',
+                    'error'
+                );
+                console.error("Error during fetch:", error);
+            });
+        } else {
+            Swal.fire(
+                'Cancelled',
+                'The agent remains assigned to the seat.',
+                'info'
+            );
+        }
+    });
+  }
+</script>
+
 
 {% endblock %}

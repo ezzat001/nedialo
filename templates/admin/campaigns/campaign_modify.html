@@ -71,7 +71,7 @@
             <li class="nav-item pt-2">
               <a class="nav-link text-dark d-flex" data-scroll="" href="#basic-info">
                 <i class="material-icons text-lg me-2">person</i>
-                <span class="text-sm">Account Info</span>
+                <span class="text-sm">Campaign Info</span>
               </a>
             </li>
 
@@ -169,11 +169,22 @@
 
               <div class="row">
                 <div class="col-6">
-                  <label class="form-label mt-4 ms-0">Target Weekly Hours *</label>
+                  <label class="form-label mt-4 ms-0">Weekly Target Hours *</label>
                   <div class="input-group input-group-dynamic ">
                       <input class="form-control" type="number" min=0 name="weekly_hours" value="{{camp.weekly_hours}}" required>
                   </div>
                 </div>
+                <div class="col-6">
+                  <label class="form-label mt-4 ms-0">Weekly Target Leads  *</label>
+                  <div class="input-group input-group-dynamic ">
+                      <input class="form-control" type="number" min=0 name="weekly_leads" value = "{{camp.weekly_leads}}" required>
+                  </div>
+                </div>
+              </div>
+
+
+              <div class="row">
+
                 <div class="col-6">
                   <label class="form-label mt-4 ms-0">Lead Points *</label>
                   <div class="input-group input-group-dynamic ">

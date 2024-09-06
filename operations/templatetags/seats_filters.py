@@ -61,5 +61,5 @@ def agent_status(agent_profile):
     if status == "offline":
         return False
     else:
-        return True
+        return status
 

@@ -702,7 +702,10 @@ def quality_pending(request):
         active=True,
         ).count()
     
-    context['total_handled_month_perc'] = round(((context['total_handled_month'] / context['total_month_all'])*100),2)
+    if context['total_month_all'] == 0:
+        context['total_handled_month_perc'] = 0  # or some other default value
+    else:
+        context['total_handled_month_perc'] = round((context['total_handled_month'] / context['total_month_all']) * 100, 2)
 
 
     context['total'] =  Lead.objects.filter(
