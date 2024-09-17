@@ -3,14 +3,19 @@ from core.models import *
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.utils import timezone as tz
-from collections import defaultdict
 from django.db.models import Count
 from django.views.decorators.http import require_POST
 from datetime import datetime,timedelta
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_protect
+from django.views import View
+from django.contrib.auth import authenticate
+from django.utils.decorators import method_decorator
 import calendar
 import json
+
+
 
 
 try:
@@ -27,6 +32,11 @@ def seats(request):
     campaigns = Campaign.objects.filter(active=True,status="active")
     context['campaigns'] = campaigns
 
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    context['month'] = current_month
+    context['year'] = current_year
     
     callers_teams = Team.objects.filter(team_type="callers")
 
@@ -44,28 +54,43 @@ def seats(request):
 
 
 @login_required
-def seat_breakdown(request, seat_id):
+def seat_breakdown(request, seat_id, month, year):
     context = {"settings":settings,}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
+
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]    
+
     
 
-    context['seat_logs'] = get_seat_breakdown(seat_id)
+    context['seat_logs'] = get_seat_breakdown(seat_id, month , year)
 
     context['seat'] = DialerCredentials.objects.get(id=seat_id)
+
     
     return render(request,'operations/seat_breakdown.html', context)
 
 
 
 @login_required
-def agent_seat_breakdown(request, agent_id):
+def agent_seat_breakdown(request, agent_id, month ,year ):
     context = {"settings":settings,}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
     
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]    
 
-    context['seat_logs'] = get_agent_breakdown(agent_id)
+    context['seat_logs'] = get_agent_breakdown(agent_id, month, year)
 
     context['agent_profile'] = Profile.objects.get(id=agent_id)
     
@@ -73,13 +98,15 @@ def agent_seat_breakdown(request, agent_id):
 
 
 
-def get_agent_breakdown(agent_profile_id):
+def get_agent_breakdown(agent_profile_id, month, year):
     """Get a breakdown of all seat assignments for a specific agent."""
-    seat_logs = SeatAssignmentLog.objects.filter(agent_profile_id=agent_profile_id)
+    seat_logs = SeatAssignmentLog.objects.filter(created_time__month=month, created_time__year=year,
+                                                 agent_profile_id=agent_profile_id)
     breakdown = []
     
     for log in seat_logs:
         breakdown.append({
+            'id':log.id,
             'seat_id': log.dialer_credentials.id,
             'seat_username':log.dialer_credentials.username,
             'campaign':log.dialer_credentials.campaign,
@@ -90,9 +117,10 @@ def get_agent_breakdown(agent_profile_id):
         })
     
     return breakdown
-def get_seat_breakdown(dialer_credentials_id):
+def get_seat_breakdown(dialer_credentials_id, month, year ):
     """Get a breakdown of all agent assignments for a specific seat."""
-    seat_logs = SeatAssignmentLog.objects.filter(dialer_credentials_id=dialer_credentials_id)
+    seat_logs = SeatAssignmentLog.objects.filter(created_time__month=month, created_time__year=year,
+                                                 dialer_credentials_id=dialer_credentials_id)
     breakdown = []
     
     for log in seat_logs:
@@ -244,75 +272,236 @@ def unseat_agent(request, agent_id):
         return JsonResponse({'message': 'Seat not found.'}, status=404)
 
 
-"""
-def update_seat_agent_profile(request, seat_id):
+
+
+
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(require_http_methods(["POST"]), name='dispatch')
+class DeleteSeatLogView(View):
+    def post(self, request, log_id):
+        current_user = request.user
+        # Ensure correct data access
+        try:
+            body = json.loads(request.body)
+            password = body['password']
+        except (KeyError, json.JSONDecodeError):
+            return JsonResponse({'error': 'Password not provided.'}, status=400)
+
+        # Authenticate user based on current_user and provided password
+        user = authenticate(username=current_user.username, password=password)
+
+        if user is not None:
+            # Check if the authenticated user can delete the target user
+            target_camp = get_object_or_404(SeatAssignmentLog, id=log_id)
+            target_camp.delete()
+            return JsonResponse({'message': 'Account deleted successfully.'}, status=200)
+        
+        else:
+            return JsonResponse({'error': 'Invalid password.'}, status=401)
+
+
+@login_required
+def update_status_admin(request):
     if request.method == 'POST':
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            agent_id = request.POST.get('agent_id')
-            
+        new_status = request.POST.get('status')
+        user_id = request.POST.get('user_id')
+        profile = Profile.objects.get(id=user_id)  # Get the user by ID
+        profile_user = profile.user
+        today = (tz.localtime(tz.now())).date()
 
-
+        
+        if new_status in dict(WorkStatus.STATUS_CHOICES).keys():
             try:
-                old_seat = None
-                seat = get_object_or_404(DialerCredentials, id=seat_id)
-                if int(agent_id) == 0:
-
-                    agent_profile = seat.agent_profile
-                    agent_profile.assigned_credentials = None
-                    seat.agent_profile = None
-                else:
-                    agent_profile = get_object_or_404(Profile, id=agent_id)
-                    try:
-                        old_seat = DialerCredentials.objects.get(agent_profile=agent_profile)
-                        old_seat.agent_profile = None
-                        old_seat.save()
-                    except:
-                        pass
-                    seat.agent_profile = agent_profile
-                    agent_profile.assigned_credentials = seat
+                work_status, created = WorkStatus.objects.get_or_create(
+                    user=profile_user,
+                    date=today,
+                    defaults={
+                        'current_status': 'ready',
+                        'last_status_change': tz.now()
+                    }
+                )
+                if not created:
+                    work_status.update_status(new_status)
                 
                 
-                agent_profile.save()
-                seat.save()
-                
 
-                return JsonResponse({'success': True, 'message': 'Seat agent profile updated successfully.'})
-
+                response_data = {
+                    'success': True,
+                    'new_status': new_status,
+                }
+                return JsonResponse(response_data)
             except Exception as e:
-                return JsonResponse({'success': False, 'message': str(e)})"""
+                return JsonResponse({'success': False, 'error': str(e)})
+        return JsonResponse({'success': False, 'error': 'Invalid status.'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
             
-            
+
+@login_required
+def agents_list_company(request):
+
+    context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+
+
+    
+    context['month'] = current_month
+    context['year'] = current_year
+   
+    
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    callers_teams = Team.objects.filter(team_type="callers")
+
+    agents = Profile.objects.filter(team__in=callers_teams, active=True)
+    context['agents'] = agents
+
+
+
+
+        
+
+
+
+    return render(request,'operations/agents/agents_list.html',context)
+
+
+
+@login_required
+def agents_list_team(request, team_id):
+
+    context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+
+
+    
+    context['month'] = current_month
+    context['year'] = current_year
+   
+    
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    team = Team.objects.get(id=team_id)
+
+    agents = Profile.objects.filter(team=team, active=True)
+    context['agents'] = agents
+
+
+
+        
+
+
+
+    return render(request,'operations/agents/agents_list.html',context)
+
+
+
+
 
 
 
 
 
 @login_required
-def working_hours_company(request):
+def working_hours_company(request, month,year):
 
     context = {}
     now = tz.now()
     current_year = now.year
     current_month = now.month
-    month_name = now.strftime('%B')
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
     context['month_name'] = month_name
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
     callers_teams = Team.objects.filter(team_type="callers")
 
-    context['agents'] = Profile.objects.filter(team__in=callers_teams, active=True)
-                                                   
+    agents = Profile.objects.filter(team__in=callers_teams, active=True)
+    context['agents'] = agents
+
+        
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    # Calculate total time for each status per agent
+    status_totals = {}
+    for agent in agents:
+        agent_totals = {}
+        for status in ['ready', 'meeting', 'break', 'offline']:
+            total_time = WorkStatus.objects.filter(
+                user=agent.user,
+                date__month=month,
+                date__year=year
+            ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+            # Convert timedelta to formatted string
+            total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            seconds = int(total_seconds % 60)
+            formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            agent_totals[status] = formatted_time
+
+        # Calculate total worked time
+        total_worked_time_seconds = sum([
+            (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+                total_ready_time=Sum('ready_time'),
+                total_meeting_time=Sum('meeting_time'),
+                total_break_time=Sum('break_time')
+            )[field] or timedelta()).total_seconds()
+            for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+        ])
+        agent_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+        # Calculate total payable time
+        try:
+            settings = ServerSetting.objects.first()
+            break_paid = settings.break_paid
+        except:
+            break_paid = False
+        total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_ready_time=Sum('ready_time')
+        )['total_ready_time'] or timedelta()).total_seconds()
+        total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_meeting_time=Sum('meeting_time')
+        )['total_meeting_time'] or timedelta()).total_seconds()
+        total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_break_time=Sum('break_time')
+        )['total_break_time'] or timedelta()).total_seconds()
+
+        total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+        agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+        status_totals[agent] = agent_totals
+
+    context['status_totals'] = status_totals
 
 
-    return render(request,'operations/working_hours.html',context)
-
+    return render(request,'operations/working_hours_company.html',context)
 
 
 
 @login_required
-def working_hours_team(request, team_id):
-
+def working_hours_team(request, team_id, month, year):
     context = {}
     now = tz.now()
 
@@ -320,20 +509,88 @@ def working_hours_team(request, team_id):
     context['month_name'] = month_name
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
 
+    # Fetch the relevant team and agents
     team = Team.objects.get(id=team_id)
+    agents = Profile.objects.filter(team=team, active=True)
+    context['agents'] = agents
+    context['team_id'] = team.id
 
-    context['agents'] = Profile.objects.filter(team=team, active=True)
-                                                   
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    # Calculate total time for each status per agent
+    status_totals = {}
+    for agent in agents:
+        agent_totals = {}
+        for status in ['ready', 'meeting', 'break', 'offline']:
+            total_time = WorkStatus.objects.filter(
+                user=agent.user,
+                date__month=month,
+                date__year=year
+            ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+            # Convert timedelta to formatted string
+            total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            seconds = int(total_seconds % 60)
+            formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            agent_totals[status] = formatted_time
+
+        # Calculate total worked time
+        total_worked_time_seconds = sum([
+            (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+                total_ready_time=Sum('ready_time'),
+                total_meeting_time=Sum('meeting_time'),
+                total_break_time=Sum('break_time')
+            )[field] or timedelta()).total_seconds()
+            for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+        ])
+        agent_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+        # Calculate total payable time
+        try:
+            settings = ServerSetting.objects.first()
+            break_paid = settings.break_paid
+        except:
+            break_paid = False
+        total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_ready_time=Sum('ready_time')
+        )['total_ready_time'] or timedelta()).total_seconds()
+        total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_meeting_time=Sum('meeting_time')
+        )['total_meeting_time'] or timedelta()).total_seconds()
+        total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_break_time=Sum('break_time')
+        )['total_break_time'] or timedelta()).total_seconds()
+
+        total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+        agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+        status_totals[agent] = agent_totals
+
+    context['status_totals'] = status_totals
 
 
-    return render(request,'operations/working_hours.html',context)
-
+    return render(request, 'operations/working_hours_team.html', context)
 
 
 
 @login_required
-def agent_hours(request, agent_id):
+def agent_hours(request, agent_id,month,year):
 
     context = {}
 
@@ -343,8 +600,21 @@ def agent_hours(request, agent_id):
     agent_profile = Profile.objects.get(id=agent_id)
     agent_user = agent_profile.user
     context['agent'] = agent_profile
+    now = tz.now()
+    month_name = now.strftime('%B')
+    context['month_name'] = month_name
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
 
-    context['breakdown_data'] = WorkStatus.objects.filter(user=agent_user)
+
+    context['breakdown_data'] = WorkStatus.objects.filter(date__month=month, date__year=year,
+                                                        login_time__isnull=False, user=agent_user)
     
                                                    
 
@@ -357,7 +627,7 @@ def agent_hours(request, agent_id):
 
 
 @login_required
-def attendance_company(request):
+def attendance_company(request, month, year):
 
     context = {}
 
@@ -366,16 +636,20 @@ def attendance_company(request):
     now = tz.now()
     current_year = now.year
     current_month = now.month
-    month_name = now.strftime('%B')
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
     context['month_name'] = month_name
-    context['today_date'] = now.date()
+    context['full_month_name'] = calendar.month_name[month]
+    context['today_date'] = month_date
 
-    context['absences'] = Absence.objects.filter(active=True)
+    context['absences'] = Absence.objects.filter(absence_date__year=year, active=True)
 
     absence_counts = Absence.objects.filter(
         active=True,
-        absence_date__month=current_month,
-        absence_date__year=current_year,
+        absence_date__month=month,
+        absence_date__year=year,
     ).values('absence_type').annotate(count=Count('id'))
 
     # Initialize all counts to zero
@@ -399,12 +673,12 @@ def attendance_company(request):
             context['nsncs'] = absence['count']
 
 
-    return render(request,'operations/attendance.html',context)
+    return render(request,'operations/attendance_company.html',context)
 
 
 
 @login_required
-def attendance_team(request, team_id):
+def attendance_team(request, team_id, month, year):
 
     context = {}
 
@@ -413,19 +687,24 @@ def attendance_team(request, team_id):
     now = tz.now()
     current_year = now.year
     current_month = now.month
-    month_name = now.strftime('%B')
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
     context['month_name'] = month_name
-    context['today_date'] = now.date()
+    context['full_month_name'] = calendar.month_name[month]
+    context['today_date'] = month_date
     team = Team.objects.get(id=team_id)
 
-    context['absences'] = Absence.objects.filter(team = team, active=True)
+    context['team'] = team
+    context['absences'] = Absence.objects.filter(team = team, absence_date__year=year,active=True)
 
 
     absence_counts = Absence.objects.filter(
         team = team,
         active=True,
-        absence_date__month=current_month,
-        absence_date__year=current_year,
+        absence_date__month=month,
+        absence_date__year=year,
     ).values('absence_type').annotate(count=Count('id'))
 
     # Initialize all counts to zero
@@ -449,8 +728,70 @@ def attendance_team(request, team_id):
             context['nsncs'] = absence['count']
 
 
-    return render(request,'operations/attendance.html',context)
 
+    return render(request,'operations/attendance_team.html',context)
+
+
+
+@login_required
+def attendance_agent(request, agent_id, month, year):
+
+    context = {}
+
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['today_date'] = month_date
+
+    agent_profile = Profile.objects.get(id=agent_id)
+    context['absences'] = Absence.objects.filter(agent_profile = agent_profile, absence_date__year=year,active=True)
+
+    context['agent_profile'] = agent_profile
+
+    absence_counts = Absence.objects.filter(
+        agent_profile = agent_profile,
+        active=True,
+        absence_date__month=month,
+        absence_date__year=year,
+    ).values('absence_type').annotate(count=Count('id'))
+
+    # Initialize all counts to zero
+    context['annuals'] = 0
+    context['upls'] = 0
+    context['sicks'] = 0
+    context['casuals'] = 0
+    context['nsncs'] = 0
+
+    # Map the counts to the context dictionary
+    for absence in absence_counts:
+        if absence['absence_type'] == 'annual':
+            context['annuals'] = absence['count']
+        elif absence['absence_type'] == 'upl':
+            context['upls'] = absence['count']
+        elif absence['absence_type'] == 'sick':
+            context['sicks'] = absence['count']
+        elif absence['absence_type'] == 'casual':
+            context['casuals'] = absence['count']
+        elif absence['absence_type'] == 'nsnc':
+            context['nsncs'] = absence['count']
+
+
+    work_status_objects = WorkStatus.get_workstatus_with_login_time(agent_profile, month, year)
+    attendance_count = work_status_objects.count()
+
+    print(work_status_objects)
+    context['attendance'] = work_status_objects
+    context['attendance_count'] = attendance_count
+
+    return render(request,'operations/attendance_agent.html',context)
 
 
 
@@ -503,7 +844,261 @@ def report_absence(request):
 
 
 
+@login_required
+def lateness_company(request, month, year):
 
+    context = {}
+
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    now = timezone.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['today_date'] = month_date
+    
+    callers_teams = Team.objects.filter(team_type="callers")
+    agents = Profile.objects.filter(team__in=callers_teams, active=True)
+    
+    # Create a list of all days in the month
+    days_in_month = calendar.monthrange(year, month)[1]
+    dates = [datetime(year, month, day) for day in range(1, days_in_month + 1)]
+
+    absences = []
+    late_less_than_5 = 0
+    early_or_on_time = 0
+    late_5_or_more = 0
+
+    for agent in agents:
+        for day in dates:
+            work_status = WorkStatus.objects.filter(
+                user=agent.user,
+                date=day.date(),
+                login_time__isnull=False
+            ).first()
+
+            if work_status and work_status.login_time:
+                actual_login_time = work_status.get_login_time_in_timezone()
+                default_login_time = agent.login_time
+
+                actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
+                default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+
+                time_difference = datetime.combine(day.date(), actual_login_time) - datetime.combine(day.date(), default_login_time)
+                minutes_difference = time_difference.total_seconds() / 60
+
+                if minutes_difference > 0:
+                    if minutes_difference <= 5:
+                        status_class = 'bg-gradient-warning'
+                        late_less_than_5 += 1
+                    else:
+                        status_class = 'bg-gradient-danger'
+                        late_5_or_more += 1
+                    status = f"{int(minutes_difference)} minutes"
+                elif minutes_difference < 0:
+                    status_class = 'bg-gradient-success'
+                    early_or_on_time += 1
+                    status = f"{abs(int(minutes_difference))} minutes"
+                else:
+                    status_class = 'bg-gradient-success'
+                    early_or_on_time += 1
+                    status = "On time"
+                
+                absences.append({
+                    'agent_profile': f"{agent.user.username} - {status}",
+                    'absence_date': day.date(),
+                    'absence_type': status_class,
+                })
+
+
+    context['absences'] = absences
+    context['late_less_than_5'] = late_less_than_5
+    context['early_or_on_time'] = early_or_on_time
+    context['late_5_or_more'] = late_5_or_more
+
+
+
+    return render(request, 'operations/lateness_company.html', context)
+
+
+@login_required
+def lateness_team(request, team_id,month, year):
+
+    context = {}
+
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    now = timezone.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['today_date'] = month_date
+    
+    team = Team.objects.get(id=team_id)
+    agents = Profile.objects.filter(team=team, active=True)
+    context['team'] = team
+
+    # Create a list of all days in the month
+    days_in_month = calendar.monthrange(year, month)[1]
+    dates = [datetime(year, month, day) for day in range(1, days_in_month + 1)]
+
+    absences = []
+
+    late_less_than_5 = 0
+    early_or_on_time = 0
+    late_5_or_more = 0
+
+    for agent in agents:
+        for day in dates:
+            work_status = WorkStatus.objects.filter(
+                user=agent.user,
+                date=day.date(),
+                login_time__isnull=False
+            ).first()
+
+            if work_status and work_status.login_time:
+                actual_login_time = work_status.get_login_time_in_timezone()
+                default_login_time = agent.login_time
+
+                actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
+                default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+
+                time_difference = datetime.combine(day.date(), actual_login_time) - datetime.combine(day.date(), default_login_time)
+                minutes_difference = time_difference.total_seconds() / 60
+
+                if minutes_difference > 0:
+                    if minutes_difference <= 5:
+                        status_class = 'bg-gradient-warning'
+                        late_less_than_5 += 1
+                    else:
+                        status_class = 'bg-gradient-danger'
+                        late_5_or_more += 1
+                    status = f"{int(minutes_difference)} minutes"
+                elif minutes_difference < 0:
+                    status_class = 'bg-gradient-success'
+                    early_or_on_time += 1
+                    status = f"{abs(int(minutes_difference))} minutes"
+                else:
+                    status_class = 'bg-gradient-success'
+                    early_or_on_time += 1
+                    status = "On time"
+                
+                absences.append({
+                    'agent_profile': f"{agent.user.username} - {status}",
+                    'absence_date': day.date(),
+                    'absence_type': status_class,
+                })
+
+
+    context['absences'] = absences
+    context['late_less_than_5'] = late_less_than_5
+    context['early_or_on_time'] = early_or_on_time
+    context['late_5_or_more'] = late_5_or_more
+
+    return render(request, 'operations/lateness_team.html', context)
+
+
+
+@login_required
+def lateness_agent(request, agent_id,month, year):
+
+    context = {}
+
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    now = timezone.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)
+    month_name = month_date.strftime('%b')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['today_date'] = month_date
+    
+    agent_profile = Profile.objects.get(id=agent_id, active=True)
+
+    context['agent_id'] = agent_id
+
+    # Create a list of all days in the month
+    days_in_month = calendar.monthrange(year, month)[1]
+    dates = [datetime(year, month, day) for day in range(1, days_in_month + 1)]
+
+    absences = []
+
+    late_less_than_5 = 0
+    early_or_on_time = 0
+    late_5_or_more = 0
+
+    total_late_minutes = 0  # Initialize total late minutes
+
+    for day in dates:
+        work_status = WorkStatus.objects.filter(
+            user=agent_profile.user,
+            date=day.date(),
+            login_time__isnull=False
+        ).first()
+
+        if work_status and work_status.login_time:
+            actual_login_time = work_status.get_login_time_in_timezone()
+            default_login_time = agent_profile.login_time
+
+            actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
+            default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+
+            # Calculate time difference
+            time_difference = datetime.combine(day.date(), actual_login_time) - datetime.combine(day.date(), default_login_time)
+            minutes_difference = time_difference.total_seconds() / 60
+
+            if minutes_difference > 0:
+                total_late_minutes += minutes_difference  # Add to total late minutes
+                
+                if minutes_difference <= 5:
+                    status_class = 'bg-gradient-warning'
+                    late_less_than_5 += 1
+                else:
+                    status_class = 'bg-gradient-danger'
+                    late_5_or_more += 1
+                status = f"{int(minutes_difference)} minutes late"
+            elif minutes_difference < 0:
+                status_class = 'bg-gradient-success'
+                early_or_on_time += 1
+                status = f"{abs(int(minutes_difference))} minutes early"
+            else:
+                status_class = 'bg-gradient-success'
+                early_or_on_time += 1
+                status = "On time"
+            
+            # Append the result
+            absences.append({
+                'agent_profile': f"{status}",
+                'absence_date': day.date(),
+                'absence_type': status_class,
+            })
+
+    total_late_seconds = round(total_late_minutes * 60)  # Convert minutes to seconds and round
+    hours, remainder = divmod(total_late_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    formatted_late_time = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+    context['total_lateness'] = formatted_late_time
+    context['absences'] = absences
+    context['late_less_than_5'] = late_less_than_5
+    context['early_or_on_time'] = early_or_on_time
+    context['late_5_or_more'] = late_5_or_more
+
+    return render(request, 'operations/lateness_agent.html', context)
 
 
 
@@ -577,7 +1172,7 @@ def camp_hours_daily(request, camp_id, month, year):
     context['month'] = month
     context['month_name'] = month_name
     context['full_month_name'] = calendar.month_name[month]
-    
+
     campaign = Campaign.objects.get(id=camp_id)
     context['campaign'] = campaign
 
@@ -601,7 +1196,10 @@ def camp_hours_daily(request, camp_id, month, year):
     current_date = start_date
     while current_date <= end_date:
         next_date = current_date + timedelta(days=1)
+        
+        # Get accumulated durations for the current day
         accumulated_duration_seconds = campaign.get_accumulated_durations(current_date, next_date)
+        
         
         # Convert accumulated seconds to decimal hours
         accumulated_hours_total = accumulated_duration_seconds / 3600  # Convert seconds to hours
@@ -619,6 +1217,7 @@ def camp_hours_daily(request, camp_id, month, year):
                                             datetime(year, month, int(day)) + timedelta(days=1))
         for day in days_list
     )
+
     accumulated_hours_total = total_accumulated_seconds / 3600  # Convert seconds to hours
 
     # Calculate achievement percentage
@@ -640,7 +1239,6 @@ def camp_hours_daily(request, camp_id, month, year):
     context['remaining_hours_formatted'] = formatted_remaining_hours
     context['achieved_hours_formatted'] = formatted_achieved_hours_total
 
-
     # Add the new calculations to the context
     context['achievement_percentage'] = round(achievement_percentage, 2)
     context['remaining_hours_percentage'] = round(remaining_hours_percentage, 2)
@@ -648,7 +1246,6 @@ def camp_hours_daily(request, camp_id, month, year):
     context['achieved_hours'] = achieved_hours_total
     context['days_list'] = days_list
     context['durations_list'] = durations_list
-
 
     return render(request, 'campaign_hours/daily_reports.html', context)
 
@@ -894,15 +1491,97 @@ def camp_hours_yearly(request, camp_id, year):
 
     return render(request, 'campaign_hours/yearly_reports.html', context)
 
+@login_required
+def all_campaigns_performance(request, month, year):
+    context = {"settings": settings}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    
+    # Create date range for the month
+    start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+    if month == 12:
+        end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+    else:
+        end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+
+    # Calculate the total number of working days in the month
+    total_working_days = calculate_working_days_in_month(start_date, end_date)
+
+    # Initialize dictionary for campaign performance
+    campaign_performance = {}
+
+    # Loop through each campaign
+    all_campaigns = Campaign.objects.filter(campaign_type="calling")
+
+    context['campaigns_count'] = len(all_campaigns)
+
+    total_targets = 0
+    total_achieved = 0 
+    
+    for campaign in all_campaigns:
+        weekly_target = campaign.weekly_leads
+        daily_target = weekly_target / 5  # 5 working days per week
+        # Calculate the target leads for the month based on working days
+        total_target_leads = daily_target * total_working_days
+
+        # Query the leads for the current month in the campaign
+        monthly_leads = Lead.objects.filter(
+            campaign=campaign,
+            pushed__range=[start_date, end_date]
+        )
+
+
+        # Filter by lead statuses
+        qualified_leads = monthly_leads.filter(status='qualified').count()
+
+        # Calculate achievement percentage
+        achievement_percentage = (qualified_leads / total_target_leads) * 100 if total_target_leads > 0 else 0
+        total_targets +=total_target_leads
+        total_achieved +=qualified_leads
+
+        # Add campaign performance to the dictionary
+        campaign_performance[campaign.id] = {
+            'campaign_name': campaign.name,  # Assuming 'name' is a field in your Campaign model
+            'achieved_leads': qualified_leads,
+            'target_leads': int(total_target_leads),
+            'achievement_percentage': round(achievement_percentage, 2)
+        }
+    
+    total_remaining = total_targets-total_achieved
+
+    achieved_percentage = (total_achieved / total_targets) * 100 if total_targets > 0 else 0
+
+    remaining_percentage = 100-achieved_percentage
+
+    context['total_targets'] = int(total_targets)
+    context['total_achieved'] = total_achieved
+    context['total_remaining'] = int(total_remaining)
+    context['achieved_percentage'] = round(achieved_percentage,2)
+    context['remaining_percentage'] = round(remaining_percentage,2)
+
+    # Sort campaigns by achievement percentage from least to most achieved
+    sorted_campaign_performance = dict(sorted(campaign_performance.items(), key=lambda item: item[1]['achievement_percentage']))
+
+    # Prepare data for JavaScript
+    campaign_names = [v['campaign_name'] for v in sorted_campaign_performance.values()] 
+    achieved_leads = [v['achieved_leads'] for v in sorted_campaign_performance.values()]
+    target_leads = [v['target_leads'] for v in sorted_campaign_performance.values()] 
+
+    context['campaign_names'] = json.dumps(campaign_names)
+    context['achieved_leads'] = json.dumps(achieved_leads)
+    context['target_leads'] = json.dumps(target_leads)
 
 
 
-from django.utils import timezone
-from datetime import datetime, timedelta
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-import calendar
-import json
+    return render(request, 'campaign_leads/overall_performance.html', context)
+
+
 
 @login_required
 def camp_leads_daily(request, camp_id, month, year):
@@ -1009,7 +1688,6 @@ def camp_leads_daily(request, camp_id, month, year):
     context['achieved_leads'] = total_qualified
     context['remaining_percentage'] = round(remaining_percentage, 2)
 
-    print(context)
 
     return render(request, 'campaign_leads/daily_reports.html', context)
 

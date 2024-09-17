@@ -33,15 +33,24 @@
 <div class="container-fluid py-4">
   <div class="d-sm-flex justify-content-between">
     <div>
-      
+      <button type="button" class="datepicker btn btn-outline-info dropdown-toggle">
+        {{full_month_name}},  {{year}}
+     </button>
     </div>
     <div class="d-flex">
+
+
 
       <button class="btn btn-icon btn-outline-success ms-2 export" data-type="csv" type="button">
         <i class="material-icons text-xs position-relative">archive</i>
         Export CSV
       </button>
+
+
     </div>
+
+  </div>
+  <div class="calendar-container"> <!-- Add margin-top to separate from buttons -->
   </div>
   <div class="row">
     <div class="col-12">
@@ -49,7 +58,7 @@
         <div class="card-header">
           <h5 class="mb-0">Working Hours Table</h5>
           <p class="text-sm mb-0">
-            Working Hours of {{month_name}}
+            Working Hours of {{full_month_name}}
           </p>
         </div>
         <div class="table-responsive">
@@ -70,7 +79,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for agent in agents %}
+              {% for agent,totals in status_totals.items %}
               <tr>
                 <td>
                   <div class="d-flex align-items-center">
@@ -88,21 +97,21 @@
                     {{agent.team}} 
                 </td>
                 <td class="text-xs font-weight-normal">
-                    {{ agent.user|total_time_for_status:"ready" }}
+                    {{ totals.ready }}
                 </td>
                 <td class="text-xs font-weight-normal">
-                    {{ agent.user|total_time_for_status:"meeting" }}
+                  {{ totals.meeting }}
                 </td>
                 <td class="text-xs font-weight-normal">
-                    {{ agent.user|total_time_for_status:"break" }}
-                </td>
-
-                <td class="text-xs font-weight-normal">
-                  {{agent.user|total_worked_time}} 
+                  {{ totals.break }}
                 </td>
 
                 <td class="text-xs font-weight-normal">
-                    {{agent.user|total_payable_time}} 
+                  {{ totals.total_worked }}
+                </td>
+
+                <td class="text-xs font-weight-normal">
+                  {{ totals.total_payable }}
                 </td>
 
                 
@@ -113,7 +122,7 @@
 
                 <td class="text-sm">
                   <div class="d-flex align-items-center">
-                    <a href="/agent-hours/{{agent.id}}"
+                    <a href="/agent-hours/{{agent.id}}-{{month}}-{{year}}"
                     data-tippy-content="Breakdown Report" data-tippy-placement="top">
                       <i class="material-icons text-secondary position-relative text-lg">description</i>
                     </a>
@@ -134,6 +143,65 @@
 
 
 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var button = document.querySelector(".datepicker");
+        var calendarContainer = document.querySelector(".calendar-container");
+  
+        // Set camp-id dynamically or statically here
+  
+        var fp = flatpickr(calendarContainer, {
+            dateFormat: "Y-m", // Internal format
+            altInput: true, // Use an alternative input
+            altFormat: "F Y", // Display format in the button
+            allowInput: true, // Allow manual input
+            onChange: function(selectedDates, dateStr, instance) {
+                var selectedDate = selectedDates[0];
+                if (selectedDate) {
+                    var formattedDate = instance.formatDate(selectedDate, "F Y");
+                    button.textContent = formattedDate;
+
+                    // Construct the URL and redirect
+                    var year = instance.formatDate(selectedDate, "Y");
+                    var month = instance.formatDate(selectedDate, "m");
+                    var redirectUrl = `/working-hours-company/${month}-${year}`;
+                    window.location.href = redirectUrl; // Redirect to the constructed URL
+                }
+            },
+            onOpen: function() {
+                // Position the calendar container below the button
+                var rect = button.getBoundingClientRect();
+                calendarContainer.style.left = `${rect.left}px`;
+                calendarContainer.style.top = `${rect.bottom}px`;
+                calendarContainer.style.display = 'block';
+            },
+            onClose: function() {
+                // Hide the calendar when it is closed
+                calendarContainer.style.display = 'none';
+            }
+        });
+  
+        // Open flatpickr calendar when the button is clicked
+        button.addEventListener("click", function() {
+            fp.open();
+        });
+  
+        // Close flatpickr calendar when clicking outside
+        document.addEventListener("click", function(event) {
+            if (!fp.calendarContainer.contains(event.target) && !event.target.closest(".datepicker")) {
+                fp.close();
+            }
+        });
+    });
+  </script>
 
   
 

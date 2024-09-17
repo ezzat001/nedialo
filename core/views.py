@@ -1,16 +1,13 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from .models import Application
 from django.conf import settings as django_settings
 from django.http import JsonResponse,HttpResponse, HttpResponseRedirect
 from django.views.decorators.http import require_http_methods
-from django.core import serializers
-from django.contrib.sessions.models import Session
-from django.template.loader import render_to_string
+
 from django.core.exceptions import ValidationError
 from django.db.models import Avg, Count, Q, Sum
 from collections import defaultdict
@@ -22,20 +19,13 @@ from datetime import datetime,timedelta
 import json
 from django.utils import timezone as tz
 from django.template.defaultfilters import date as _date
-
-from dateutil.relativedelta import relativedelta
-from itertools import chain
-from operator import attrgetter
-import calendar,time
+ 
+import calendar
 from django.utils.timezone import now
 import asyncio
 from django.utils.safestring import mark_safe
-from django.core.files.storage import default_storage
 import os
 import requests
-from django.utils.decorators import method_decorator
-from django.views import View
-from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 
@@ -301,38 +291,40 @@ def lead_submission(request):
 
 
 
-def my_leads(request):
+def my_leads(request, month, year):
 
-    now = tz.now()
-    current_year = now.year
-    current_month = now.month
-    current_month_name = _date(now, "F")
+ 
     context = {}
-    context['month_name'] =current_month_name
-    context['year'] = current_year
+
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
     context['profile'] = Profile.objects.get(user=request.user)
 
     context['pending_leads'] = Lead.objects.filter(agent_user=request.user,status="pending", active=True).order_by('-pushed')[:5]
 
     context['qualified'] = Lead.objects.filter(
-        pushed__month=current_month,
-        pushed__year=current_year,
+        pushed__month=month,
+        pushed__year=year,
         agent_user=request.user,
         status="qualified",
         active=True
         ).count()
 
     context['disqualified'] = Lead.objects.filter(
-        pushed__month=current_month,
-        pushed__year=current_year,
+        pushed__month=month,
+        pushed__year=year,
         agent_user=request.user,
         status__in = ["disqualified", "duplicate"],
         active=True
         ).count()
 
     pending_leads = Lead.objects.filter(
-        pushed__month=current_month,
-        pushed__year=current_year,
+        pushed__month=month,
+        pushed__year=year,
         agent_user=request.user,
         status="pending",
         active=True
@@ -341,8 +333,8 @@ def my_leads(request):
     context['pending'] = pending_leads.count()
 
     context['callback'] = Lead.objects.filter(
-        pushed__month=current_month,
-        pushed__year=current_year,
+        pushed__month=month,
+        pushed__year=year,
         agent_user=request.user,
         status="callback",
         active=True
@@ -350,16 +342,16 @@ def my_leads(request):
     
 
     context['total'] =  Lead.objects.filter(
-        pushed__month=current_month,
-        pushed__year=current_year,
+        pushed__month=month,
+        pushed__year=year,
         agent_user=request.user,
         active=True
         ).count()
     
 
     context['leads_list'] =  Lead.objects.filter(
-        pushed__month=current_month,
-        pushed__year=current_year,
+        pushed__month=month,
+        pushed__year=year,
         agent_user=request.user,
         active=True
         ).order_by("-pushed")[:6]
@@ -388,7 +380,39 @@ def my_leads(request):
 
 
     
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+
+    negative_threshold = settings.negative_percentage
+    neutral_threshold = settings.neutral_percentage
+
+
+    leads = Lead.objects.filter(agent_profile=profile,
+                    pushed__year=year,
+                    pushed__month=month).exclude(status="pending").order_by('-pushed')
     
+    context['contacts'] = leads[:10]
+    lead_flows = list(leads.values_list('lead_flow', flat=True))
+    total_count = len(lead_flows)
+
+    negative_count = sum(1 for flow in lead_flows if flow < negative_threshold)
+    neutral_count = sum(1 for flow in lead_flows if negative_threshold <= flow < neutral_threshold)
+    positive_count = sum(1 for flow in lead_flows if flow >= neutral_threshold)
+
+    
+    negative_percentage = round((negative_count / total_count * 100),2) if total_count > 0 else 0
+    neutral_percentage = round((neutral_count / total_count * 100),2) if total_count > 0 else 0
+    positive_percentage = round((positive_count / total_count * 100),2) if total_count > 0 else 0
+
+    context.update({
+        'negative_count': negative_count,
+        'neutral_count': neutral_count,
+        'positive_count': positive_count,
+        'negative_percentage': negative_percentage,
+        'neutral_percentage': neutral_percentage,
+        'positive_percentage': positive_percentage,
+    })
 
 
     
@@ -418,7 +442,15 @@ def lead_report(request, lead_id):
     context['lead_status'] = LEAD_CHOICES
 
 
+    lead_flow = lead.lead_flow_json
 
+    parsed_lead_flow = {}
+    for key, value in lead_flow.items():
+        parsed_lead_flow[key] = {
+            'percentage': abs(value),
+            'is_positive': True if value >= 0 else False  # True for positive, False for negative
+        }
+    context['lead_flow'] = parsed_lead_flow
     
     
     
@@ -432,6 +464,7 @@ def lead_report(request, lead_id):
 
 
         lead = Lead.objects.get(lead_id=lead_id)
+
 
         if lead.status == "pending":
 
@@ -466,7 +499,7 @@ def lead_report(request, lead_id):
 
 
 @login_required
-def leads_quality(request):
+def leads_quality(request, month, year):
     context = {}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
@@ -475,15 +508,15 @@ def leads_quality(request):
     negative_threshold = settings.negative_percentage
     neutral_threshold = settings.neutral_percentage
 
-    now = tz.now()
-    current_year = now.year
-    current_month = now.month
-    month_name = now.strftime('%B')
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
     context['month_name'] = month_name
-    context['current_year'] = current_year
+    context['full_month_name'] = calendar.month_name[month]
     leads = Lead.objects.filter(agent_profile=profile,
-                    pushed__year=current_year,
-                    pushed__month=current_month).exclude(status="pending").order_by('-pushed')
+                    pushed__year=year,
+                    pushed__month=month).exclude(status="pending").order_by('-pushed')
     
     context['contacts'] = leads[:10]
     lead_flows = list(leads.values_list('lead_flow', flat=True))
@@ -513,22 +546,23 @@ def leads_quality(request):
 
 
 @login_required
-def lead_scoring(request):
+def lead_scoring(request, month, year):
     context = {"settings": settings}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    now = tz.now()
-    current_year = now.year
-    current_month = now.month
-    month_name = now.strftime('%B')
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
     context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
     # Get the first and last days of the month
-    first_day = datetime(current_year, current_month, 1)
-    if current_month == 12:
-        last_day = datetime(current_year + 1, 1, 1) - timedelta(days=1)
+    first_day = datetime(year, month, 1)
+    if month == 12:
+        last_day = datetime(year + 1, 1, 1) - timedelta(days=1)
     else:
-        last_day = datetime(current_year, current_month + 1, 1) - timedelta(days=1)
+        last_day = datetime(year, month + 1, 1) - timedelta(days=1)
 
     # Get ISO week numbers for the first and last days of the month
     first_week = first_day.isocalendar()[1]
@@ -541,8 +575,8 @@ def lead_scoring(request):
     leads = Lead.objects.filter(
         agent_profile=profile,
         status="qualified",
-        pushed__year=current_year,
-        pushed__month=current_month
+        pushed__year=year,
+        pushed__month=month
     )
     
     context['leads'] = leads.order_by("-pushed")[:10]
@@ -572,6 +606,8 @@ def lead_scoring(request):
     context['week_numbers'] = week_labels
     context['weekly_total_points'] = weekly_total_points_list
 
+    
+
 
 
 
@@ -581,7 +617,7 @@ def lead_scoring(request):
 
 
 @login_required
-def leads_leaderboard(request):
+def leads_leaderboard(request, month, year):
     context = {"settings": settings}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
@@ -589,8 +625,12 @@ def leads_leaderboard(request):
     now = tz.now()
     current_year = now.year
     current_month = now.month
-    month_name = now.strftime('%B')
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
     context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
     # Get the first and last days of the month
     role = Role.objects.get(role_name='Admin')
     active_coldcallers = Profile.objects.filter(active=True, role=role)
@@ -602,8 +642,8 @@ def leads_leaderboard(request):
         # Step 2: Fetch and aggregate qualified leads for the agent
         leads = Lead.objects.filter(
             agent_profile=agent,
-            pushed__year=current_year,
-            pushed__month=current_month,
+            pushed__year=year,
+            pushed__month=month,
             status="qualified"
         )
 
@@ -787,15 +827,13 @@ def quality_lead_reports(request):
 
     context['qualified'] = Lead.objects.filter(
         pushed__year=current_year,
-        agent_user=request.user,
-        status="qualified",
+         status="qualified",
         active=True
         ).count()
 
     context['disqualified'] = Lead.objects.filter(
         pushed__year=current_year,
-        agent_user=request.user,
-        status__in=["disqualified","callback"],
+         status__in=["disqualified","callback"],
         active=True
         ).count()
 
@@ -803,8 +841,7 @@ def quality_lead_reports(request):
     
     context['duplicated'] = Lead.objects.filter(
         pushed__year=current_year,
-        agent_user=request.user,
-        status="duplicated",
+         status="duplicated",
         active=True
         ).count()
 
@@ -813,8 +850,7 @@ def quality_lead_reports(request):
 
     context['total'] =  Lead.objects.filter(
         pushed__year=current_year,
-        agent_user=request.user,
-        active=True
+         active=True
         ).count()
     
 
@@ -842,6 +878,7 @@ def quality_lead_reports(request):
         ).count()
         char_data_disqualified.append(total_count)
     context['char_data_disqualified'] = char_data_disqualified
+
 
 
 
@@ -947,6 +984,198 @@ def quality_lead_reports(request):
 
 
     return render(request, "quality/lead_reports.html",context)
+
+
+
+
+def agent_lead_reports(request, agent_id):
+
+    context = {}
+
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    current_month_name = _date(now, "F")
+    
+    context['year'] = current_year
+    context['month_name'] =current_month_name
+
+    
+
+
+    context['profile'] = Profile.objects.get(user=request.user)
+
+    agent_profile = Profile.objects.get(id=agent_id)
+    context['agent_profile'] = agent_profile
+
+    context['qualified'] = Lead.objects.filter(
+        pushed__year=current_year,
+        agent_profile=agent_profile,
+        status="qualified",
+        active=True
+        ).count()
+
+    context['disqualified'] = Lead.objects.filter(
+        pushed__year=current_year,
+        agent_profile=agent_profile,
+        status__in=["disqualified","callback"],
+        active=True
+        ).count()
+
+    
+    
+    context['duplicated'] = Lead.objects.filter(
+        pushed__year=current_year,
+        agent_profile=agent_profile,
+        status="duplicated",
+        active=True
+        ).count()
+
+    
+    
+
+    context['total'] =  Lead.objects.filter(
+        pushed__year=current_year,
+        agent_profile=agent_profile,
+        active=True
+        ).count()
+    
+
+    
+
+    char_data_qualified = []
+    for month in range(1, 13):
+        total_count = Lead.objects.filter(
+            agent_profile=agent_profile,
+          
+            pushed__month=month,
+            pushed__year=current_year,
+            status="qualified",
+            active=True
+        ).count()
+        char_data_qualified.append(total_count)
+    context['char_data_qualified'] = char_data_qualified
+
+
+    char_data_disqualified = []
+    for month in range(1, 13):
+        total_count = Lead.objects.filter(
+            agent_profile=agent_profile,
+            pushed__month=month,
+            pushed__year=current_year,
+            status="disqualified",
+            active=True
+        ).count()
+        char_data_disqualified.append(total_count)
+    context['char_data_disqualified'] = char_data_disqualified
+
+
+
+        # Determine the first and last days of the current month
+    first_day = datetime(current_year, current_month, 1)
+    if current_month == 12:
+        last_day = datetime(current_year + 1, 1, 1) - timedelta(days=1)
+    else:
+        last_day = datetime(current_year, current_month + 1, 1) - timedelta(days=1)
+
+    # Get ISO week numbers for the first and last days of the month
+    first_week = first_day.isocalendar()[1]
+    last_week = last_day.isocalendar()[1]
+
+    # Initialize a dictionary to store total leads per week
+    weekly_leads_count = defaultdict(int)
+
+    # Get leads for the current month and year
+    leads = Lead.objects.filter(
+        agent_profile=agent_profile,
+        pushed__year=current_year,
+        pushed__month=current_month,
+        active=True
+    )
+
+    # Order and limit the number of leads in the context for display
+
+    # Count total leads for each week
+    for lead in leads:
+        week_number = lead.pushed.isocalendar()[1]  # Get ISO week number
+        weekly_leads_count[week_number] += 1
+
+    # Ensure that all weeks from first to last are represented
+    weeks_in_month = range(first_week, last_week + 1)
+
+    # Prepare list with total leads for each week
+    weekly_total_leads_list = [weekly_leads_count.get(week, 0) for week in weeks_in_month]
+
+    # Convert week numbers to "Week 1", "Week 2", etc.
+    week_labels = [f"Week {i + 1}" for i in range(len(weeks_in_month))]
+
+    # Update context with week labels and total leads per week
+    context['week_numbers'] = week_labels
+    context['weekly_total_leads'] = weekly_total_leads_list
+
+
+    qualified = Lead.objects.filter(
+        agent_profile=agent_profile,
+        pushed__month=current_month,
+        pushed__year=current_year,
+        status="qualified",
+        active=True
+        )
+    
+    qualified_dict = {
+        str(lead.lead_id): {
+            'longitude': lead.longitude,
+            'latitude': lead.latitude,
+            'seller_name': lead.seller_name
+        }
+        for lead in qualified
+        if lead.longitude != 0 and lead.latitude != 0
+    }
+    context['locations'] = mark_safe(json.dumps(qualified_dict))
+
+    state_lead_count = defaultdict(int)
+
+    # Iterate through qualified leads and count by state
+    for lead in qualified:
+        state = lead.state
+        state_lead_count[state] += 1
+
+    # Convert defaultdict to a regular dict
+    state_lead_count = dict(state_lead_count)
+
+    # Sort states by lead count in descending order
+    sorted_states = sorted(state_lead_count.items(), key=lambda x: x[1], reverse=True)
+
+    # Initialize the dictionary for the top three and the remainder
+    top_three_states = {}
+    other_states_count = 0
+
+    for i, (state, count) in enumerate(sorted_states):
+        if i < 3:
+            top_three_states[state] = count
+        else:
+            other_states_count += count
+
+    # Add the "other states" to the dictionary
+    if other_states_count > 0:
+        top_three_states['Other'] = other_states_count
+
+    # Update the context
+    context['state_lead_count'] = top_three_states
+
+    # Print the top three states and other states count
+    
+
+
+    context['all_leads'] = Lead.objects.filter(agent_profile=agent_profile,active=True).order_by('-pushed')
+    
+    
+    
+
+
+
+    return render(request, "quality/lead_reports_agent.html",context)
+
 
 
 
@@ -1103,6 +1332,20 @@ def feedbacks_table(request):
     return render(request,'quality/feedbacks.html',context)
 
 
+@login_required
+def feedbacks_agent(request, agent_id):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    agent_profile = Profile.objects.get(id=agent_id)
+    context['agent_profile'] = agent_profile
+    context['feedbacks'] = Feedback.objects.filter(agent_profile=agent_profile, active=True).order_by('-created')
+
+
+    return render(request,'quality/feedbacks.html',context)
+
+
 
 @login_required
 def feedback_single(request):
@@ -1233,22 +1476,27 @@ def feedback_report(request, id):
     return render(request,'quality/feedback_report.html',context)
 
 @login_required
-def quality_agents(request):
+def quality_agents(request, month, year):
     context = {"settings": settings}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    now = tz.now()
-    current_year = now.year
-    current_month = now.month
-    month_name = now.strftime('%B')
+
+
+
+
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
     context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
     # Get the first and last days of the month
-    first_day = datetime(current_year, current_month, 1)
-    if current_month == 12:
-        last_day = datetime(current_year + 1, 1, 1) - timedelta(days=1)
+    first_day = datetime(year, month, 1)
+    if month == 12:
+        last_day = datetime(year + 1, 1, 1) - timedelta(days=1)
     else:
-        last_day = datetime(current_year, current_month + 1, 1) - timedelta(days=1)
+        last_day = datetime(year, month + 1, 1) - timedelta(days=1)
 
     # Get ISO week numbers for the first and last days of the month
     first_week = first_day.isocalendar()[1]
@@ -1260,8 +1508,8 @@ def quality_agents(request):
     # Get leads for the current month and year
     leads = Lead.objects.filter(
         status="qualified",
-        pushed__year=current_year,
-        pushed__month=current_month
+        pushed__year=year,
+        pushed__month=month
     )
     
     # Count leads per week
@@ -1294,8 +1542,8 @@ def quality_agents(request):
         # Aggregate leads data for the current QA agent
         aggregated_data = Lead.objects.filter(
             handled_by=qa_agent.user,
-            pushed__year=current_year,
-            pushed__month=current_month
+            pushed__year=year,
+            pushed__month=month
         ).aggregate(
             qualified_count=Count('lead_id', filter=Q(status='qualified')),
             disqualified_count=Count('lead_id', filter=Q(status='disqualified')),
@@ -1808,7 +2056,7 @@ def update_status(request):
             meeting_time_seconds = work_status.meeting_time.total_seconds()
             break_time_seconds = work_status.break_time.total_seconds()
             offline_time_seconds = work_status.offline_time.total_seconds()
-            
+            login_time = str((work_status.get_login_time_in_timezone()).strftime('%I:%M %p'))
             # Format times
             def format_duration(seconds):
                 hours, remainder = divmod(seconds, 3600)
@@ -1819,6 +2067,7 @@ def update_status(request):
             response_data = {
                 'success': True,
                 'new_status': new_status,
+                'login_time':login_time,
                 'ready_time': format_duration(ready_time_seconds),
                 'meeting_time': format_duration(meeting_time_seconds),
                 'break_time': format_duration(break_time_seconds),
@@ -1847,8 +2096,13 @@ def work_status_data(request):
     ready_time_seconds = work_status.ready_time.total_seconds()
     meeting_time_seconds = work_status.meeting_time.total_seconds()
     break_time_seconds = work_status.break_time.total_seconds()
+    try:
+        login_time = str((work_status.get_login_time_in_timezone()).strftime('%I:%M %p'))
+    except:
+        login_time = "00:00:00"
 
     data = {
+        'login_time':login_time,
         'current_status': work_status.current_status,
         'ready_time': ready_time_seconds,
         'meeting_time': meeting_time_seconds,

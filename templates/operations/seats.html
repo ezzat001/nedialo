@@ -139,7 +139,7 @@
 
             <td  class="text-xs font-weight-normal">
               
-              <a href="agent-seat-breakdown/{{agent.id}}" class="mx-3" >
+              <a href="agent-seat-breakdown/{{agent.id}}-{{month}}-{{year}}" class="mx-3" >
 
                       <i class="material-icons text-secondary position-relative text-lg">description</i>
                </a>
@@ -228,7 +228,7 @@
                 {% else %}
                 <span class="badge filter bg-gradient-warning" data-color="warning" >Empty</span>
                 {% endif %}
-                <a href="seat-breakdown/{{seat.id}}" class="text-sm text-secondary" data-tippy-content="Breakdown Reports" data-tippy-placement="right">{{ seat.username }}
+                <a href="seat-breakdown/{{seat.id}}-{{month}}-{{year}}" class="text-sm text-secondary" data-tippy-content="Breakdown Reports" data-tippy-placement="right">{{ seat.username }}
                   <i class="material-icons text-small" style="vertical-align: middle;">
                     description
                   </i>

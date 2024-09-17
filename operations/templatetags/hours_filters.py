@@ -206,3 +206,16 @@ def instance_total_payable_time(work_status_instance):
     formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
 
     return formatted_time
+
+
+
+
+
+@register.simple_tag
+def get_current_status(profile):
+    """
+    Template tag to get the current status of a profile.
+    """
+    if profile:
+        return profile.get_current_status()
+    return 'offline'  # Default value if profile is not available

@@ -79,29 +79,34 @@ urlpatterns = [
 
 
 
-    path('my-leads',my_leads),
+    path('my-leads/<int:month>-<int:year>',my_leads),
     path('lead-report/<int:lead_id>', lead_report),
-    path('quality-feedback', leads_quality),
-    path('lead-scoring',lead_scoring),
-    path('leads-leaderboard',leads_leaderboard),
+    path('quality-feedback/<int:month>-<int:year>', leads_quality),
+    path('lead-scoring/<int:month>-<int:year>',lead_scoring),
+    path('leads-leaderboard/<int:month>-<int:year>',leads_leaderboard),
 
     path('quality-pending',quality_pending),
     path('lead-reports',quality_lead_reports),
+    path('agent-leads/<int:agent_id>',agent_lead_reports),
     path('fireback-lead/<int:lead_id>/', fire_lead, name='fire-lead'),
 
     path('lead-handling/<int:lead_id>', lead_handling, name='lead_handling'),
     path('get-lead-status/<int:lead_id>/',get_lead_status, name='get_lead_status'),
     path('feedbacks', feedbacks_table),
+    path('feedbacks-agent/<int:agent_id>', feedbacks_agent),
+
     path('feedback-single', feedback_single),
     path('feedback-multiple', feedback_multiple),
     path('feedback-report/<int:id>',feedback_report),
 
-    path('quality-agents',quality_agents),
+    path('quality-agents/<int:month>-<int:year>',quality_agents),
 
 
     path('work-status-data/', work_status_data, name='work_status_data'),
 
     path('update-status/', update_status, name='update_status'),
+
+
 
 
     path('leave-requests',leave_request_list),
@@ -128,17 +133,25 @@ urlpatterns = [
 
 
     path('seats', seats),
-    path('seat-breakdown/<int:seat_id>', seat_breakdown),
-    path('agent-seat-breakdown/<int:agent_id>', agent_seat_breakdown),
+    path('seat-breakdown/<int:seat_id>-<int:month>-<int:year>', seat_breakdown),
+    path('agent-seat-breakdown/<int:agent_id>-<int:month>-<int:year>', agent_seat_breakdown),
 
     path('update-seat-agent/<int:seat_id>/', update_seat_agent_profile, name='update_seat_agent_profile'),
     path('unseat/<int:agent_id>/', unseat_agent, name='unseat_agent'),
+    path('seatlog-delete/<int:log_id>/', DeleteSeatLogView.as_view()),
 
+
+    path('agents-list-company', agents_list_company),
+    path('agents-list-team/<int:team_id>', agents_list_team),
+
+    path('update_status_admin/', update_status_admin, name='update_status_admin'),
 
     path('camphours-daily/<int:camp_id>-<int:month>-<int:year>', camp_hours_daily),
 
     path('camphours-monthly/<int:camp_id>-<int:month>-<int:year>', camp_hours_monthly),
     path('camphours-yearly/<int:camp_id>-<int:year>', camp_hours_yearly),
+
+    path('all-campaigns-performance/<int:month>-<int:year>', all_campaigns_performance),
 
     path('campleads-daily/<int:camp_id>-<int:month>-<int:year>', camp_leads_daily),
 
@@ -146,13 +159,18 @@ urlpatterns = [
     path('campleads-yearly/<int:camp_id>-<int:year>', camp_leads_yearly),
 
 
-    path('working-hours/company', working_hours_company),
-    path('working-hours/<int:team_id>', working_hours_team),
-    path('agent-hours/<int:agent_id>', agent_hours),
+    path('working-hours-company/<int:month>-<int:year>', working_hours_company),
+    path('working-hours-team/<int:team_id>-<int:month>-<int:year>', working_hours_team),
+    path('agent-hours/<int:agent_id>-<int:month>-<int:year>', agent_hours),
 
-    path('attendance-monitor/company',attendance_company),
+    path('attendance-monitor-company/<int:month>-<int:year>',attendance_company),
+    path('attendance-monitor-team/<int:team_id>-<int:month>-<int:year>',attendance_team),
+    path('attendance-monitor-agent/<int:agent_id>-<int:month>-<int:year>',attendance_agent),
 
-    path('attendance-monitor/<int:team_id>',attendance_team),
+
+    path('lateness-monitor-company/<int:month>-<int:year>', lateness_company),
+    path('lateness-monitor-team/<int:team_id>-<int:month>-<int:year>',lateness_team),
+    path('lateness-monitor-agent/<int:agent_id>-<int:month>-<int:year>',lateness_agent),
 
     path('report-absence',report_absence),
 

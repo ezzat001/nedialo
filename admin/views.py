@@ -265,7 +265,7 @@ class DeleteCampaignView(View):
             # Check if the authenticated user can delete the target user
             target_camp = get_object_or_404(Campaign, id=camp_id)
             target_camp.delete()
-            return JsonResponse({'message': 'Account deleted successfully.'}, status=200)
+            return JsonResponse({'message': 'Campaign deleted successfully.'}, status=200)
         
         else:
             return JsonResponse({'error': 'Invalid password.'}, status=401)

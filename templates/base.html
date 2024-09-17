@@ -145,6 +145,11 @@ crossorigin=""/>
                     document.getElementById('ready-time').innerText = formatDuration(data.ready_time);
                     document.getElementById('meeting-time').innerText = formatDuration(data.meeting_time);
                     document.getElementById('break-time').innerText = formatDuration(data.break_time);
+                    document.getElementById('login-time').innerText = data.login_time;
+
+                    if (document.getElementById('login-time-av')) {
+                      document.getElementById('login-time-av').innerText = data.login_time;
+                    }
                     if (document.getElementById('ready-time-av')) {
                       document.getElementById('ready-time-av').innerText = formatDuration(data.ready_time);
                     }
@@ -199,11 +204,14 @@ crossorigin=""/>
                         const workStatusSelect = document.getElementById('work_status');
                         workStatusSelect.value = data.current_status;
     
-                        // Update total time spent in each status
+                        document.getElementById('login-time').innerText = data.login_time;
                         document.getElementById('ready-time').innerText = formatDuration(data.ready_time);
                         document.getElementById('meeting-time').innerText = formatDuration(data.meeting_time);
                         document.getElementById('break-time').innerText = formatDuration(data.break_time);
 
+                        if (document.getElementById('login-time-av')) {
+                          document.getElementById('login-time-av').innerText = data.login_time;
+                      }
                         if (document.getElementById('ready-time-av')) {
                           document.getElementById('ready-time-av').innerText = formatDuration(data.ready_time);
                       }
@@ -283,6 +291,7 @@ crossorigin=""/>
     <span id="working-hours" hidden>00:00:00</span>
     <span id="last-status-change" hidden>{{ work_status.last_status_change|date:"c" }}</span>
 
+    <span id="login-time" class="text-dark text-xs" hidden>00:00:00</span>
 
     <span id="ready-time" class="text-dark text-xs" hidden>00:00:00</span>
 
@@ -480,7 +489,7 @@ crossorigin=""></script>
           <div class="collapse " id="leadscategory">
             <ul class="nav ">
               <li class="nav-item ">
-                <a class="nav-link text-grey " href="/my-leads" target="_parent">
+                <a class="nav-link text-grey " href="/my-leads/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> home </span>
                   <span class="sidenav-normal  ms-2  ps-1"> My Leads <b class="caret"></b></span>
                 </a>
@@ -489,19 +498,20 @@ crossorigin=""></script>
               
 
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/lead-scoring" target="_parent">
+                <a class="nav-link text-grey " href="/lead-scoring/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> star_border </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Leads Scoring </span>
                 </a>
               </li>
+              <!--
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/quality-feedback" target="_parent">
+                <a class="nav-link text-grey " href="/quality-fb/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> verified_user </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Leads Quality </span>
                 </a>
-              </li>
+              </li>-->
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/leads-leaderboard" target="_parent">
+                <a class="nav-link text-grey " href="/leads-leaderboard/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> emoji_events </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Leaderboard </span>
                 </a>
@@ -607,7 +617,7 @@ crossorigin=""></script>
               </li>
 
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/quality-agents" target="_parent">
+                <a class="nav-link text-grey " href="/quality-agents/{{current_month}}-{{current_month}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> supervisor_account   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> QA Agents </span>
                 </a>
@@ -675,7 +685,7 @@ crossorigin=""></script>
           <div class="collapse " id="campaignleads">
             <ul class="nav ">
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/seats" target="_parent">
+                <a class="nav-link text-grey " href="/all-campaigns-performance/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> bar_chart </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Overall Performance </span>
                 </a>
@@ -723,10 +733,26 @@ crossorigin=""></script>
           <div class="collapse " id="agentscategory">
             <ul class="nav ">
               <li class="nav-item ">
-                <a class="nav-link text-grey " href="/agents-list" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> account_circle  </span>
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#aglistdata">
+                  <span class="sidenav-mini-icon material-icons"> account_circle </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Agents List <b class="caret"></b></span>
                 </a>
+                <div class="collapse " id="aglistdata">
+                  <ul class="nav nav-sm flex-column">
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/agents-list-company" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Company Data </span>
+                      </a>
+                    </li>
+                    {% for team in callers_teams %}
+                      <li class="nav-item">
+                        <a class="nav-link text-muted " href="/agents-list-team/{{team.id}}" target="_parent">
+                          <span class="sidenav-normal  ms-2  ps-1"> {{team.team_name}} </span>
+                        </a>
+                      </li>   
+                    {% endfor %}
+                  </ul>
+                </div>
               </li>
               <li class="nav-item ">
                 <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#whdata">
@@ -736,13 +762,13 @@ crossorigin=""></script>
                 <div class="collapse " id="whdata">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
-                      <a class="nav-link text-muted " href="/working-hours/company" target="_parent">
+                      <a class="nav-link text-muted " href="/working-hours-company/{{current_month}}-{{current_year}}" target="_parent">
                         <span class="sidenav-normal  ms-2  ps-1"> Company Data </span>
                       </a>
                     </li>
                     {% for team in callers_teams %}
                       <li class="nav-item">
-                        <a class="nav-link text-muted " href="/working-hours/{{team.id}}" target="_parent">
+                        <a class="nav-link text-muted " href="/working-hours-team/{{team.id}}-{{current_month}}-{{current_year}}" target="_parent">
                           <span class="sidenav-normal  ms-2  ps-1"> {{team.team_name}} </span>
                         </a>
                       </li>   
@@ -758,13 +784,36 @@ crossorigin=""></script>
                 <div class="collapse " id="amdata">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
-                      <a class="nav-link text-muted " href="/attendance-monitor/company" target="_parent">
+                      <a class="nav-link text-muted " href="/attendance-monitor-company/{{current_month}}-{{current_year}}" target="_parent">
                         <span class="sidenav-normal  ms-2  ps-1"> Company Data </span>
                       </a>
                     </li>
                     {% for team in callers_teams %}
                       <li class="nav-item">
-                        <a class="nav-link text-muted " href="/attendance-monitor/{{team.id}}" target="_parent">
+                        <a class="nav-link text-muted " href="/attendance-monitor-team/{{team.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                          <span class="sidenav-normal  ms-2  ps-1"> {{team.team_name}} </span>
+                        </a>
+                      </li>   
+                    {% endfor %}
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#lmdata" >
+                  <span class="sidenav-mini-icon material-icons"> access_time </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Lateness Monitor </span>
+                </a>
+                <div class="collapse " id="lmdata">
+                  <ul class="nav nav-sm flex-column">
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/lateness-monitor-company/{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Company Data </span>
+                      </a>
+                    </li>
+                    {% for team in callers_teams %}
+                      <li class="nav-item">
+                        <a class="nav-link text-muted " href="/lateness-monitor-team/{{team.id}}-{{current_month}}-{{current_year}}" target="_parent">
                           <span class="sidenav-normal  ms-2  ps-1"> {{team.team_name}} </span>
                         </a>
                       </li>   

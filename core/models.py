@@ -367,7 +367,7 @@ class ClientProfile(models.Model): #Profile Standard Information
 
 
     settings_theme = models.CharField(max_length=50,default="white", choices=THEME_CHOICES)
-    maps_theme = models.CharField(max_length=50,default="white", choices=THEME_CHOICES)
+    maps_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
 
     active = models.BooleanField(default=True)
 
@@ -414,28 +414,82 @@ class Campaign(models.Model): # Client Campaigns
 
     def get_accumulated_durations(self, start_date=None, end_date=None):
         """
+        Calculate the accumulated durations for all seat logs associated with this campaign
+        within a specific date range, accounting for logs that span multiple days.
+        """
+        seat_logs = SeatAssignmentLog.objects.filter(dialer_credentials__campaign=self)
+
+        # Apply date range filter if provided
+        if start_date:
+            seat_logs = seat_logs.filter(start_time__gte=start_date)
+        if end_date:
+            seat_logs = seat_logs.filter(end_time__lte=end_date)
+
+        total_duration = timedelta()
+
+        for log in seat_logs:
+            log_start_time = log.start_time
+            log_end_time = log.end_time or timezone.now()
+
+            # Adjust log times to fall within the specified date range
+            if start_date:
+                log_start_time = max(log_start_time, start_date)
+            if end_date:
+                log_end_time = min(log_end_time, end_date)
+
+            # Split the duration calculation into full days and partial days
+            current_time = log_start_time
+
+            while current_time < log_end_time:
+                # Calculate the end of the current day
+                end_of_day = current_time.replace(hour=23, minute=59, second=59, microsecond=999999)
+                if end_of_day > log_end_time:
+                    end_of_day = log_end_time
+
+                # Calculate the duration for the current day
+                duration = end_of_day - current_time
+                total_duration += duration
+
+                # Move to the next day
+                current_time = end_of_day + timedelta(seconds=1)
+
+        return total_duration.total_seconds()
+
+
+
+    def get_accumulated_durations(self, start_date=None, end_date=None):
+        """
         Calculate the accumulated durations for all seats associated with this campaign
         within a specific date range.
         """
         # Filter SeatAssignmentLogs based on the campaign ID through the related DialerCredentials
         seat_logs = SeatAssignmentLog.objects.filter(dialer_credentials__campaign=self)
 
-        # Apply date range filter if start_date and end_date are provided
+        # Apply timezone-aware start_date and end_date filtering
         if start_date:
+            start_date = timezone.make_aware(start_date) if timezone.is_naive(start_date) else start_date
             seat_logs = seat_logs.filter(start_time__gte=start_date)
+
         if end_date:
+            end_date = timezone.make_aware(end_date) if timezone.is_naive(end_date) else end_date
             seat_logs = seat_logs.filter(end_time__lte=end_date)
 
-        # Calculate the duration for each log entry using an annotation, and then sum them up
-        total_duration = seat_logs.annotate(
-            duration=ExpressionWrapper(
-                F('end_time') - F('start_time'),
-                output_field=DurationField()
-            )
-        ).aggregate(total_duration=Sum('duration'))['total_duration']
+        # Calculate the duration for each log entry
+        total_duration = 0
+        for log in seat_logs:
+            log_start_time = timezone.localtime(log.start_time)  # Ensure timezone-aware
+            log_end_time = timezone.localtime(log.end_time) if log.end_time else timezone.now()
 
-        # Return total duration in seconds or 0 if no logs
-        return total_duration.total_seconds() if total_duration else 0
+            # Ensure that the duration is calculated only for the overlapping period with the given date range
+            effective_start_time = max(log_start_time, start_date) if start_date else log_start_time
+            effective_end_time = min(log_end_time, end_date) if end_date else log_end_time
+
+            # Calculate the duration only within the effective date range
+            if effective_end_time > effective_start_time:
+                total_duration += (effective_end_time - effective_start_time).total_seconds()
+
+        return total_duration
+
 
     def get_total_hours_per_account(self, start_date, end_date):
         """Calculate total hours and unique agents for each account within the date range."""
@@ -524,8 +578,8 @@ class Profile(models.Model): #Profile Standard Information
     national_id = models.ImageField(upload_to=random_name_national_id, blank=True, null=True)
 
 
-    settings_theme = models.CharField(max_length=50,default="white", choices=THEME_CHOICES)
-    maps_theme = models.CharField(max_length=50,default="white", choices=THEME_CHOICES)
+    settings_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
+    maps_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
 
 
 
@@ -547,6 +601,15 @@ class Profile(models.Model): #Profile Standard Information
             else:
                 self.id = 1000  # Start with ID 1000 if no agents exist yet
         super().save(*args, **kwargs)
+
+
+    def get_current_status(self):
+        try:
+            # Fetch the latest work status based on the last_status_change field
+            last_work_status = WorkStatus.objects.filter(user=self.user).latest('last_status_change')
+            return last_work_status.current_status
+        except WorkStatus.DoesNotExist:
+            return "offline"
 
 
 class DataSourceCredentials(models.Model):
@@ -719,7 +782,7 @@ class Lead(models.Model):
     handling_time = models.DurationField(null=True, blank=True)
     handled_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="handled_by_lead_post",null=True,blank=True)
     lead_flow = models.FloatField(default=0,null=True, blank=True)
-    lead_flow_json = models.JSONField(null=True, blank=True)
+    lead_flow_json = models.JSONField(default=dict, null=True, blank=True)
 
     
     active = models.BooleanField(default=True)
@@ -879,7 +942,24 @@ class WorkStatus(models.Model):
             'offline': self.get_total_seconds('offline'),
         }
     
+    def get_login_time_in_timezone(self):
+        if self.login_time:
+            return timezone.localtime(self.login_time)
+        return None
 
+    @classmethod
+    def get_workstatus_with_login_time(cls, agent_profile, month, year):
+        return cls.objects.filter(
+            user__profile=agent_profile, 
+            login_time__isnull=False,
+            date__month=month,
+            date__year=year
+        )    
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'last_status_change']),
+        ]
 
 
 
