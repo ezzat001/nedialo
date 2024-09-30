@@ -14,6 +14,8 @@ from django.contrib.auth import authenticate
 from django.utils.decorators import method_decorator
 import calendar
 import json
+from django.db import transaction, DatabaseError
+from core.decorators import *
 
 
 
@@ -24,12 +26,13 @@ except:
     settings = None
 
 
+@permission_required('seats')
 @login_required
 def seats(request):
     context = {"settings":settings,}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
-    campaigns = Campaign.objects.filter(active=True,status="active")
+    campaigns = Campaign.objects.filter(campaign_type="calling", active=True,status="active")
     context['campaigns'] = campaigns
 
     now = tz.now()
@@ -38,10 +41,9 @@ def seats(request):
     context['month'] = current_month
     context['year'] = current_year
     
-    callers_teams = Team.objects.filter(team_type="callers")
+    callers_list = ['callers',]
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
 
-
-    #callers = Profile.objects.filter(team__in=callers_teams,assigned_credentials__isnull=True, active=True)
     agents = Profile.objects.filter(team__in=callers_teams, active=True)
     #agents = 0 # CHECK CALLERS 
     context['agent_profiles'] = agents
@@ -52,7 +54,7 @@ def seats(request):
 
 
 
-
+@permission_required('seats')
 @login_required
 def seat_breakdown(request, seat_id, month, year):
     context = {"settings":settings,}
@@ -76,7 +78,7 @@ def seat_breakdown(request, seat_id, month, year):
     return render(request,'operations/seat_breakdown.html', context)
 
 
-
+@permission_required('seats')
 @login_required
 def agent_seat_breakdown(request, agent_id, month ,year ):
     context = {"settings":settings,}
@@ -165,6 +167,69 @@ def list_all_seat_breakdowns():
 
 
 
+
+
+def log_end_of_session(agent_profile, seat):
+    SeatAssignmentLog.objects.filter(
+        agent_profile=agent_profile,
+        dialer_credentials=seat,
+        end_time__isnull=True
+    ).update(end_time=timezone.now())
+
+
+@transaction.atomic
+def update_seat_agent_profile(request, seat_id):
+    if request.method == 'POST':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            try:
+                agent_id = int(request.POST.get('agent_id'))
+                seat = get_object_or_404(DialerCredentials, id=seat_id)
+
+                if agent_id == 0:
+                    # Unassign current agent from seat
+                    agent_profile = seat.agent_profile
+                    if agent_profile:
+                        log_end_of_session(agent_profile, seat)
+                        agent_profile.assigned_credentials = None
+                        agent_profile.save()
+
+                    seat.agent_profile = None
+                    seat.save()
+                
+                else:
+                    # Assign new agent to seat
+                    agent_profile = get_object_or_404(Profile, id=agent_id)
+                    try:
+                        old_seat = DialerCredentials.objects.get(agent_profile=agent_profile)
+                        log_end_of_session(agent_profile, old_seat)
+                        old_seat.agent_profile = None
+                        old_seat.save()
+
+                    except DialerCredentials.DoesNotExist:
+                        old_seat = None
+
+                    seat.agent_profile = agent_profile
+                    seat.save()
+
+                    agent_profile.assigned_credentials = seat
+                    agent_profile.save()
+
+                    SeatAssignmentLog.objects.create(
+                        agent_profile=agent_profile,
+                        dialer_credentials=seat,
+                        start_time=timezone.now()
+                    )
+
+                return JsonResponse({'success': True, 'message': 'Seat agent profile updated successfully.'})
+
+            except DatabaseError as e:
+                return JsonResponse({'success': False, 'message': 'Database error occurred'}, status=500)
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+"""
 def update_seat_agent_profile(request, seat_id):
     if request.method == 'POST':
         # Check if the request is an AJAX request
@@ -174,13 +239,18 @@ def update_seat_agent_profile(request, seat_id):
             try:
                 old_seat = None
                 # Fetch the seat object
+
                 seat = get_object_or_404(DialerCredentials, id=seat_id)
 
                 if int(agent_id) == 0:
                     # Unassign the current agent from the seat
                     agent_profile = seat.agent_profile
 
+                    print(agent_profile)
+
                     if agent_profile:
+
+                        print(agent_profile)
                         # Log the end of the current session
                         SeatAssignmentLog.objects.filter(
                             agent_profile=agent_profile,
@@ -243,6 +313,8 @@ def update_seat_agent_profile(request, seat_id):
 
     # If the request is not POST or not an AJAX request, return a 405 Method Not Allowed response
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+"""
+
 
 @require_POST
 def unseat_agent(request, agent_id):
@@ -303,6 +375,7 @@ class DeleteSeatLogView(View):
             return JsonResponse({'error': 'Invalid password.'}, status=401)
 
 
+
 @login_required
 def update_status_admin(request):
     if request.method == 'POST':
@@ -338,7 +411,7 @@ def update_status_admin(request):
         return JsonResponse({'success': False, 'error': 'Invalid status.'})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
             
-
+@permission_required('agents_table')
 @login_required
 def agents_list_company(request):
 
@@ -356,7 +429,8 @@ def agents_list_company(request):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    callers_teams = Team.objects.filter(team_type="callers")
+    callers_list = ['callers', ]
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
 
     agents = Profile.objects.filter(team__in=callers_teams, active=True)
     context['agents'] = agents
@@ -371,7 +445,7 @@ def agents_list_company(request):
     return render(request,'operations/agents/agents_list.html',context)
 
 
-
+@permission_required('agents_table')
 @login_required
 def agents_list_team(request, team_id):
 
@@ -409,7 +483,7 @@ def agents_list_team(request, team_id):
 
 
 
-
+@permission_required('working_hours')
 @login_required
 def working_hours_company(request, month,year):
 
@@ -427,8 +501,9 @@ def working_hours_company(request, month,year):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    callers_teams = Team.objects.filter(team_type="callers")
-
+    callers_list = ['callers', 'sales']
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
+    
     agents = Profile.objects.filter(team__in=callers_teams, active=True)
     context['agents'] = agents
 
@@ -499,7 +574,7 @@ def working_hours_company(request, month,year):
     return render(request,'operations/working_hours_company.html',context)
 
 
-
+@permission_required('working_hours')
 @login_required
 def working_hours_team(request, team_id, month, year):
     context = {}
@@ -588,7 +663,7 @@ def working_hours_team(request, team_id, month, year):
     return render(request, 'operations/working_hours_team.html', context)
 
 
-
+@permission_required('agents_table')
 @login_required
 def agent_hours(request, agent_id,month,year):
 
@@ -625,7 +700,484 @@ def agent_hours(request, agent_id,month,year):
 
 
 
+@permission_required('adjusting_hours')
+@login_required
+def adjusting_hours(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
 
+    context['adjusted_hours'] = ManualHours.objects.filter(active=True).order_by('-created')
+    
+   
+    
+    return render(request,'salaries/adjusting_hours.html', context)
+
+@permission_required('adjusting_hours')
+@login_required
+def adjusting_hours_form(request):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+
+
+    context['profile'] = profile
+    context['agent_profiles'] = Profile.objects.filter(active=True)
+
+
+
+    if request.method == "POST":
+        data = request.POST
+
+        agent_id = data.get('agent')
+        operation = data.get('operation')
+        amount = data.get('amount')
+        reason = data.get('reason')
+ 
+        if int(operation) == 1:
+            positive = True
+        else:
+            positive = False
+
+        agent_profile = Profile.objects.get(id=agent_id)
+ 
+        feedback = ManualHours.objects.create(agent_user=agent_profile.user,
+                                agent_profile=agent_profile,
+                                admin_user=profile.user,
+                                admin_profile=profile,
+                                positive=positive,
+                                hours=amount,
+                                reason=reason,
+ 
+                                )
+ 
+        return redirect('/adjusting-hours')
+
+            
+    
+    return render(request,'salaries/adjusting_hours_form.html',context)
+
+
+@permission_required('salaries_table')
+@login_required
+def salary_company(request, month,year):
+
+    context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['month_name'] = month_name
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    callers_list = ['callers', 'sales']
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
+    
+    agents = Profile.objects.filter(team__in=callers_teams, active=True)
+    context['agents'] = agents
+
+        
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    # Calculate total time for each status per agent
+    status_totals = {}
+    for agent in agents:
+        agent_totals = {}
+        for status in ['ready', 'meeting', 'break', 'offline']:
+            total_time = WorkStatus.objects.filter(
+                user=agent.user,
+                date__month=month,
+                date__year=year
+            ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+            total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            seconds = int(total_seconds % 60)
+            formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            agent_totals[status] = formatted_time
+
+        total_worked_time_seconds = sum([
+            (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+                total_ready_time=Sum('ready_time'),
+                total_meeting_time=Sum('meeting_time'),
+                total_break_time=Sum('break_time')
+            )[field] or timedelta()).total_seconds()
+            for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+        ])
+        agent_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+        try:
+            settings = ServerSetting.objects.first()
+            break_paid = settings.break_paid
+        except:
+            break_paid = False
+
+        total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_ready_time=Sum('ready_time')
+        )['total_ready_time'] or timedelta()).total_seconds()
+        total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_meeting_time=Sum('meeting_time')
+        )['total_meeting_time'] or timedelta()).total_seconds()
+        total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_break_time=Sum('break_time')
+        )['total_break_time'] or timedelta()).total_seconds()
+
+        total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+
+        # Fetch added and removed manual hours
+        added_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+        removed_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+        deductions = Action.objects.filter(
+            agent=agent.user,
+            action_type="deduction",
+            status="approved",
+            active=True,
+            submission_date__month=month,
+            submission_date__year=year
+        )
+
+        ded_total = deductions.aggregate(total_deductions=Sum('deduction_amount'))['total_deductions'] or 0
+        payments = Prepayment.objects.filter(
+            agent=agent.user,
+            status="approved",
+            active=True,
+            submission_date__month=month,
+            submission_date__year=year
+        )
+
+        prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
+        
+        # Convert manual hours to seconds (assuming manual hours are in hours)
+        added_seconds = added_hours * 3600
+        removed_seconds = removed_hours * 3600
+        deduction_seconds = ded_total * 3600
+        
+
+        # Adjust total payable time with manual hours
+        total_payable_time_seconds += added_seconds - removed_seconds - deduction_seconds
+
+        agent_totals['added_hours'] = str(timedelta(seconds=added_seconds))
+        agent_totals['removed_hours'] = str(timedelta(seconds=removed_seconds))
+        agent_totals['deductions'] = str(timedelta(seconds=deduction_seconds))
+        agent_totals['prepayments'] = str(prepayment_total)
+
+        agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+        status_totals[agent] = agent_totals
+
+        salary = agent.hourly_rate * (total_payable_time_seconds/3600)
+
+        salary_final = salary - int(prepayment_total)
+
+        agent_totals['salary'] = round(salary_final,2)
+    context['status_totals'] = status_totals
+
+    return render(request, 'salaries/salaries_company.html', context)
+
+
+
+@permission_required('salaries_table')
+@login_required
+def salary_team(request, team_id, month,year):
+
+    context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['month_name'] = month_name
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    team = Team.objects.get(id=team_id)
+
+    context['teamid'] = team_id
+    
+    agents = Profile.objects.filter(team=team, active=True)
+    context['agents'] = agents
+
+        
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    # Calculate total time for each status per agent
+    status_totals = {}
+    for agent in agents:
+        agent_totals = {}
+        for status in ['ready', 'meeting', 'break', 'offline']:
+            total_time = WorkStatus.objects.filter(
+                user=agent.user,
+                date__month=month,
+                date__year=year
+            ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+            total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            seconds = int(total_seconds % 60)
+            formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            agent_totals[status] = formatted_time
+
+        total_worked_time_seconds = sum([
+            (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+                total_ready_time=Sum('ready_time'),
+                total_meeting_time=Sum('meeting_time'),
+                total_break_time=Sum('break_time')
+            )[field] or timedelta()).total_seconds()
+            for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+        ])
+        agent_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+        try:
+            settings = ServerSetting.objects.first()
+            break_paid = settings.break_paid
+        except:
+            break_paid = False
+
+        total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_ready_time=Sum('ready_time')
+        )['total_ready_time'] or timedelta()).total_seconds()
+        total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_meeting_time=Sum('meeting_time')
+        )['total_meeting_time'] or timedelta()).total_seconds()
+        total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_break_time=Sum('break_time')
+        )['total_break_time'] or timedelta()).total_seconds()
+
+        total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+
+        # Fetch added and removed manual hours
+        added_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+        removed_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+        deductions = Action.objects.filter(
+            agent=agent.user,
+            action_type="deduction",
+            status="approved",
+            active=True,
+            submission_date__month=month,
+            submission_date__year=year
+        )
+
+        ded_total = deductions.aggregate(total_deductions=Sum('deduction_amount'))['total_deductions'] or 0
+        payments = Prepayment.objects.filter(
+            agent=agent.user,
+            status="approved",
+            active=True,
+            submission_date__month=month,
+            submission_date__year=year
+        )
+
+        prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
+        
+        # Convert manual hours to seconds (assuming manual hours are in hours)
+        added_seconds = added_hours * 3600
+        removed_seconds = removed_hours * 3600
+        deduction_seconds = ded_total * 3600
+        
+
+        # Adjust total payable time with manual hours
+        total_payable_time_seconds += added_seconds - removed_seconds - deduction_seconds
+
+        agent_totals['added_hours'] = str(timedelta(seconds=added_seconds))
+        agent_totals['removed_hours'] = str(timedelta(seconds=removed_seconds))
+        agent_totals['deductions'] = str(timedelta(seconds=deduction_seconds))
+        agent_totals['prepayments'] = str(prepayment_total)
+
+        agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+        status_totals[agent] = agent_totals
+
+        salary = agent.hourly_rate * (total_payable_time_seconds/3600)
+
+        salary_final = salary - int(prepayment_total)
+
+        agent_totals['salary'] = round(salary_final,2)
+    context['status_totals'] = status_totals
+
+    return render(request, 'salaries/salaries_team.html', context)
+
+@permission_required('agents_table')
+@login_required
+def invoice(request, agent_id,month, year):
+    context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = int(month)
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['month_name'] = month_name    
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['agent_profile'] = Profile.objects.get(id=agent_id)
+
+    formatted_date = f"{month:02d}/01/{year}"
+
+    context ['formatted_date'] = formatted_date
+
+
+    next_month = (month % 12) + 1
+    next_year = year + (month // 12)
+    formatted_date = f"{next_month:02d}/01/{next_year}"
+
+    context ['due_date'] = formatted_date
+
+
+    agent = Profile.objects.get(id=agent_id)
+
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    try:
+        settings = ServerSetting.objects.first()
+        break_paid = settings.break_paid
+    except:
+        break_paid = False
+    # Calculate total time for each status per agent
+    status_totals = {}
+    agent_totals = {}
+    for status in ['ready', 'meeting', 'break', 'offline']:
+        total_time = WorkStatus.objects.filter(
+            user=agent.user,
+            date__month=month,
+            date__year=year
+        ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+        total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = int(total_seconds % 60)
+        formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        status_totals[status] = formatted_time
+        if status == "break":
+            status_totals[f"{status}_total"] = round((total_seconds / 3600) * agent.hourly_rate, 2) if break_paid else 0
+        else:
+            status_totals[f"{status}_total"] = round((total_seconds / 3600) * agent.hourly_rate, 2)
+
+
+    total_worked_time_seconds = sum([
+        (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_ready_time=Sum('ready_time'),
+            total_meeting_time=Sum('meeting_time'),
+            total_break_time=Sum('break_time')
+        )[field] or timedelta()).total_seconds()
+        for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+    ])
+    status_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+
+
+    total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+        total_ready_time=Sum('ready_time')
+    )['total_ready_time'] or timedelta()).total_seconds()
+    total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+        total_meeting_time=Sum('meeting_time')
+    )['total_meeting_time'] or timedelta()).total_seconds()
+    total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+        total_break_time=Sum('break_time')
+    )['total_break_time'] or timedelta()).total_seconds()
+
+    total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+
+    # Fetch added and removed manual hours
+    added_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+    removed_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+    deductions = Action.objects.filter(
+        agent=agent.user,
+        action_type="deduction",
+        status="approved",
+        active=True,
+        submission_date__month=month,
+        submission_date__year=year
+    )
+
+    ded_total = deductions.aggregate(total_deductions=Sum('deduction_amount'))['total_deductions'] or 0
+    payments = Prepayment.objects.filter(
+        agent=agent.user,
+        status="approved",
+        active=True,
+        submission_date__month=month,
+        submission_date__year=year
+    )
+
+    prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
+
+    # Convert manual hours to seconds (assuming manual hours are in hours)
+    added_seconds = added_hours * 3600
+    removed_seconds = removed_hours * 3600
+    deduction_seconds = ded_total * 3600
+
+    # Adjust total payable time with manual hours
+    total_positive = total_payable_time_seconds + added_seconds
+    total_payable =  total_positive - removed_seconds - deduction_seconds
+
+    status_totals['added_hours'] = str(timedelta(seconds=added_seconds))
+    status_totals['added_hours_total'] = round(added_hours * agent.hourly_rate, 2)
+    status_totals['removed_hours'] = str(timedelta(seconds=removed_seconds))
+    status_totals['removed_hours_total'] = round(removed_hours * agent.hourly_rate, 2)
+
+    status_totals['deductions'] = str(timedelta(seconds=deduction_seconds))
+    status_totals['deductions_total'] = round(ded_total * agent.hourly_rate, 2)
+
+    status_totals['prepayments'] = str(prepayment_total)
+    status_totals['prepayment_total'] = round(prepayment_total * agent.hourly_rate, 2)
+    status_totals['total_positive'] = round((total_positive/3600) * agent.hourly_rate, 2)
+    status_totals['total_payable'] = f"{int(total_payable // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+    salary = agent.hourly_rate * (total_payable / 3600)
+
+    salary_final = salary - int(prepayment_total)
+
+    status_totals['salary'] = round(salary_final, 2)
+    
+    context['agentid'] = agent.id
+
+    context['invoice'] = status_totals
+
+    print(status_totals)
+    
+    return render(request,'salaries/invoice.html', context)
+
+
+
+
+@permission_required('attendance_monitor')
 @login_required
 def attendance_company(request, month, year):
 
@@ -676,7 +1228,7 @@ def attendance_company(request, month, year):
     return render(request,'operations/attendance_company.html',context)
 
 
-
+@permission_required('attendance_monitor')
 @login_required
 def attendance_team(request, team_id, month, year):
 
@@ -732,7 +1284,7 @@ def attendance_team(request, team_id, month, year):
     return render(request,'operations/attendance_team.html',context)
 
 
-
+@permission_required('attendance_monitor')
 @login_required
 def attendance_agent(request, agent_id, month, year):
 
@@ -794,7 +1346,7 @@ def attendance_agent(request, agent_id, month, year):
     return render(request,'operations/attendance_agent.html',context)
 
 
-
+@permission_required('attendance_monitor')
 @login_required
 def report_absence(request):
 
@@ -843,7 +1395,7 @@ def report_absence(request):
 
 
 
-
+@permission_required('lateness_monitor')
 @login_required
 def lateness_company(request, month, year):
 
@@ -862,7 +1414,8 @@ def lateness_company(request, month, year):
     context['full_month_name'] = calendar.month_name[month]
     context['today_date'] = month_date
     
-    callers_teams = Team.objects.filter(team_type="callers")
+    callers_list = ['callers', 'sales']
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
     agents = Profile.objects.filter(team__in=callers_teams, active=True)
     
     # Create a list of all days in the month
@@ -925,7 +1478,7 @@ def lateness_company(request, month, year):
 
     return render(request, 'operations/lateness_company.html', context)
 
-
+@permission_required('lateness_monitor')
 @login_required
 def lateness_team(request, team_id,month, year):
 
@@ -1008,7 +1561,7 @@ def lateness_team(request, team_id,month, year):
     return render(request, 'operations/lateness_team.html', context)
 
 
-
+@permission_required('lateness_monitor')
 @login_required
 def lateness_agent(request, agent_id,month, year):
 
@@ -1159,6 +1712,8 @@ def format_hours_minutes(decimal_hours):
     return f"{hours:02}:{minutes:02}"
 
 
+
+@permission_required('camp_hours')
 @login_required
 def camp_hours_daily(request, camp_id, month, year):
     context = {"settings": settings}
@@ -1249,6 +1804,8 @@ def camp_hours_daily(request, camp_id, month, year):
 
     return render(request, 'campaign_hours/daily_reports.html', context)
 
+
+@permission_required('camp_hours')
 @login_required
 def camp_hours_monthly(request, camp_id, month, year):
     context = {"settings": settings}
@@ -1367,7 +1924,7 @@ def camp_hours_monthly(request, camp_id, month, year):
 
 
 
-
+@permission_required('camp_hours')
 @login_required
 def camp_hours_yearly(request, camp_id, year):
     context = {"settings": settings}
@@ -1491,6 +2048,8 @@ def camp_hours_yearly(request, camp_id, year):
 
     return render(request, 'campaign_hours/yearly_reports.html', context)
 
+
+@permission_required('camp_leads')
 @login_required
 def all_campaigns_performance(request, month, year):
     context = {"settings": settings}
@@ -1582,7 +2141,7 @@ def all_campaigns_performance(request, month, year):
     return render(request, 'campaign_leads/overall_performance.html', context)
 
 
-
+@permission_required('camp_leads')
 @login_required
 def camp_leads_daily(request, camp_id, month, year):
     context = {"settings": settings}
@@ -1691,7 +2250,7 @@ def camp_leads_daily(request, camp_id, month, year):
 
     return render(request, 'campaign_leads/daily_reports.html', context)
 
-
+@permission_required('camp_leads')
 @login_required
 def camp_leads_monthly(request, camp_id, month, year):
     context = {"settings": settings}
@@ -1808,7 +2367,7 @@ def camp_leads_monthly(request, camp_id, month, year):
 
 
 
-
+@permission_required('camp_leads')
 @login_required
 def camp_leads_yearly(request, camp_id, year):
     context = {"settings": settings}

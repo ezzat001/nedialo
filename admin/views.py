@@ -15,8 +15,9 @@ from django.utils.decorators import method_decorator
 from django.middleware.csrf import CsrfViewMiddleware
 from nedialo.constants import countries, us_states, discovery_options
 import json
+from core.decorators import *
 
-# Create your views here.
+
 @login_required
 def admin_home(request):
     context = {}
@@ -25,6 +26,53 @@ def admin_home(request):
     return render(request,'admin/admin-home.html',context)
 
 
+
+
+@permission_required('admin_home')
+@login_required
+def applications_table(request):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['applications'] = Application.objects.filter(active=True).order_by('-submission_date')
+                                                  
+
+
+    return render(request,'admin/applications.html',context)
+
+
+@permission_required('admin_applications')
+@login_required
+def application_report(request, app_id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['app_status'] = APPLICATION_STATUS_CHOICES
+    context['app'] = Application.objects.get(id=app_id)
+
+    if request.method == "POST":
+        data = request.POST
+
+        status = data.get('status')
+ 
+        
+        app = Application.objects.get(id=app_id)
+
+        
+        app.status=status
+        app.handled_by=request.user
+        app.save()
+        
+            
+        
+
+        return redirect('/applications')
+    return render(request,'admin/application_report.html', context)
+
+
+
+@permission_required('admin_campaigns')
 @login_required
 def campaigns_table(request):
 
@@ -39,7 +87,7 @@ def campaigns_table(request):
 
 
 
-
+@permission_required('admin_campaigns')
 @login_required
 def campaign_create(request):
 
@@ -103,7 +151,7 @@ def campaign_create(request):
 
 
 
-
+@permission_required('admin_campaigns')
 @login_required
 def campaign_modify(request,camp_id):
 
@@ -272,7 +320,7 @@ class DeleteCampaignView(View):
 
 
 
-
+@permission_required('admin_contactlists')
 @login_required
 def contactlists_table(request):
 
@@ -286,7 +334,7 @@ def contactlists_table(request):
 
 
 
-
+@permission_required('admin_contactlists')
 @login_required
 def contactlist_create(request):
 
@@ -372,7 +420,7 @@ class DeleteContactListView(View):
 
 
 
-
+@permission_required('admin_campaigns')
 @login_required
 def dialer_creds_table(request,campaign_id):
 
@@ -388,7 +436,7 @@ def dialer_creds_table(request,campaign_id):
 
 
 
-
+@permission_required('admin_campaigns')
 @login_required
 def dialer_cred_create(request,campaign_id):
 
@@ -463,7 +511,7 @@ class DeleteDialerCredView(View):
 
 
 
-
+@permission_required('admin_campaigns')
 @login_required
 def source_creds_table(request,campaign_id):
 
@@ -479,7 +527,7 @@ def source_creds_table(request,campaign_id):
 
 
 
-
+@permission_required('admin_contactlists')
 @login_required
 def source_cred_create(request,campaign_id):
 
@@ -558,7 +606,7 @@ class DeleteSourceCredView(View):
 
 
 
-
+@permission_required('admin_accounts')
 @login_required
 def agents_table(request):
 
@@ -573,7 +621,7 @@ def agents_table(request):
 
 
 
-
+@permission_required('admin_accounts')
 @login_required
 def agent_create(request):
 
@@ -637,7 +685,7 @@ def agent_create(request):
 
 
 
-
+@permission_required('admin_accounts')
 @login_required
 def agent_modify(request,username):
 
@@ -769,7 +817,7 @@ def upload_id(request, userid):
     return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
 
-
+@permission_required('admin_clients')
 @login_required
 def clients_table(request):
 
@@ -782,7 +830,7 @@ def clients_table(request):
     return render(request,'admin/clients/clients.html',context)
 
 
-
+@permission_required('admin_clients')
 @login_required
 def client_create(request):
 
@@ -833,7 +881,7 @@ def client_create(request):
 
 
 
-
+@permission_required('admin_clients')
 @login_required
 def client_modify(request,username):
 
@@ -911,6 +959,8 @@ class DeleteClientView(View):
         else:
             return JsonResponse({'error': 'Invalid password.'}, status=401)
 
+
+@permission_required('admin_provided_services')
 @login_required
 def services_table(request):
 
@@ -922,7 +972,7 @@ def services_table(request):
     return render(request,'admin/services/services.html',context)
 
 
-
+@permission_required('admin_provided_services')
 @login_required
 def service_create(request):
 
@@ -980,7 +1030,7 @@ class DeleteServiceView(View):
 
 
 
-
+@permission_required('admin_dialers')
 @login_required
 def dialers_table(request):
 
@@ -992,7 +1042,7 @@ def dialers_table(request):
     return render(request,'admin/dialers/dialers.html',context)
 
 
-
+@permission_required('admin_dialers')
 @login_required
 def dialer_create(request):
 
@@ -1050,7 +1100,7 @@ class DeleteDialerView(View):
 
 
 
-
+@permission_required('admin_sources')
 @login_required
 def dataSources_table(request):
 
@@ -1062,7 +1112,7 @@ def dataSources_table(request):
     return render(request,'admin/datasources/datasources.html',context)
 
 
-
+@permission_required('admin_sources')
 @login_required
 def dataSource_create(request):
 

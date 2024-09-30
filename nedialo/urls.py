@@ -3,6 +3,7 @@ from django.urls import path
 from core.views import *
 from admin.views import *
 from operations.views import *
+from sales.views import *
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -11,7 +12,9 @@ from django.conf.urls.static import static
 urlpatterns = [
 
 
-    path('admin', admin_home),
+    path('admin', applications_table),
+    #path('applications', applications_table),
+    path('application-form/<int:app_id>', application_report),
     path('crm-admin/', admin.site.urls),
     path('', home),
     path('login', loginview),
@@ -86,8 +89,8 @@ urlpatterns = [
     path('leads-leaderboard/<int:month>-<int:year>',leads_leaderboard),
 
     path('quality-pending',quality_pending),
-    path('lead-reports',quality_lead_reports),
-    path('agent-leads/<int:agent_id>',agent_lead_reports),
+    path('lead-reports/<int:month>-<int:year>',quality_lead_reports),
+    path('agent-leads/<int:agent_id>-<int:month>-<int:year>',agent_lead_reports),
     path('fireback-lead/<int:lead_id>/', fire_lead, name='fire-lead'),
 
     path('lead-handling/<int:lead_id>', lead_handling, name='lead_handling'),
@@ -117,6 +120,16 @@ urlpatterns = [
     path('leave-handling',leave_handling_list),
 
     path('leave-report/<int:leave_id>',leave_report),
+
+
+    path('prepayment-requests',prepayment_request_list),
+    path('new-prepayment',prepayment_request, name="file_upload"),
+
+    path('delete-prepayment/<int:prepayment_id>/', delete_prepayment, name='delete-prepayment'),
+
+    path('prepayments-handling',prepayment_handling_list),
+
+    path('prepayment-report/<int:prepayment_id>',prepayment_report),
 
 
 
@@ -163,6 +176,14 @@ urlpatterns = [
     path('working-hours-team/<int:team_id>-<int:month>-<int:year>', working_hours_team),
     path('agent-hours/<int:agent_id>-<int:month>-<int:year>', agent_hours),
 
+    path('adjusting-hours', adjusting_hours),
+    path('adjusting-hours-form', adjusting_hours_form),
+
+    path('salaries-table-company/<int:month>-<int:year>', salary_company),
+    path('salaries-table-team/<int:team_id>-<int:month>-<int:year>', salary_team),
+    path('invoice/<int:agent_id>-<int:month>-<int:year>', invoice),
+
+
     path('attendance-monitor-company/<int:month>-<int:year>',attendance_company),
     path('attendance-monitor-team/<int:team_id>-<int:month>-<int:year>',attendance_team),
     path('attendance-monitor-agent/<int:agent_id>-<int:month>-<int:year>',attendance_agent),
@@ -172,11 +193,24 @@ urlpatterns = [
     path('lateness-monitor-team/<int:team_id>-<int:month>-<int:year>',lateness_team),
     path('lateness-monitor-agent/<int:agent_id>-<int:month>-<int:year>',lateness_agent),
 
+    
+
     path('report-absence',report_absence),
 
 
+    path('sales-dashboard-<int:year>',sales_dashboard),
+    path('sales-lookerstudio',sales_lookerstudio),
+    path('sales-calendar-<int:month>-<int:year>', sales_calendar),
 
 
+    path('sales-lead-submit/', SalesLeadSubmitView.as_view(), name='sales_lead_submit'),
+
+    path('sales-lead-update/', update_sales_lead, name='sales_lead_update'),
+
+    path('sales-lead-update-status/', UpdateLeadStatusView.as_view(), name='update-lead-status'),
+
+
+    path('sales-lead-data/', sales_leads_data, name='sales_leads_data'),
 
 
 ]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

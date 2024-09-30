@@ -81,6 +81,21 @@ LEAD_CHOICES = (
    
 )
 
+
+SALES_LEAD_CHOICES = (
+    ("follow_up","Follow Up" ),
+    ("scheduled_meeting","Scheduled Meeting"),
+    ('no_show','No Show'),
+    ('send_contract',"To-Send Contract"),
+    ('follow_up_landing', "Follow Up-Landing"),
+    ('landed','Landed'),
+    ('longterm_follow_up', 'Long Term Follow Up'),
+    ('unresponsive', 'Unresponsive'),
+    ('not_interested', 'Not Interested'),
+    ('archive', 'Archive')
+
+    )
+
 PROPERTY_CHOICES = (
     ('house','House'),
     ('vacant_land','Vacant Land'),
@@ -246,6 +261,9 @@ class ServerSetting(models.Model):
     negative_percentage = models.PositiveIntegerField(default=60, null=True, blank=True)
     neutral_percentage = models.PositiveIntegerField(default=80, null=True, blank=True)
     break_paid = models.BooleanField(default=False)
+    
+    
+    sales_lookerstudio = models.TextField(blank=True, null=True)
 
     hide_campaign_leadform = models.BooleanField(default=False)
     hide_client_leadform = models.BooleanField(default=False)
@@ -254,6 +272,70 @@ class ServerSetting(models.Model):
 class Role(models.Model):
     role_name = models.CharField(max_length=50, null=True, blank=True)
 
+    work_status = models.BooleanField(default=False)
+
+    caller_dashboard = models.BooleanField(default=False)
+
+    my_leads = models.BooleanField(default=False)
+    lead_scoring = models.BooleanField(default=False)
+    leaderboard = models.BooleanField(default=False)
+
+    leave_request = models.BooleanField(default=False)
+    prepayment_request = models.BooleanField(default=False)
+    action_request = models.BooleanField(default=False)
+
+    leave_handling = models.BooleanField(default=False)
+    prepayment_handling = models.BooleanField(default=False)
+    action_handling = models.BooleanField(default=False)
+    delete_handling_request = models.BooleanField(default=False)
+
+    qa_pending = models.BooleanField(default=False)
+    qa_lead_handling = models.BooleanField(default=False)
+    qa_lead_reports = models.BooleanField(default=False)
+    qa_auditing = models.BooleanField(default=False)
+    qa_auditing_handling = models.BooleanField(default=False)
+    qa_agents_table = models.BooleanField(default=False)
+
+
+    seats = models.BooleanField(default=False)
+    camp_hours = models.BooleanField(default=False)
+    camp_leads = models.BooleanField(default=False)
+
+    sales_dashboard = models.BooleanField(default=False)
+    sales_lookerstudio = models.BooleanField(default=False)
+    sales_performance = models.BooleanField(default=False)
+
+
+    agents_table = models.BooleanField(default=False)
+    working_hours = models.BooleanField(default=False)
+    attendance_monitor = models.BooleanField(default=False)
+    lateness_monitor = models.BooleanField(default=False)
+
+    salaries_table = models.BooleanField(default=False)
+    adjusting_hours = models.BooleanField(default=False)
+
+
+    admin_home = models.BooleanField(default=False)
+
+    admin_applications = models.BooleanField(default=False)
+
+    admin_accounts = models.BooleanField(default=False)
+    admin_clients = models.BooleanField(default=False)
+    admin_campaigns = models.BooleanField(default=False)
+    admin_contactlists = models.BooleanField(default=False)
+
+    admin_roles = models.BooleanField(default=False)
+    admin_provided_services = models.BooleanField(default=False)
+    admin_dialers = models.BooleanField(default=False)
+    admin_sources = models.BooleanField(default=False)
+    admin_server_settings = models.BooleanField(default=False)
+
+
+
+
+
+
+
     active=models.BooleanField(default=True)
 
     def __str__(self):
@@ -261,8 +343,7 @@ class Role(models.Model):
 
 
 class Application(models.Model):
-    time = models.TimeField(auto_now_add=True)
-    date = models.DateField(auto_now_add=True)
+    submission_date = models.DateTimeField(default=timezone.now)
     referrer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     position = models.CharField(max_length=50, choices=APPLICATION_POS_CHOICES, null=True, blank=True)
     full_name = models.CharField(max_length=50, null=True, blank=True)
@@ -270,10 +351,12 @@ class Application(models.Model):
     phone = models.CharField(max_length=50, null=True, blank=True)
     education = models.CharField(max_length=50, choices=APPLICATION_EDU_CHOICES,null=True, blank=True)
     experience = models.TextField(null=True, blank=True)
-    start_date = models.TextField(null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
     shift = models.CharField(max_length=50, choices=APPLICATION_SHIFT_CHOICES,null=True, blank=True)
     audio_file = models.FileField(upload_to='applications_audio', blank=True, null=True)
     status = models.CharField(max_length=50, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True,default="pending")
+    handled_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="handled_by_app",null=True,blank=True)
+
     active = models.BooleanField(default=True)
 
 class Team(models.Model):
@@ -583,7 +666,6 @@ class Profile(models.Model): #Profile Standard Information
 
 
 
-    assigned_campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, null=True, blank=True)
     assigned_credentials = models.ForeignKey(DialerCredentials, on_delete=models.SET_NULL, null=True, blank=True)
 
     active = models.BooleanField(default=True)
@@ -626,7 +708,7 @@ class DataSourceCredentials(models.Model):
 
 class CampaignDispoSetting(models.Model):
 
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name="camp_dispo",null=True, blank=True)
+    campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, related_name="camp_dispo",null=True, blank=True)
     slot1_dispo = models.CharField(max_length=50, null=True, blank=True)
     slot2_dispo = models.CharField(max_length=50, null=True, blank=True)
     slot3_dispo = models.CharField(max_length=50, null=True, blank=True)
@@ -688,7 +770,7 @@ class ContactListPerformance(models.Model): # Call Dispos
 
 
 class LeadHandlingSettings(models.Model):
-    campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE, null=True, blank=True)
+    campaign = models.OneToOneField(Campaign, on_delete=models.SET_NULL, null=True, blank=True)
     slot1_name = models.CharField(max_length=100, null=True, blank=True)
     slot1_percentage = models.FloatField(default=0)
     
@@ -791,39 +873,64 @@ class Lead(models.Model):
         return str(self.agent_profile) +" #"+str(self.lead_id)
     
 
+class SalesLead(models.Model):
+    pushed = models.DateTimeField(default=timezone.now)
+
+    lead_id = models.AutoField(primary_key=True)
+    agent_user = models.ForeignKey(User, on_delete=models.SET_NULL,related_name="sales_agent_user", null=True, blank=True)
+    agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL,related_name="sales_agent_profile", null=True, blank=True, )
+    
+    campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, related_name="sales_lead_campaign", null=True, blank=True)
+    contact = models.CharField(max_length=50, null=True, blank=True)
+    contact_phone = models.CharField(max_length=50, null=True, blank=True)
+    contact_email = models.CharField(max_length=50, null=True, blank=True)
+    interest_rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], default=1)
+
+    followup_date = models.DateField(null=True, blank=True)
+    followup_time = models.TimeField(null=True, blank=True)
+
+    state = models.CharField(max_length=50, default=0, null=True, blank=True)
+
+    status = models.CharField(max_length=50, choices=SALES_LEAD_CHOICES, default='follow_up', null=True, blank=True)
+
+    notes = models.TextField(null=True , blank=True)
+    
+    modified_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="sales_modified_by",null=True,blank=True)
 
 
+    
+    active = models.BooleanField(default=True)
 
-class LeadHandlingDB(models.Model):
-   agent_user = models.ForeignKey(User,on_delete=models.SET_NULL, null=True, blank=True, related_name="lead_handling_user")
-   agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="lead_handling_profile")
-   lead = models.OneToOneField(Lead, on_delete=models.SET_NULL, null=True, blank=True, related_name="lead_handling_lead")
-   campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, null=True, blank=True,related_name="lead_handling_camp")
-   lead_flow = models.ForeignKey(LeadHandlingSettings, on_delete=models.SET_NULL, blank=True, null=True, related_name="lead_handling_db")
-   percentage = models.FloatField(default=0, blank=True, null=True)
-   active = models.BooleanField(default=True)
+    def __str__(self):
+        return str(self.agent_profile) +" #"+str(self.lead_id)
     
 
-    
+
+
+
+
 
 
 class Leave(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    agent_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="leave_profile")
-    agent_profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="leave_profile")
+    agent_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="leave_profile")
+    agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leave_profile")
     agent_name = models.CharField(max_length=50, null=True,blank=True)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_leave', blank=True,)
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL,null=True, blank=True,  related_name='team_leave', )
     leave_type = models.CharField(max_length=20, choices=LEAVE_CHOICES, default='UPL', blank=True, null=True)
     submission_date = models.DateTimeField(default=timezone.now)
     requested_date = models.DateField( blank=True, null=True)
     reason = models.TextField( blank=True, null=True)
     file = models.FileField(upload_to=random_name_leave_files, null=True, blank=True)
-    handled_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="handled_by_leave", blank=True,null=True)
+    handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="handled_by_leave", blank=True,null=True)
     status = models.CharField(max_length=50, choices=REQUESTS_STATUS_CHOICES, blank=True, null=True,default="pending")
     active = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.agent_profile) +" #"+str(self.id)
+
+
+
 
 
 class Action(models.Model):
@@ -838,12 +945,28 @@ class Action(models.Model):
     incident_date = models.DateField( blank=True, null=True)
     deduction_amount= models.FloatField(default=0,blank=True, null=True)
     file = models.FileField(upload_to=random_name_action_files, null=True, blank=True)
-    handled_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='handled_by_deduction', blank=True, null=True)
+    handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='handled_by_deduction', blank=True, null=True)
     status = models.CharField(max_length=50, choices=REQUESTS_STATUS_CHOICES, blank=True, null=True,default="pending")
     active = models.BooleanField(default=True)
 
     def __str__(self):
         return str(self.agent_profile) +" #"+str(self.id)
+
+
+
+class Prepayment(models.Model):
+    agent = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL,null=True, related_name="agent_profile_prepayment")
+
+    submission_date = models.DateField(default=timezone.now)
+    timeframe = models.CharField(max_length=50, blank=True, null=True)
+    payment_account = models.TextField(blank=True, null=True)
+    amount = models.FloatField(blank=True, null=True)
+    handled_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="handled_by_prepayment", blank=True, null=True)
+    status = models.CharField(max_length=50, choices=REQUESTS_STATUS_CHOICES, blank=True, null=True,default="pending")
+    active = models.BooleanField(default=True)
+
+
 
 class Feedback(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -888,7 +1011,7 @@ class WorkStatus(models.Model):
         ('offline', 'Offline'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateField(default=timezone.now)
     current_status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     last_status_change = models.DateTimeField(default=timezone.now)
@@ -965,8 +1088,8 @@ class WorkStatus(models.Model):
 
 
 class SeatAssignmentLog(models.Model):
-    agent_profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    dialer_credentials = models.ForeignKey(DialerCredentials, on_delete=models.CASCADE)
+    agent_profile = models.ForeignKey(Profile,null=True, blank=True,  on_delete=models.SET_NULL)
+    dialer_credentials = models.ForeignKey(DialerCredentials, null=True, blank=True, on_delete=models.SET_NULL)
     start_time = models.DateTimeField(default=timezone.now)  # When the seat was assigned
     end_time = models.DateTimeField(null=True, blank=True)  # When the seat was released
     created_time = models.DateTimeField(auto_now_add=True)  # Time when the log entry was created
@@ -993,3 +1116,24 @@ class SeatAssignmentLog(models.Model):
         minutes, seconds = divmod(remainder, 60)
         
         return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
+
+
+
+class ManualHours(models.Model):
+ 
+    created = models.DateTimeField(default=timezone.now)
+
+    agent_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="agent_user_hours")
+    agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="agent_profile_hours")
+    admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="admin_user_hours")
+    admin_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="admin_profile_hours")
+
+    hours = models.IntegerField(null=True, blank=True)
+
+    positive = models.BooleanField(default=True)
+
+    reason = models.CharField(max_length=200,blank=True, null=True)
+
+    active = models.BooleanField(default=True)

@@ -1,0 +1,1038 @@
+{% extends 'base.html' %}
+
+{% load custom_filters %}
+
+{% block head %}
+
+
+
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+    }
+
+    
+
+    .input-group-static {
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group-static .form-control.zip-code {
+        width: 120px;
+    }
+
+
+</style>
+
+
+
+
+<style>
+    .border-radius-md {
+        border: none !important;  /* Remove any border */
+    }
+
+    /* Or set it to a specific color if needed */
+    .border-radius-md {
+        border: 1px solid transparent !important;  /* Set border to transparent */
+    }
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block body %}
+
+
+
+<div class="container-fluid py-4">
+  <div class="d-sm-flex justify-content-between">
+    <div class="container">
+      <div class="calendar-container"></div>
+
+      <!-- Button to open the date picker -->
+      <button type="button" class="datepicker btn btn-outline-info dropdown-toggle">
+          {{year}}
+      </button>
+
+    </div>
+
+    <div class="d-flex">
+
+      <div class="dropdown d-inline">
+        <button class="btn btn-icon  ms-2  bg-gradient-info  mb-0 mt-3" onclick="showNewLeadForm('{{account}}')">
+          +Add
+          
+        </button>
+      </div>
+
+    </div>
+  </div>
+    <div class="mt-3 kanban-container">
+        
+      <div class="py-2 min-vh-100 d-inline-flex" style="overflow-x: auto">
+
+
+        <div id="myKanban"></div>
+      </div>
+    </div>
+    
+    
+    
+  </div>
+
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          var button = document.querySelector(".datepicker");
+          var calendarContainer = document.querySelector(".calendar-container");
+    
+          // Set camp-id dynamically or statically here
+    
+          var fp = flatpickr(calendarContainer, {
+              dateFormat: "Y-m", // Internal format
+              altInput: true, // Use an alternative input
+              altFormat: "F Y", // Display format in the button
+              allowInput: true, // Allow manual input
+              onChange: function(selectedDates, dateStr, instance) {
+                  var selectedDate = selectedDates[0];
+                  if (selectedDate) {
+                      var formattedDate = instance.formatDate(selectedDate, "F Y");
+                      button.textContent = formattedDate;
+
+                      // Construct the URL and redirect
+                      var year = instance.formatDate(selectedDate, "Y");
+                      var month = instance.formatDate(selectedDate, "m");
+                      var redirectUrl = `/sales-dashboard-${year}`;
+                      window.location.href = redirectUrl; // Redirect to the constructed URL
+                  }
+              },
+              onOpen: function() {
+                  // Position the calendar container below the button
+                  var rect = button.getBoundingClientRect();
+                  calendarContainer.style.left = `${rect.left}px`;
+                  calendarContainer.style.top = `${rect.bottom}px`;
+                  calendarContainer.style.display = 'block';
+              },
+              onClose: function() {
+                  // Hide the calendar when it is closed
+                  calendarContainer.style.display = 'none';
+              }
+          });
+    
+          // Open flatpickr calendar when the button is clicked
+          button.addEventListener("click", function() {
+              fp.open();
+          });
+    
+          // Close flatpickr calendar when clicking outside
+          document.addEventListener("click", function(event) {
+              if (!fp.calendarContainer.contains(event.target) && !event.target.closest(".datepicker")) {
+                  fp.close();
+              }
+          });
+      });
+    </script>
+  
+
+
+
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script src="static/js/plugins/jkanban/jkanban.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
+  <script src="static/js/plugins/dragula/dragula.min.js"></script>
+
+
+
+<!--
+<script>
+
+
+  $(document).ready(function() {
+
+    function getInterestBadge(interestRating) {
+      // Convert the interestRating to an integer
+      interestRating = parseInt(interestRating, 10);
+  
+      switch (interestRating) {
+          case 1:
+              return '<span class="badge badge-sm bg-gradient-danger">Very Low</span>';
+          case 2:
+              return '<span class="badge badge-sm bg-gradient-warning">Low</span>';
+          case 3:
+              return '<span class="badge badge-sm bg-gradient-warning">Moderate</span>';
+          case 4:
+              return '<span class="badge badge-sm bg-gradient-success">High</span>';
+          case 5:
+              return '<span class="badge badge-sm bg-gradient-success">Very High</span>';
+          default:
+              return '<span class="badge badge-sm bg-gradient-secondary">Unknown</span>'; // Fallback for unexpected values
+      }
+    }
+
+
+
+
+    // jkanban init
+    (function() {
+      if (document.getElementById("myKanban")) {
+        var KanbanTest = new jKanban({
+          element: "#myKanban",
+          gutter: "10px",
+          widthBoard: "350px",
+          click: el => {
+
+            let taskId = el.getAttribute("data-leadid");
+            let taskContact = el.getAttribute("data-contact");
+            let taskPhone = el.getAttribute("data-phone");
+            let taskEmail = el.getAttribute("data-email");
+            let taskInterestRate = el.getAttribute("data-interest_rate");
+            let taskFollowUpDate = el.getAttribute("data-followup_date");
+            let taskFollowUpTime = el.getAttribute("data-followup_time");
+            let taskNotes = el.getAttribute("data-notes");
+            let taskAgent = el.getAttribute("data-agent");
+
+
+
+            // Show SweetAlert
+            Swal.fire({
+              title: 'Contact Details',
+              html: `
+                <input id="jkanban-task-id" class="d-none" value="${taskId}" />
+                
+                <div class="input-group input-group-static mb-4">
+                  <label>Contact / Organization</label>
+                  <input class="form-control" id="jkanban-contact-name" type="text" value="${taskContact}">
+                </div>
+                <div class="input-group input-group-static mb-4">
+                  <label>Phone</label>
+                  <input class="form-control" id="jkanban-contact-phone" type="text" value="${taskPhone}">
+                </div>
+
+                <div class="input-group input-group-static mb-4">
+                  <label>Email</label>
+                  <input class="form-control" id="jkanban-contact-email" type="text" value="${taskEmail}">
+                </div>
+
+                <div class="input-group input-group-static mb-4">
+                  <label>Interest Rate (1-5)</label>
+                  <input class="form-control" id="jkanban-contact-interest" type="text" value="${taskInterestRate}">
+                </div>
+
+                <div class="input-group input-group-static mb-4">
+                  <label>Follow Up Date</label>
+                  <input class="form-control" id="jkanban-contact-followupdate" type="date" value="${taskFollowUpDate}">
+                </div>
+
+                <div class="input-group input-group-static mb-4">
+                  <label>Follow Up Time</label>
+                  <input class="form-control" id="jkanban-contact-followuptime" type="time" value="${taskFollowUpTime}">
+                </div>
+
+                <div class="input-group input-group-static">
+                  <label>Notes</label>
+                  <textarea class="form-control" id="jkanban-contact-notes" rows="4">${taskNotes}</textarea>
+                </div>
+                <hr>
+                <div class="input-group input-group-static mb-4">
+                  <label>Sales Agent</label>
+                  <input class="form-control" id="jkanban-contact-agent" type="text" value="${taskAgent}" disabled>
+                </div>
+              `,
+              focusConfirm: false,
+              preConfirm: () => {
+                const updatedTaskId = document.getElementById('jkanban-task-id').value;
+                const updatedTaskContact = document.getElementById('jkanban-contact-name').value;
+                const updatedTaskPhone = document.getElementById('jkanban-contact-phone').value;
+                const updatedTaskEmail = document.getElementById('jkanban-contact-email').value;
+                const updatedTaskInterestRate = document.getElementById('jkanban-contact-interest').value;
+                const updatedTaskFollowUpDate = document.getElementById('jkanban-contact-followupdate').value;
+                const updatedTaskFollowUpTime = document.getElementById('jkanban-contact-followuptime').value;
+                const updatedTaskNotes = document.getElementById('jkanban-contact-notes').value;
+            
+                // AJAX request to update the task
+                return fetch('/sales-lead-update/', {  // Adjust the URL to your Django view
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'), // Include CSRF token
+                    },
+                    body: JSON.stringify({
+                        id: updatedTaskId,
+                        contact: updatedTaskContact,
+                        phone: updatedTaskPhone,
+                        email: updatedTaskEmail,
+                        interest_rate: updatedTaskInterestRate,
+                        followup_date: updatedTaskFollowUpDate,
+                        followup_time: updatedTaskFollowUpTime,
+                        notes: updatedTaskNotes,
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                }).then(data => {
+                    // Update task in Kanban board
+                    KanbanTest.replaceElement(updatedTaskId, {
+                      id: updatedTaskId,
+                      title: `
+                          ${getInterestBadge(updatedTaskInterestRate)} 
+                          <p class="text mt-2">${updatedTaskContact}</p>
+                          <div class="d-flex justify-content-between align-items-center">
+                              <span class="text-muted small">${updatedTaskFollowUpDate}</span>
+                              <span class="text-muted small">${updatedTaskFollowUpTime}</span>
+                          </div>
+                      `,
+                      class: ["border-radius-md"],
+                      "leadid":updatedTaskId,
+                        "contact": updatedTaskContact,
+                        "phone": updatedTaskPhone,
+                        "email": updatedTaskEmail,
+                        "interest_rate": updatedTaskInterestRate,
+                        "followup_date": updatedTaskFollowUpDate, 
+                        "followup_time": updatedTaskFollowUpTime,
+                        "notes": updatedTaskNotes,
+                      
+                        // Update other attributes if necessary
+                    });
+                }).catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+            },
+            
+              showCancelButton: true,
+              cancelButtonText: 'Close',
+              confirmButtonText: 'Save changes'
+            });
+
+          },
+          
+          buttonClick: function(el, boardId) {
+            if (document.querySelector("[data-id='" + boardId + "'] .itemform") === null) {
+              // create a form to enter element
+              var formItem = document.createElement("form");
+              formItem.setAttribute("class", "itemform");
+              formItem.innerHTML = `<div class="input-group">
+                <textarea class="form-control" rows="2" autofocus></textarea>
+                </div>
+                <div class="form-group">
+                  <button type="submit" class="btn bg-gradient-success btn-sm pull-end">Add</button>
+                  <button type="button" id="kanban-cancel-item" class="btn bg-gradient-light btn-sm pull-end me-2">Cancel</button>
+                </div>`;
+  
+              KanbanTest.addForm(boardId, formItem);
+              formItem.addEventListener("submit", function(e) {
+                e.preventDefault();
+                var text = e.target[0].value;
+                let newTaskId = "_" + text.toLowerCase().replace(/ /g, "_") + boardId;
+                KanbanTest.addElement(boardId, {
+                  id: newTaskId,
+                  title: text,
+                  class:[]
+                });
+                formItem.parentNode.removeChild(formItem);
+              });
+              document.getElementById("kanban-cancel-item").onclick = function() {
+                formItem.parentNode.removeChild(formItem);
+              };
+            }
+          },
+          addItemButton: true,
+          boards: [
+            {% for status, leads in sales_leads.items %}
+              {
+                id: "{{status}}",
+                title: "{{ sales_lead_choices|get_item:status }} - {{leads|length}}",
+                "data-id": "{{ status }}",
+                item: [
+                  {% if leads %}
+                    {% for lead in leads %}
+                      {
+                        id: "{{lead.lead_id}}",
+                        title: '{% if lead.interest_rating == 1%}<span class="badge badge-sm bg-gradient-danger">Very Low</span>{%elif lead.interest_rating == 2%}<span class="badge badge-sm bg-gradient-warning">Low</span>{%elif lead.interest_rating == 3%}<span class="badge badge-sm bg-gradient-warning">Moderate</span>{%elif lead.interest_rating == 4%}<span class="badge badge-sm bg-gradient-success">High</span>{%elif lead.interest_rating == 5%}<span class="badge badge-sm bg-gradient-success">Very High</span> {%endif%}<p class="text mt-2">{{lead.contact}}</p><div class="d-flex justify-content-between align-items-center"><span class="text-muted small">{{ lead.followup_date|date:'Y-m-d'  }}</span><span class="text-muted small">{{ lead.followup_time|time:"H:i" }}</span> </div>',
+                        class: ["border-radius-md"],
+                        "leadid":"{{lead.lead_id|escapejs}}",
+                        "contact": "{{lead.contact|escapejs}}",
+                        "phone": "{{lead.contact_phone|escapejs}}",
+                        "email": "{{lead.contact_email|escapejs}}",
+                        "interest_rate": "{{lead.interest_rating}}",
+                        "followup_date": "{{ lead.followup_date|date:'Y-m-d' }}", 
+                        "followup_time": "{{ lead.followup_time|time:'H:i' }}",
+                        "notes": "{{lead.notes|escapejs}}",
+                        "agent":"{{lead.agent_profile.full_name}}",
+                      },
+                    {% endfor %}
+                  {% endif %}
+                ]
+              },
+            {% endfor %}
+          ],
+          
+        });
+
+        // Handle update task button
+      }
+    })();
+
+    
+
+    const titleButtons = document.querySelectorAll('.kanban-title-button'); // Adjust the selector if needed
+    titleButtons.forEach(button => {
+      button.style.display = 'none'; // This will hide each button
+    });
+
+
+    /////////////////////////////////////////////////////////////////////
+
+
+
+
+      const kanbanBoards = document.querySelectorAll('.kanban-board');
+  
+      // Function to initialize Sortable for kanban boards
+      function initializeSortable() {
+          kanbanBoards.forEach(board => {
+              const dragArea = board.querySelector('.kanban-drag');
+              if (dragArea) {
+                  new Sortable(dragArea, {
+                      group: 'kanban',
+                      animation: 150,
+                      onEnd: function (evt) {
+                          const movedItemId = evt.item.getAttribute('data-eid'); 
+                          const newParentDiv = evt.to.closest('.kanban-board'); // This gives the new parent board
+                          let newParentId = newParentDiv ? newParentDiv.getAttribute('data-id') : null;
+  
+  
+                          // Send AJAX request to update lead status
+                          fetch('/sales-lead-update-status/', {
+                              method: 'POST',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'X-CSRFToken': getCookie2('csrftoken'), // Get CSRF token if CSRF protection is enabled
+                              },
+                              body: JSON.stringify({
+                                  id: movedItemId,
+                                  status: newParentId // Assuming newParentId reflects the new status
+                              })
+                          })
+                          .then(response => response.json())
+                          .then(data => {
+  
+                              if (data.status === 'success') {
+                                  // Notify other tabs of the update
+                                  const updatePayload = JSON.stringify({ id: movedItemId, status: newParentId });
+                                  localStorage.setItem('leadStatusUpdate', updatePayload);
+                              } else {
+                              }
+                          })
+                          .catch(error => {
+                          });
+                      }
+                  });
+              } else {
+                  console.error('No drag area found for this board:', board);
+              }
+          });
+      }
+  
+      // Function to get CSRF token for AJAX requests
+      function getCookie2(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.startsWith(name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+  
+
+
+
+          // Initial call to set up Sortable
+    initializeSortable();
+
+
+    
+  });
+  
+</script>
+
+-->
+
+ 
+
+<script>
+
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    function getInterestBadge(interestRating) {
+      // Convert the interestRating to an integer
+      interestRating = parseInt(interestRating, 10);
+  
+      switch (interestRating) {
+          case 1:
+              return '<span class="badge badge-sm bg-gradient-danger">Very Low</span>';
+          case 2:
+              return '<span class="badge badge-sm bg-gradient-warning">Low</span>';
+          case 3:
+              return '<span class="badge badge-sm bg-gradient-warning">Moderate</span>';
+          case 4:
+              return '<span class="badge badge-sm bg-gradient-success">High</span>';
+          case 5:
+              return '<span class="badge badge-sm bg-gradient-success">Very High</span>';
+          default:
+              return '<span class="badge badge-sm bg-gradient-secondary">Unknown</span>'; // Fallback for unexpected values
+      }
+    }
+
+
+
+
+   // Function to initialize the jKanban board
+function initializeKanbanBoard() {
+  if (document.getElementById("myKanban")) {
+      // Clear existing Kanban board
+      const kanbanElement = document.getElementById("myKanban");
+      kanbanElement.innerHTML = '';  // Clear existing Kanban items
+
+      var KanbanTest = new jKanban({
+          element: "#myKanban",
+          gutter: "10px",
+          widthBoard: "350px",
+          click: el => {
+              let taskId = el.getAttribute("data-leadid");
+              let taskContact = el.getAttribute("data-contact");
+              let taskPhone = el.getAttribute("data-phone");
+              let taskEmail = el.getAttribute("data-email");
+              let taskInterestRate = el.getAttribute("data-interest_rate");
+              let taskFollowUpDate = el.getAttribute("data-followup_date");
+              let taskFollowUpTime = el.getAttribute("data-followup_time");
+              let taskNotes = el.getAttribute("data-notes");
+              let taskAgent = el.getAttribute("data-agent");
+
+              // Show SweetAlert
+              Swal.fire({
+                  title: 'Contact Details',
+                  html: `
+                  <input id="jkanban-task-id" class="d-none" value="${taskId}" />
+                  <div class="input-group input-group-static mb-4">
+                    <label>Contact / Organization</label>
+                    <input class="form-control" id="jkanban-contact-name" type="text" value="${taskContact}">
+                  </div>
+                  <div class="input-group input-group-static mb-4">
+                    <label>Phone</label>
+                    <input class="form-control" id="jkanban-contact-phone" type="text" value="${taskPhone}">
+                  </div>
+                  <div class="input-group input-group-static mb-4">
+                    <label>Email</label>
+                    <input class="form-control" id="jkanban-contact-email" type="text" value="${taskEmail}">
+                  </div>
+                  <div class="input-group input-group-static mb-4">
+                    <label>Interest Rate (1-5)</label>
+                    <input class="form-control" id="jkanban-contact-interest" type="text" value="${taskInterestRate}">
+                  </div>
+                  <div class="input-group input-group-static mb-4">
+                    <label>Follow Up Date</label>
+                    <input class="form-control" id="jkanban-contact-followupdate" type="date" value="${taskFollowUpDate}">
+                  </div>
+                  <div class="input-group input-group-static mb-4">
+                    <label>Follow Up Time</label>
+                    <input class="form-control" id="jkanban-contact-followuptime" type="time" value="${taskFollowUpTime}">
+                  </div>
+                  <div class="input-group input-group-static">
+                    <label>Notes</label>
+                    <textarea class="form-control" id="jkanban-contact-notes" rows="4">${taskNotes}</textarea>
+                  </div>
+                  <hr>
+                  <div class="input-group input-group-static mb-4">
+                    <label>Sales Agent</label>
+                    <input class="form-control" id="jkanban-contact-agent" type="text" value="${taskAgent}" disabled>
+                  </div>
+                  `,
+                  focusConfirm: false,
+                  preConfirm: () => {
+                      const updatedTaskId = document.getElementById('jkanban-task-id').value;
+                      const updatedTaskContact = document.getElementById('jkanban-contact-name').value;
+                      const updatedTaskPhone = document.getElementById('jkanban-contact-phone').value;
+                      const updatedTaskEmail = document.getElementById('jkanban-contact-email').value;
+                      const updatedTaskInterestRate = document.getElementById('jkanban-contact-interest').value;
+                      const updatedTaskFollowUpDate = document.getElementById('jkanban-contact-followupdate').value;
+                      const updatedTaskFollowUpTime = document.getElementById('jkanban-contact-followuptime').value;
+                      const updatedTaskNotes = document.getElementById('jkanban-contact-notes').value;
+
+                      // AJAX request to update the task
+                      return fetch('/sales-lead-update/', {
+                          method: 'POST',
+                          headers: {
+                              'Content-Type': 'application/json',
+                              'X-CSRFToken': getCookie('csrftoken'),
+                          },
+                          body: JSON.stringify({
+                              id: updatedTaskId,
+                              contact: updatedTaskContact,
+                              phone: updatedTaskPhone,
+                              email: updatedTaskEmail,
+                              interest_rate: updatedTaskInterestRate,
+                              followup_date: updatedTaskFollowUpDate,
+                              followup_time: updatedTaskFollowUpTime,
+                              notes: updatedTaskNotes,
+                          })
+                      }).then(response => {
+                          if (!response.ok) {
+                              throw new Error('Network response was not ok');
+                          }
+                          return response.json();
+                      }).then(data => {
+                          // Update task in Kanban board
+                          KanbanTest.replaceElement(updatedTaskId, {
+                              id: updatedTaskId,
+                              title: `
+                                  ${getInterestBadge(updatedTaskInterestRate)} 
+                                  <p class="text mt-2">${updatedTaskContact}</p>
+                                  <div class="d-flex justify-content-between align-items-center">
+                                      <span class="text-muted small">${updatedTaskFollowUpDate}</span>
+                                      <span class="text-muted small">${updatedTaskFollowUpTime}</span>
+                                  </div>
+                              `,
+                              class: ["border-radius-md"],
+                              "leadid": updatedTaskId,
+                              "contact": updatedTaskContact,
+                              "phone": updatedTaskPhone,
+                              "email": updatedTaskEmail,
+                              "interest_rate": updatedTaskInterestRate,
+                              "followup_date": updatedTaskFollowUpDate,
+                              "followup_time": updatedTaskFollowUpTime,
+                              "notes": updatedTaskNotes,
+                          });
+                      }).catch(error => {
+                          console.error('There was a problem with the fetch operation:', error);
+                      });
+                  },
+                  showCancelButton: true,
+                  cancelButtonText: 'Close',
+                  confirmButtonText: 'Save changes'
+              });
+          },
+          buttonClick: function(el, boardId) {
+              if (document.querySelector("[data-id='" + boardId + "'] .itemform") === null) {
+                  var formItem = document.createElement("form");
+                  formItem.setAttribute("class", "itemform");
+                  formItem.innerHTML = `<div class="input-group">
+                      <textarea class="form-control" rows="2" autofocus></textarea>
+                  </div>
+                  <div class="form-group">
+                      <button type="submit" class="btn bg-gradient-success btn-sm pull-end">Add</button>
+                      <button type="button" id="kanban-cancel-item" class="btn bg-gradient-light btn-sm pull-end me-2">Cancel</button>
+                  </div>`;
+
+                  KanbanTest.addForm(boardId, formItem);
+                  formItem.addEventListener("submit", function(e) {
+                      e.preventDefault();
+                      var text = e.target[0].value;
+                      let newTaskId = "_" + text.toLowerCase().replace(/ /g, "_") + boardId;
+                      KanbanTest.addElement(boardId, {
+                          id: newTaskId,
+                          title: text,
+                          class: []
+                      });
+                      formItem.parentNode.removeChild(formItem);
+                  });
+                  document.getElementById("kanban-cancel-item").onclick = function() {
+                      formItem.parentNode.removeChild(formItem);
+                  };
+              }
+          },
+          addItemButton: true,
+          boards: [
+              {% for status, leads in sales_leads.items %}
+              {
+                  id: "{{status}}",
+                  title: "{{ sales_lead_choices|get_item:status }} - {{leads|length}}",
+                  "data-id": "{{ status }}",
+                  item: [
+                      {% if leads %}
+                      {% for lead in leads %}
+                      {
+                          id: "{{lead.lead_id}}",
+                          title: '{% if lead.interest_rating == 1%}<span class="badge badge-sm bg-gradient-danger">Very Low</span>{%elif lead.interest_rating == 2%}<span class="badge badge-sm bg-gradient-warning">Low</span>{%elif lead.interest_rating == 3%}<span class="badge badge-sm bg-gradient-warning">Moderate</span>{%elif lead.interest_rating == 4%}<span class="badge badge-sm bg-gradient-success">High</span>{%elif lead.interest_rating == 5%}<span class="badge badge-sm bg-gradient-success">Very High</span> {%endif%}<p class="text mt-2">{{lead.contact}}</p><div class="d-flex justify-content-between align-items-center"><span class="text-muted small">{{ lead.followup_date|date:'Y-m-d'  }}</span><span class="text-muted small">{{ lead.followup_time|time:"H:i" }}</span> </div>',
+                          class: ["border-radius-md"],
+                          "leadid": "{{lead.lead_id|escapejs}}",
+                          "contact": "{{lead.contact|escapejs}}",
+                          "phone": "{{lead.phone_number|escapejs}}",
+                          "email": "{{lead.email|escapejs}}",
+                          "interest_rate": "{{lead.interest_rating}}",
+                          "followup_date": "{{ lead.followup_date|date:'Y-m-d' }}",
+                          "followup_time": "{{ lead.followup_time|time:'H:i' }}",
+                          "notes": "{{ lead.notes|escapejs }}",
+                          "agent":"{{lead.agent_profile.full_name}}",
+                      },
+                      {% endfor %}
+                      {% endif %}
+                  ]
+              },
+              {% endfor %}
+          ]
+      });
+  }
+  const titleButtons = document.querySelectorAll('.kanban-title-button'); // Adjust the selector if needed
+  titleButtons.forEach(button => {
+    button.style.display = 'none'; // This will hide each button
+  });
+}
+
+// Initial load of the Kanban board
+initializeKanbanBoard();
+
+// Function to refresh the Kanban board
+function refreshKanbanBoard() {
+  initializeKanbanBoard();
+
+}
+
+
+    
+
+   
+
+
+    /////////////////////////////////////////////////////////////////////
+
+
+    const kanbanContainers = Array.from(document.querySelectorAll('.kanban-drag')); // Get all kanban-drag containers
+
+    // Initialize Dragula for kanban item drag-and-drop
+    const drake = dragula({
+        containers: kanbanContainers,  // Target the kanban-drag containers
+        copy: false,  // Items are moved, not copied
+        accepts: (el, target, source, sibling) => true,  // Allow dropping in any valid container
+        removeOnSpill: false  // Prevent removal of items if dragged outside containers
+    });
+    
+    // Event listener for when an item is dropped
+    drake.on('drop', (el, target, source, sibling) => {
+        console.log('Item dropped');
+    
+        // Append the dragged element to the new container manually
+        if (target) {
+            target.appendChild(el);  // Move the element to the new container
+        }
+    
+        const movedItemId = el.getAttribute('data-eid');
+        const newParentDiv = target.closest('.kanban-board');  // Get the new parent board
+        let newParentId = newParentDiv ? newParentDiv.getAttribute('data-id') : null;
+    
+        // Send AJAX request to update lead status
+        fetch('/sales-lead-update-status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie2('csrftoken'),  // Get CSRF token for security
+            },
+            body: JSON.stringify({
+                id: movedItemId,
+                status: newParentId  // Update status based on new parent ID
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Notify other tabs of the update
+                const updatePayload = JSON.stringify({ id: movedItemId, status: newParentId });
+                localStorage.setItem('leadStatusUpdate', updatePayload);
+            } else {
+                // Handle failure case
+                console.error('Failed to update status:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error during fetch:', error);
+        });
+    });
+    
+    // Function to get CSRF token for AJAX requests
+    function getCookie2(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(`${name}=`)) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+
+
+
+    
+  });
+  
+  
+
+</script>
+
+
+
+
+
+<script>
+    // Function to retrieve CSRF token from cookies
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.startsWith(name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+    }
+
+    function showNewLeadForm() {
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn bg-gradient-info',
+          cancelButton: 'btn bg-gradient-dark'
+        },
+        buttonsStyling: false
+      });
+
+      swalWithBootstrapButtons.fire({
+        title: `New Lead`,
+        html: `
+          <div class="card border-0 shadow-sm input-group input-group-static">
+            <form id="leadForm" class="text-center p-3">
+              
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Contact / Organization</label>
+                    <input type="text" class="form-control" name="contact" id="contact" required>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Phone Number</label>
+                    <input type="text" class="form-control" name="phone" id="phone" required>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Email</label>
+                    <input type="email" class="form-control" name="email" id="email" required>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Interest Rate (1-5)</label>
+                    <input type="number" class="form-control" name="interest" id="interest" min="1" max="5" value="1" required>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Follow Up Date</label>
+                    <input type="date" class="form-control" name="date" id="date" required>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Follow Up Time</label>
+                    <input type="time" class="form-control" name="time" id="time" required>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Notes</label>
+                    <textarea class="form-control" rows="2" name="notes" id="notes" required></textarea>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        confirmButtonColor: '#3F8C4D',
+        cancelButtonText: 'Cancel',
+        cancelButtonColor: '#dc3545',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          const formData = {
+            contact: document.getElementById('contact').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            interest: document.getElementById('interest').value,
+            date: document.getElementById('date').value,
+            time: document.getElementById('time').value,
+            notes: document.getElementById('notes').value,
+
+          };
+
+          // Fetch CSRF token from cookie
+          const csrftoken = getCookie('csrftoken');
+
+          // Send POST request to create new lead
+          return fetch(`/sales-lead-submit/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken // Include CSRF token in headers
+            },
+            body: JSON.stringify(formData) // Include all form data
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Network response was not ok - ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .catch(error => {
+            Swal.showValidationMessage(`Request failed: ${error}`);
+          });
+        },
+        allowOutsideClick: () => !Swal.isLoading(),
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Lead Added to Follow Up!',
+            icon: 'success'
+          });
+          location.href = location.href;
+
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          Swal.fire({
+            title: 'Cancelled',
+            icon: 'error'
+          });
+        }
+
+      });
+
+      // Enable/disable submit button based on form input
+      const enableSubmitButton = () => {
+        const isFormValid = document.getElementById('leadForm').checkValidity();
+        swalWithBootstrapButtons.getConfirmButton().disabled = !isFormValid;
+      };
+
+      // Attach input event listeners to all fields
+      const inputs = document.querySelectorAll('#leadForm input, #leadForm textarea');
+      inputs.forEach(input => {
+        input.addEventListener('input', enableSubmitButton);
+      });
+
+      // Initial call to set the button state correctly
+      enableSubmitButton();
+    }
+</script>
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+  var win = navigator.platform.indexOf('Win') > -1;
+  if (win && document.querySelector('#sidenav-scrollbar')) {
+    var options = {
+      damping: '0.5'
+    }
+    Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+  }
+</script>
+
+
+
+
+
+
+
+
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

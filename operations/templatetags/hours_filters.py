@@ -4,6 +4,7 @@ from django.db.models import Sum
 from core.models import WorkStatus, ServerSetting
 from datetime import timedelta
 
+
 register = template.Library()
 
 @register.filter
@@ -219,3 +220,28 @@ def get_current_status(profile):
     if profile:
         return profile.get_current_status()
     return 'offline'  # Default value if profile is not available
+
+
+
+@register.filter
+def format_integer(value):
+    if isinstance(value, (int, float)):
+        return "{:.1f}".format(value).rstrip('0').rstrip('.')
+    return value
+
+
+
+@register.filter
+def format_abs_value(value):
+    if isinstance(value, (int, float)):
+        abs_value = abs(value)  # Get the absolute value
+        return "{:.1f}".format(abs_value).rstrip('0').rstrip('.')  # Format to one decimal place
+    return value
+
+
+@register.filter
+def multiply(value, multiplier):
+    try:
+        return float(value) * float(multiplier)
+    except (ValueError, TypeError):
+        return value

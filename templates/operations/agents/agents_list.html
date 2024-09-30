@@ -75,7 +75,7 @@
                 <th>Auditing</th>
                 <th>Attendance</th>
                 <th>Lateness</th>
-                
+                <th>MTD</th>      
               </tr>
             </thead>
             <tbody>
@@ -139,7 +139,7 @@
 
                 <td class="text-xs font-weight-normal">
                   <div class="d-flex align-items-center">
-                    <a href="/agent-leads/{{agent.id}}">
+                    <a href="/agent-leads/{{agent.id}}-{{month}}-{{year}}">
                       <i class="material-icons text-secondary position-relative text-lg">house</i>
                     </a>
                   </div>
@@ -163,6 +163,14 @@
                   <div class="d-flex align-items-center">
                     <a href="/lateness-monitor-agent/{{agent.id}}-{{month}}-{{year}}">
                       <i class="material-icons text-secondary position-relative text-lg">access_time</i>
+                    </a>
+                  </div>
+                </td>
+
+                <td class="text-xs font-weight-normal">
+                  <div class="d-flex align-items-center">
+                    <a href="/invoice/{{agent.id}}-{{month}}-{{year}}">
+                      <i class="material-icons text-secondary position-relative text-lg">monetization_on</i>
                     </a>
                   </div>
                 </td>

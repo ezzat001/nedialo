@@ -75,11 +75,13 @@
                             <div class="col-sm-6">
                                 <div class="input-group input-group-static">
                                     <label for="exampleFormControlSelect1">List Name *</label>
-                                    <select class="form-control" name="dialer_list" id="dialer_list" required>
-                                        <option value="">Select a contact list</option>
+                                    <select class="form-control" name="dialer_list" id="dialer_list" >
+                                        <option value="0" selected>None</option>
+                                        <!--
                                         {% for list in contactlists %}
                                             <option value="{{list.id}}">{{list.name}}</option>
                                         {% endfor %}
+                                         -->
                                 
                                     </select>
                                 </div>

@@ -5,7 +5,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from .models import Application
 from django.conf import settings as django_settings
-from django.http import JsonResponse,HttpResponse, HttpResponseRedirect
+from django.http import JsonResponse,HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_http_methods
 
 from django.core.exceptions import ValidationError
@@ -27,6 +27,7 @@ from django.utils.safestring import mark_safe
 import os
 import requests
 from django.views.decorators.http import require_http_methods
+from core.decorators import *
 
 
 
@@ -101,6 +102,8 @@ def logoutview(request):
 
     return redirect('/login')
 
+
+@permission_required('caller_dashboard')
 @login_required
 def home(request):
     today = (tz.localtime(tz.now())).date()
@@ -221,6 +224,7 @@ def home(request):
     
     return render(request,'dashboard/agent.html',context)
 
+
 @login_required
 def user_profile(request):
     context = {}
@@ -234,7 +238,7 @@ def lead_submission(request):
     context = {"settings":settings,"api_token":django_settings.HERE_API}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
-    context['campaigns'] = Campaign.objects.filter(status="active")
+    context['campaigns'] = Campaign.objects.filter(campaign_type="calling", status="active")
     context['contactlists'] = ContactList.objects.filter(active=True)
     if request.method == "POST":
         lat,long = 0,0
@@ -260,7 +264,10 @@ def lead_submission(request):
     
         agent_profile = Profile.objects.get(user=request.user)
         campaign = Campaign.objects.get(id=campid)
-        contact_list = ContactList.objects.get(id=contactlistid)
+        if int(contactlistid) == 0:
+            contact_list = None
+        else:
+            contact_list = ContactList.objects.get(id=contactlistid)
         lead = Lead.objects.create(
             agent_user=request.user,
             agent_profile=agent_profile,
@@ -289,8 +296,8 @@ def lead_submission(request):
 
     return render(request,'leads/lead_submission.html', context)
 
-
-
+@permission_required('my_leads')
+@login_required
 def my_leads(request, month, year):
 
  
@@ -422,8 +429,7 @@ def my_leads(request, month, year):
 
 
 
-
-
+@login_required
 def lead_report(request, lead_id):
 
     context = {}
@@ -431,6 +437,10 @@ def lead_report(request, lead_id):
     context['profile'] = Profile.objects.get(user=request.user)
 
     lead = Lead.objects.get(lead_id=lead_id,active=True)
+
+    if lead.agent_user != request.user:
+        return HttpResponseForbidden("You do not have permission to access this resource.")
+
     context['campaigns'] = Campaign.objects.filter(status="active")
     context['contactlists'] = ContactList.objects.filter(active=True)
 
@@ -544,7 +554,7 @@ def leads_quality(request, month, year):
 
 
 
-
+@permission_required('lead_scoring')
 @login_required
 def lead_scoring(request, month, year):
     context = {"settings": settings}
@@ -579,7 +589,7 @@ def lead_scoring(request, month, year):
         pushed__month=month
     )
     
-    context['leads'] = leads.order_by("-pushed")[:10]
+    context['leads'] = leads.order_by("-pushed")
     # Calculate lead points per campaign
     leads_per_campaign = leads.values('campaign').annotate(lead_count=Count('lead_id')).order_by('campaign')
     campaign_leads_count = {
@@ -615,7 +625,7 @@ def lead_scoring(request, month, year):
 
 
 
-
+@permission_required('leaderboard')
 @login_required
 def leads_leaderboard(request, month, year):
     context = {"settings": settings}
@@ -674,7 +684,8 @@ def leads_leaderboard(request, month, year):
 
 
 
-
+@permission_required('qa_pending')
+@login_required
 def quality_pending(request):
 
     context = {}
@@ -807,18 +818,23 @@ def quality_pending(request):
 
 
 
-
-def quality_lead_reports(request):
+@permission_required('qa_lead_reports')
+@login_required
+def quality_lead_reports(request, month, year):
 
     context = {}
 
     now = tz.now()
-    current_year = now.year
-    current_month = now.month
+    current_year = year
+    current_month = month
     current_month_name = _date(now, "F")
-    
-    context['year'] = current_year
-    context['month_name'] =current_month_name
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+
 
     
 
@@ -976,7 +992,9 @@ def quality_lead_reports(request):
     
 
 
-    context['all_leads'] = Lead.objects.filter(active=True).order_by('-pushed')
+    context['all_leads'] = Lead.objects.filter(active=True        
+                                               ,pushed__year=current_year,
+                                                pushed__month=current_month).order_by('-pushed')
     
     
     
@@ -986,20 +1004,25 @@ def quality_lead_reports(request):
     return render(request, "quality/lead_reports.html",context)
 
 
-
-
-def agent_lead_reports(request, agent_id):
+@permission_required('agents_table')
+@login_required
+def agent_lead_reports(request, agent_id,month , year ):
 
     context = {}
 
     now = tz.now()
-    current_year = now.year
-    current_month = now.month
+    current_year = year
+    current_month = month
     current_month_name = _date(now, "F")
     
     context['year'] = current_year
     context['month_name'] =current_month_name
-
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
     
 
 
@@ -1007,6 +1030,8 @@ def agent_lead_reports(request, agent_id):
 
     agent_profile = Profile.objects.get(id=agent_id)
     context['agent_profile'] = agent_profile
+
+    context['agentid'] = agent_profile.id
 
     context['qualified'] = Lead.objects.filter(
         pushed__year=current_year,
@@ -1167,7 +1192,9 @@ def agent_lead_reports(request, agent_id):
     
 
 
-    context['all_leads'] = Lead.objects.filter(agent_profile=agent_profile,active=True).order_by('-pushed')
+    context['all_leads'] = Lead.objects.filter(agent_profile=agent_profile,active=True,
+                                               pushed__month=current_month,
+                                               pushed__year=current_year).order_by('-pushed')
     
     
     
@@ -1178,7 +1205,8 @@ def agent_lead_reports(request, agent_id):
 
 
 
-
+@permission_required('qa_lead_reports')
+@login_required
 @require_http_methods(["POST"])
 def fire_lead(request, lead_id):
     try:
@@ -1218,12 +1246,19 @@ def get_lead_status(request, lead_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+@permission_required('qa_lead_handling')
+@login_required
 def lead_handling(request, lead_id):
 
     context = {}
 
     context['profile'] = Profile.objects.get(user=request.user)
     lead = Lead.objects.get(lead_id=lead_id,active=True)
+
+    if not lead.assigned:
+        return HttpResponseForbidden("You do not have permission to access this resource.")
+
     context['campaigns'] = Campaign.objects.filter(status="active")
     context['contactlists'] = ContactList.objects.filter(active=True)
 
@@ -1320,6 +1355,7 @@ def lead_handling(request, lead_id):
     return render(request, 'quality/lead_handling.html', context)
 
 
+@permission_required('qa_auditing')
 @login_required
 def feedbacks_table(request):
 
@@ -1331,7 +1367,7 @@ def feedbacks_table(request):
 
     return render(request,'quality/feedbacks.html',context)
 
-
+@permission_required('agents_table')
 @login_required
 def feedbacks_agent(request, agent_id):
 
@@ -1346,7 +1382,7 @@ def feedbacks_agent(request, agent_id):
     return render(request,'quality/feedbacks.html',context)
 
 
-
+@permission_required('qa_auditing')
 @login_required
 def feedback_single(request):
 
@@ -1397,7 +1433,7 @@ def feedback_single(request):
     return render(request,'quality/feedback_single.html',context)
 
 
-
+@permission_required('qa_auditing')
 @login_required
 def feedback_multiple(request):
 
@@ -1448,7 +1484,7 @@ def feedback_multiple(request):
 
 
 
-
+@permission_required('qa_auditing_handling')
 @login_required
 def feedback_report(request, id):
 
@@ -1475,6 +1511,8 @@ def feedback_report(request, id):
     
     return render(request,'quality/feedback_report.html',context)
 
+
+@permission_required('qa_agents_table')
 @login_required
 def quality_agents(request, month, year):
     context = {"settings": settings}
@@ -1600,7 +1638,8 @@ def handle_audio_upload(request):
             new_application.shift = request.POST.get('shift')
             new_application.experience = request.POST.get('previous_experience')
             new_application.save()
-            return JsonResponse({'success': 'Application submitted successfully'})
+            
+            return redirect('/')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     else:
@@ -1688,7 +1727,7 @@ def payment_info(request):
         elif instapay_choice == "on":
             profile.payment_method = "instapay"
         else:
-            redirect('/')
+            return redirect('/')
         profile.save()
     return redirect('/settings')
 
@@ -1748,7 +1787,7 @@ def validate_file(file):
 
 
 
-
+@permission_required('leave_request')
 @csrf_exempt
 @login_required
 def leave_request(request):
@@ -1794,7 +1833,7 @@ def leave_request(request):
     return render(request,'requests/leave.html', context)
 
 
-
+@permission_required('leave_request')
 @login_required
 def leave_request_list(request):
     context = {}
@@ -1808,8 +1847,13 @@ def leave_request_list(request):
 def delete_leave(request, leave_id):
     try:
         leave = Leave.objects.get(id=leave_id)
-        leave.delete()
-        return JsonResponse({'message': 'Leave deleted successfully.'}, status=200)
+        if leave.status == "pending":
+
+            leave.delete()
+            return JsonResponse({'message': 'Leave deleted successfully.'}, status=200)
+        else:
+            return JsonResponse({'message': 'You Can not Delete a Handled Request.'}, status=403)
+
     except Leave.DoesNotExist:
         return JsonResponse({'message': 'Leave not found.'}, status=404)
 
@@ -1817,7 +1861,7 @@ def delete_leave(request, leave_id):
 
 
 
-
+@permission_required('leave_handling')
 @login_required
 def leave_handling_list(request):
     context = {}
@@ -1828,7 +1872,7 @@ def leave_handling_list(request):
     return render(request,'requests/leaves_list_handling.html', context)
 
 
-
+@permission_required('leave_handling')
 @login_required
 def leave_report(request, leave_id):
     context = {}
@@ -1882,7 +1926,7 @@ def leave_report(request, leave_id):
 
 
 
-
+@permission_required('action_request')
 @csrf_exempt
 @login_required
 def action_request(request):
@@ -1931,7 +1975,7 @@ def action_request(request):
     return render(request,'requests/action.html', context)
 
 
-
+@permission_required('action_request')
 @login_required
 def action_request_list(request):
     context = {}
@@ -1942,20 +1986,25 @@ def action_request_list(request):
     return render(request,'requests/actions_list.html', context)
 
 
+
 @require_http_methods(["DELETE"])
 def delete_action(request, action_id):
     try:
         action = Action.objects.get(id=action_id)
-        action.delete()
-        return JsonResponse({'message': 'Leave deleted successfully.'}, status=200)
-    except Leave.DoesNotExist:
-        return JsonResponse({'message': 'Leave not found.'}, status=404)
+        if action.status == "pending":
+
+            action.delete()
+            return JsonResponse({'message': 'Action deleted successfully.'}, status=200)
+        else:
+            return JsonResponse({'message': 'You Can not Delete a Handled Request.'}, status=403)
+    except Action.DoesNotExist:
+        return JsonResponse({'message': 'Action not found.'}, status=404)
 
 
 
 
 
-
+@permission_required('action_handling')
 @login_required
 def action_handling_list(request):
     context = {}
@@ -1966,7 +2015,7 @@ def action_handling_list(request):
     return render(request,'requests/action_list_handling.html', context)
 
 
-
+@permission_required('action_handling')
 @login_required
 def action_report(request, action_id):
     context = {}
@@ -2012,7 +2061,108 @@ def action_report(request, action_id):
 
 
 
+@permission_required('prepayment_request')
+@login_required
+def prepayment_request(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
 
+    if request.method == "POST":
+        data = request.POST
+        agent_profile = Profile.objects.get(user=request.user)
+        timeframe = data.get('timeframe')
+        amount = data.get('amount')
+        payment_account = data.get('payment_account')
+        reason = data.get('reason')
+
+        
+
+        
+
+        # Create Leave instance with or without the file
+        prepayment = Prepayment.objects.create(
+            agent=request.user,
+            agent_profile=agent_profile,
+            timeframe=timeframe,
+            amount=amount,
+            payment_account=payment_account,
+        )
+
+        print(prepayment)
+    
+        
+
+        return redirect('/prepayment-requests')
+    return render(request,'requests/prepayment.html', context)
+
+
+@permission_required('prepayment_request')
+@login_required
+def prepayment_request_list(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['prepayments'] = Prepayment.objects.filter(active=True, agent=request.user).order_by('-submission_date')
+    context['profile'] = profile
+
+    return render(request,'requests/prepayments_list.html', context)
+
+@require_http_methods(["DELETE"])
+def delete_prepayment(request, prepayment_id):
+    try:
+        prepayment = Prepayment.objects.get(id=prepayment_id)
+        if prepayment.status == "pending":
+
+            prepayment.delete()
+            return JsonResponse({'message': 'Prepayment deleted successfully.'}, status=200)
+        else:
+            return JsonResponse({'message': 'You Can not Delete a Handled Request.'}, status=403)
+    except Prepayment.DoesNotExist:
+        return JsonResponse({'message': 'Prepayment not found.'}, status=404)
+
+
+
+
+
+@permission_required('prepayment_handling')
+@login_required
+def prepayment_handling_list(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['prepayments'] = Prepayment.objects.filter(active=True).order_by('-submission_date')
+    context['profile'] = profile
+
+    return render(request,'requests/prepayments_list_handling.html', context)
+
+
+@permission_required('prepayment_handling')
+@login_required
+def prepayment_report(request, prepayment_id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['prepayment_status'] = REQUESTS_STATUS_CHOICES
+    context['prepayment'] = Prepayment.objects.get(id=prepayment_id)
+
+    if request.method == "POST":
+        data = request.POST
+        amount = data.get('amount')
+        status = data.get('prepayment_status')
+ 
+        
+        prepayment = Prepayment.objects.get(id=prepayment_id)
+
+
+        prepayment.amount=amount
+        prepayment.status=status
+        prepayment.handled_by=request.user
+        prepayment.save()
+       
+            
+        
+
+        return redirect('/prepayments-handling')
+    return render(request,'requests/prepayment_report.html', context)
 
 
 
@@ -2031,7 +2181,7 @@ def format_duration(seconds):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
-
+@permission_required('work_status')
 @login_required
 def update_status(request):
     new_status = request.POST.get('status')

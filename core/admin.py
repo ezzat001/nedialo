@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import *
 
+
 # Register your models here.
 
 @admin.register(ServerSetting)
@@ -23,7 +24,7 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Application)
 class ApplicationAdmin(admin.ModelAdmin):
-    list_display = ('full_name','time','date','position','active')
+    list_display = ('full_name','submission_date','position','active')
     readonly_fields = ('id',)
 
 
@@ -56,7 +57,7 @@ class CampaignAdmin(admin.ModelAdmin):
 
 @admin.register(DialerCredentials)
 class DialerCredentialsAdmin(admin.ModelAdmin):
-    list_display = ('campaign', 'dialer','account_type',"username",'password','active')
+    list_display = ('campaign', 'agent_profile','account_type',"username",'password','active')
     
 
 @admin.register(DataSourceCredentials)
@@ -79,10 +80,7 @@ class ContactListAdmin(admin.ModelAdmin):
 class LeadAdmin(admin.ModelAdmin):
     list_display = ('agent_user', 'lead_id','campaign','pushed','seller_name','status','handled_by')
 
-
-@admin.register(LeadHandlingDB)
-class LeadHandlingDBAdmin(admin.ModelAdmin):
-    list_display = ('agent_profile', 'campaign', 'active')
+ 
 
 
 @admin.register(Leave)
@@ -104,3 +102,8 @@ admin.site.register(WorkStatus)
 admin.site.register(Absence)
 
 admin.site.register(SeatAssignmentLog)
+
+admin.site.register(Prepayment)
+
+
+admin.site.register(SalesLead)

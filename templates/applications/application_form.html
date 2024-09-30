@@ -224,4 +224,95 @@
 
 
 
+
+
+
+<script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+  
+  
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      tippy('[data-tippy-content]', {
+        placement: 'top', // Default placement
+        fallbackPlacements: ['top', 'right', 'bottom', 'left'], // Fallbacks if top doesn't fit
+        boundary: 'window', // Consider the window as the boundary for fitting
+        animation: 'scale', // Optional: Define animation style
+        theme: 'light', // Optional: Define theme
+      });
+    });
+  </script>
+  
+  
+  
+  
+  <script>
+  
+      document.addEventListener('DOMContentLoaded', function () {
+          if (document.getElementById('position')) {
+              var residence = document.getElementById('position');
+              const example = new Choices(residence, {
+                  searchEnabled: false,
+                  searchChoices: false,
+                  searchFields: ['label', 'value'], // Fields to search within
+                  searchPlaceholderValue: 'Search...', // Placeholder for the search input
+                  shouldSort: false, // Disable sorting of choices
+                  itemSelectText: '', // Text shown in the dropdown when an item is selected
+                  fuseOptions: {
+                      includeScore: false, // Include score in search results
+                      threshold: 0.3, // Match threshold for search results
+                      keys: ['label', 'value'] // Fields to search within
+                  }
+              });
+          }
+  
+  
+          if (document.getElementById('education')) {
+              var residence = document.getElementById('education');
+              const example = new Choices(residence, {
+                  searchEnabled: false,
+                  searchChoices: false,
+                  searchFields: ['label', 'value'], // Fields to search within
+                  searchPlaceholderValue: 'Search...', // Placeholder for the search input
+                  shouldSort: false, // Disable sorting of choices
+                  itemSelectText: '', // Text shown in the dropdown when an item is selected
+                  fuseOptions: {
+                      includeScore: false, // Include score in search results
+                      threshold: 0.3, // Match threshold for search results
+                      keys: ['label', 'value'] // Fields to search within
+                  }
+              });
+          }
+  
+  
+  
+          if (document.getElementById('shift')) {
+              var residence = document.getElementById('shift');
+              const example = new Choices(residence, {
+                  searchEnabled: false,
+                  searchChoices: false,
+                  searchFields: ['label', 'value'], // Fields to search within
+                  searchPlaceholderValue: 'Search...', // Placeholder for the search input
+                  shouldSort: false, // Disable sorting of choices
+                  itemSelectText: '', // Text shown in the dropdown when an item is selected
+                  fuseOptions: {
+                      includeScore: false, // Include score in search results
+                      threshold: 0.3, // Match threshold for search results
+                      keys: ['label', 'value'] // Fields to search within
+                  }
+              });
+          }
+  
+      });
+  
+  </script>
+
 {% endblock %}

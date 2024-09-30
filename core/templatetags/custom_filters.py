@@ -1,6 +1,14 @@
 from django import template
+
 from core.models import DialerCredentials,DataSourceCredentials,Profile
 register = template.Library()
+
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
 
 @register.filter
 def format_float(value):
@@ -126,6 +134,9 @@ def user_fullname(user):
     except:
         profile = "N/A"
     return profile
+
+
+
 
 
 

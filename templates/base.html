@@ -390,17 +390,12 @@ crossorigin=""></script>
           <div class="collapse" id="ProfileNav" style="">
             <ul class="nav ">
               <li class="nav-item">
-                <a class="nav-link text-grey" href="/" target="_parent">
+                <a class="nav-link text-grey" href="/settings" target="_parent">
                   <span class="material-icons"> person </span>
                   <span class="sidenav-normal  ms-3  ps-1"> My Profile </span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/settings" target="_parent">
-                  <span class="material-icons">settings</span>
-                  <span class="sidenav-normal  ms-3  ps-1"> Settings </span>
-                </a>
-              </li>
+             
               <li class="nav-item">
                 <a class="nav-link text-grey " href="/logout" target="_parent">
                   <span class="material-icons">logout</span>
@@ -419,7 +414,7 @@ crossorigin=""></script>
           </a>
         </li>
 
-
+        <!--
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#trainingResources" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">menu_book</i>
@@ -450,8 +445,9 @@ crossorigin=""></script>
             </ul>
           </div>
         </li>
+        -->
 
-
+        <!--
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#campaingscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">ads_click</i>
@@ -478,7 +474,7 @@ crossorigin=""></script>
             </ul>
           </div>
         </li>
-
+        -->
 
 
         <li class="nav-item">
@@ -603,7 +599,7 @@ crossorigin=""></script>
               </li>
 
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/lead-reports" target="_parent">
+                <a class="nav-link text-grey " href="/lead-reports/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> description   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Lead Reports </span>
                 </a>
@@ -617,7 +613,7 @@ crossorigin=""></script>
               </li>
 
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/quality-agents/{{current_month}}-{{current_month}}" target="_parent">
+                <a class="nav-link text-grey " href="/quality-agents/{{current_month}}-{{current_year}}" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> supervisor_account   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> QA Agents </span>
                 </a>
@@ -726,6 +722,67 @@ crossorigin=""></script>
         </li>
 
         <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#salesoutleads" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">attach_money</i>
+            <span class="nav-link-text ms-2 ps-1">Sales & Outreach</span>
+          </a>
+          <div class="collapse " id="salesoutleads">
+            <ul class="nav ">
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="/sales-dashboard-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> dashboard </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Sales Dashboard</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="/sales-calendar-{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> today </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Sales Calendar </span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="/sales-lookerstudio" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> query_stats </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Looker Studio</span>
+                </a>
+              </li>
+
+              
+              <!--
+              {% for sales_camp in sales_campaigns %}
+              <li class="nav-item ">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#campleadsoutreach">
+                  <span class="sidenav-mini-icon material-icons">  </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> {{sales_camp}} <b class="caret"></b></span>
+                </a>
+                <div class="collapse " id="campleadsoutreach">
+                  <ul class="nav nav-sm flex-column">
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/campleads-sales-daily/{{sales_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Daily Reports </span>
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/campleads-sales-monthly/{{sales_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Monthly Reports </span>
+                      </a>
+                    </li>   
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/campleads-sales-yearly/{{sales_camp.id}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Yearly Reports </span>
+                      </a>
+                    </li>   
+                  </ul>
+                </div>
+              </li>
+              {% endfor %}
+              -->
+              
+            </ul>
+          </div>
+        </li>
+
+        <li class="nav-item">
           <a data-bs-toggle="collapse" href="#agentscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">people</i>
             <span class="nav-link-text ms-2 ps-1">Agents</span>
@@ -800,11 +857,11 @@ crossorigin=""></script>
               </li>
 
               <li class="nav-item">
-                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#lmdata" >
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#saltabdata" >
                   <span class="sidenav-mini-icon material-icons"> access_time </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Lateness Monitor </span>
                 </a>
-                <div class="collapse " id="lmdata">
+                <div class="collapse " id="saltabdata">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
                       <a class="nav-link text-muted " href="/lateness-monitor-company/{{current_month}}-{{current_year}}" target="_parent">
@@ -821,49 +878,19 @@ crossorigin=""></script>
                   </ul>
                 </div>
               </li>
+
+              
+            <!--
               <li class="nav-item">
                 <a class="nav-link text-grey " href="/action-request" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> local_atm  </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Reward System </span>
                 </a>
               </li>
-              
+              -->
             </ul>
           </div>
         </li>
-
-
-        <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#scoringcategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">score </i>
-            <span class="nav-link-text ms-2 ps-1">Scoring System</span>
-          </a>
-          <div class="collapse " id="scoringcategory">
-            <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/agents-salary" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> bar_chart   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Performance Analytics <b class="caret"></b></span>
-                </a>
-              </li>
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/working-hours" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> star_border </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Lead Scoring <b class="caret"></b></span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/reschedule-request" target="_parent">
-                  <span class="sidenav-mini-icon material-icons medal"> workspace_premium  </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Recognition Programs </span>
-                </a>
-              </li>
-
-              
-            </ul>
-          </div>
-        </li>
-
 
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#salariescategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
@@ -872,18 +899,45 @@ crossorigin=""></script>
           </a>
           <div class="collapse " id="salariescategory">
             <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/agents-salary" target="_parent">
+              <li class="nav-item">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#lmdata" >
                   <span class="sidenav-mini-icon material-icons"> account_balance </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Salaries Table <b class="caret"></b></span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Salaries Table </span>
+                </a>
+                <div class="collapse " id="lmdata">
+                  <ul class="nav nav-sm flex-column">
+                    <li class="nav-item">
+                      <a class="nav-link text-muted " href="/salaries-table-company/{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal  ms-2  ps-1"> Company Data </span>
+                      </a>
+                    </li>
+                    {% for team in callers_teams %}
+                      <li class="nav-item">
+                        <a class="nav-link text-muted " href="/salaries-table-team/{{team.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                          <span class="sidenav-normal  ms-2  ps-1"> {{team.team_name}} </span>
+                        </a>
+                      </li>   
+                    {% endfor %}
+                  </ul>
+                </div>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="/adjusting-hours" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> more_time </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Adjusting Hours </span>
                 </a>
               </li>
+
+              <!--
               <li class="nav-item ">
-                <a class="nav-link text-grey " href="/working-hours" target="_parent">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> grade </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Bonuses & Incentives <b class="caret"></b></span>
                 </a>
               </li>
+              -->
+
+              <!--
               <li class="nav-item">
                 <a class="nav-link text-grey " href="/reschedule-request" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> timeline </span>
@@ -895,14 +949,48 @@ crossorigin=""></script>
                   <span class="sidenav-mini-icon material-icons"> local_atm  </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Reward System </span>
                 </a>
-              </li>
+              </li>-->
               
             </ul>
           </div>
         </li>
 
+        <!--
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#scoringcategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">score </i>
+            <span class="nav-link-text ms-2 ps-1">Scoring System</span>
+          </a>
+          <div class="collapse " id="scoringcategory">
+            <ul class="nav ">
+              <li class="nav-item ">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> bar_chart   </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Performance Analytics <b class="caret"></b></span>
+                </a>
+              </li>
+              <li class="nav-item ">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> star_border </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Lead Scoring <b class="caret"></b></span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
+                  <span class="sidenav-mini-icon material-icons medal"> workspace_premium  </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Recognition Programs </span>
+                </a>
+              </li>
+
+              
+            </ul>
+          </div>
+        </li>
+        -->
 
 
+
+        <!--
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#datacategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}"> storage </i>
@@ -911,25 +999,25 @@ crossorigin=""></script>
           <div class="collapse " id="datacategory">
             <ul class="nav ">
               <li class="nav-item ">
-                <a class="nav-link text-grey " href="/agents-salary" target="_parent">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> publish  </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Data Export/Import <b class="caret"></b></span>
                 </a>
               </li>
               <li class="nav-item ">
-                <a class="nav-link text-grey " href="/working-hours" target="_parent">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> insert_chart   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Enhanced Reporting <b class="caret"></b></span>
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/reschedule-request" target="_parent">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> pie_chart </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Demographic Insights </span>
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link text-grey " href="/action-request" target="_parent">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> find_in_page   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Lead Enrichment </span>
                 </a>
@@ -948,6 +1036,7 @@ crossorigin=""></script>
             </ul>
           </div>
         </li>
+        -->
 
         <li class="nav-item">
           <a class="nav-link"  href="/admin" target="_parent" >
@@ -1042,9 +1131,9 @@ crossorigin=""></script>
             </div>
           <ul class="navbar-nav  justify-content-end">
             <li class="nav-item">
-              <a href="static/pages/authentication/signin/illustration.html" class="nav-link text-body p-0 position-relative" target="_blank">
+              <a href="/invoice/{{profile.id}}-{{current_month}}-{{current_year}}" class="nav-link text-body p-0 position-relative" target="_parent">
                 <i class="material-icons me-sm-1">
-              account_circle
+                  monetization_on
             </i>
               </a>
             </li>
@@ -1060,7 +1149,7 @@ crossorigin=""></script>
             <li class="nav-item px-3">
               <a href="/settings" class="nav-link text-body p-0" target="_parent">
                 <i class="material-icons fixed-plugin-button-nav cursor-pointer">
-              settings
+              account_circle
             </i>
               </a>
             </li>
