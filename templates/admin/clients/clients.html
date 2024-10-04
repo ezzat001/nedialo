@@ -35,9 +35,7 @@
     </div>
     <div class="d-flex">
       <div class="dropdown d-inline">
-        <a href="javascript:;" class="btn btn-outline-info dropdown-toggle " data-bs-toggle="dropdown" id="navbarDropdownMenuLink2">
-          Filters
-        </a>
+
         <ul class="dropdown-menu dropdown-menu-lg-start px-2 py-3" aria-labelledby="navbarDropdownMenuLink2" data-popper-placement="left-start">
           <li><a class="dropdown-item border-radius-md text-success" href="javascript:;">Status: Active</a></li>
           <li><a class="dropdown-item border-radius-md text-danger" href="javascript:;">Status: Inactive</a></li>
@@ -105,7 +103,7 @@
                     {{account.get_state_display}}
                 </td>
                 <td class="text-xs font-weight-normal">
-                  {{account.joining_date}}
+                  {{account.joining_date|date:"Y-m-d"}}
                 </td>
 
                 <td class="text-xs font-weight-normal">
@@ -146,10 +144,8 @@
                 </td>
 
                 <td class="text-sm">
-                  <div class="d-flex align-items-center">
-                    <a href="account-reports/{{account.id}}" data-bs-toggle="tooltip" data-bs-original-title="Preview User">
-                      <i class="material-icons text-secondary position-relative text-lg">visibility</i>
-                    </a>
+                  <div class="d-flex align-items-left">
+    
                     <a href="client-modify/{{account.user}}" class="mx-3" data-bs-toggle="tooltip" data-bs-original-title="Edit User">
                       <i class="material-icons text-secondary position-relative text-lg">drive_file_rename_outline</i>
                     </a>
@@ -290,13 +286,15 @@
 
 
 <script>
-
   const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
     searchable: true,
     fixedHeight: false,
-    
   });
 
+  // Custom function to decode all URL-encoded characters
+  function decodeAllData(data) {
+    return decodeURIComponent(data); // Decodes any URL-encoded characters
+  }
 
   document.querySelectorAll(".export").forEach(function(el) {
     el.addEventListener("click", function(e) {
@@ -304,17 +302,33 @@
 
       var data = {
         type: type,
-        filename: "agents-" + type,
+        filename: "clients-list",
       };
 
       if (type === "csv") {
-        data.columnDelimiter = "|";
+        data.columnDelimiter = ",";
       }
 
-      dataTableSearch.export(data);
+      // Use the export functionality but prevent immediate download
+      const csvContent = dataTableSearch.export({
+        type: type,
+        download: false, // Prevent immediate download
+      });
+
+      // Decode all URL-encoded characters
+      const decodedContent = decodeAllData(csvContent);
+
+      // Now trigger the download with the decoded content
+      const blob = new Blob([decodedContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = data.filename + ".csv";
+      link.click();
     });
   });
 </script>
+
+
 <script>
   var win = navigator.platform.indexOf('Win') > -1;
   if (win && document.querySelector('#sidenav-scrollbar')) {

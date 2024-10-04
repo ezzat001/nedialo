@@ -21,7 +21,13 @@
     .input-group-static .form-control.zip-code {
         width: 120px;
     }
-</style>
+
+    .dialer-seat {
+        width: 300px; /* Set your preferred width */
+        word-wrap: break-word;
+    }
+    
+ </style>
 
 
 {% endblock %}
@@ -68,8 +74,7 @@
                 <th>Team</th>
                 <th>Login</th>
                 <th>Working Status</th>
-                <th>Campaign</th>
-                <th>Seat</th>
+                <th class="dialer-seat">Dialer Seat</th>
 
                 <th>Leads</th>
                 <th>Auditing</th>
@@ -97,22 +102,40 @@
                     {{agent.team}} 
                 </td>
                 <td class="text-xs font-weight-normal">
-                    {{ agent.login_time }}
-                </td>
-                <td>                    
- 
-                  <div class="input-group input-group-dynamic me-2" style="flex: 1;">
 
-                    <select class="form-control agent-select" name="agent" data-user-id="{{ agent.id }}" id="agent-select-{{ agent.id }}" placeholder="Search Agent" required>
+                    <div class="d-flex align-items-center">
+
+
+
+                      <a href="javascript:;" onclick="showNewLeadForm('{{agent.full_name}}', '{{agent.id}}','{{agent.login_time|time:'H:i'}}')" style="display: inline-flex; align-items: center;">
+                        {{ agent.login_time }}
+                        <i class="material-icons text-secondary" style="font-size: 16px; vertical-align: middle;">timer</i>
+                    </a>
+                    
+                    
+
+
+
+                    </div>
+                </td>
+
+
+                <td>                    
+                  <div class="input-group input-group-dynamic me-2" style="flex: 1;">
+                    <select class="form-control agent-select" name="agent" data-user-id="{{ agent.id }}" 
+                    data-has-credentials="{% if agent.assigned_credentials %}{{ agent.assigned_credentials }}{% else %}none{% endif %}" 
+                    id="agent-select-{{ agent.id }}" placeholder="Search Agent" required>
                       {% get_current_status agent as work_status %}
                       <option value="ready" {% if work_status == 'ready' %}selected{% endif %}>Ready</option>
                       <option value="break" {% if work_status == 'break' %}selected{% endif %}>Break</option>
                       <option value="meeting" {% if work_status == 'meeting' %}selected{% endif %}>Meeting</option>
                       <option value="offline" {% if work_status == 'offline' %}selected{% endif %}>Offline</option>
                     </select>
-                    
                   </div>
-                </td>
+                </td>  
+
+                
+                <!--
                 <td class="text-s font-weight-normal">
                   {% if agent.assigned_credentials.campaign %}
                   <span class="badge filter bg-gradient-secondary" data-color="secondary" >
@@ -124,18 +147,19 @@
                   {% else %}
 
                   {% endif %}
-                </td>
+                </td>-->
 
-                <td class="text-xs font-weight-normal">
 
-                  {% if agent.assigned_credentials %}
-                  
-                    {{ agent.assigned_credentials }}
-
-                  {% else %}
-
-                  {% endif %}               
-                </td>
+                <td class="dialer-seat">
+                  <div class="input-group input-group-dynamic me-2" style="flex: 1;">
+                      <select class="form-control seat-select" name="seat" data-user-id="{{ agent.id }}" id="seat-select-{{ agent.id }}" required>
+                          <option value="0">Camp None - No Assigned Seat</option>
+                          {% for seat in seats %}
+                          <option value="{{ seat.id }}" {% if agent.assigned_credentials.id == seat.id %}selected{% endif %}>{{ seat.campaign.name }} - {{ seat }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </td>
 
                 <td class="text-xs font-weight-normal">
                   <div class="d-flex align-items-center">
@@ -191,6 +215,145 @@
 
 
 
+
+
+
+  <script>
+    // Function to retrieve CSRF token from cookies
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  
+    function formatTime(date) {
+      // Get hours and minutes from the date object
+      const hours = String(date.getHours()).padStart(2, '0'); // Ensure 2 digits
+      const minutes = String(date.getMinutes()).padStart(2, '0'); // Ensure 2 digits
+      return `${hours}:${minutes}`;
+    }
+    
+    function showNewLeadForm(agentName, agentId, loginTime) {
+      // Format loginTime if it's a Date object
+      const formattedLoginTime = typeof loginTime === 'string' ? loginTime : formatTime(new Date(loginTime));
+      
+      const swalWithBootstrapButtons = Swal.mixin({
+        customClass: {
+          confirmButton: 'btn bg-gradient-info',
+          cancelButton: 'btn bg-gradient-dark'
+        },
+        buttonsStyling: false
+      });
+      
+      swalWithBootstrapButtons.fire({
+        title: `Adjust Login Time`,
+        html: `
+          <div class="card border-0 shadow-sm input-group input-group-static">
+            <form id="leadForm" class="text-center p-3">
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Agent ID</label>
+                    <input type="text" class="form-control" value="${agentId}" name="agent_id" id="agent_id" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Agent Name</label>
+                    <input type="text" class="form-control" value="${agentName}" name="agent_name" id="agent_name" disabled>
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-4">
+                <div class="col-sm-12">
+                  <div class="input-group input-group-static">
+                    <label>Login Time</label>
+                    <input type="time" class="form-control" value="${loginTime}" name="login_time" id="login_time" required>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        confirmButtonColor: '#3F8C4D',
+        cancelButtonText: 'Cancel',
+        cancelButtonColor: '#dc3545',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+          const formData = {
+            agent_id: document.getElementById('agent_id').value,
+            agent_name: document.getElementById('agent_name').value,
+            login_time: document.getElementById('login_time').value,
+          };
+  
+          // Fetch CSRF token from cookie
+          const csrftoken = getCookie('csrftoken');
+  
+          // Send POST request to update the agent's login time
+          return fetch(`/agent-login-update/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken // Include CSRF token in headers
+            },
+            body: JSON.stringify(formData) // Include all form data
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Network response was not ok - ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .catch(error => {
+            Swal.showValidationMessage(`Request failed: ${error}`);
+          });
+        },
+        allowOutsideClick: () => !Swal.isLoading(),
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: 'Login Time Adjusted!',
+            icon: 'success'
+          });
+          location.reload();
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          Swal.fire({
+            title: 'Cancelled',
+            icon: 'error'
+          });
+        }
+      });
+  
+      // Enable/disable submit button based on form input
+      const enableSubmitButton = () => {
+        const isFormValid = document.getElementById('leadForm').checkValidity();
+        swalWithBootstrapButtons.getConfirmButton().disabled = !isFormValid;
+      };
+  
+      // Attach input event listeners to all fields in the form
+      const inputs = document.querySelectorAll('#leadForm input');
+      inputs.forEach(input => {
+        input.addEventListener('input', enableSubmitButton);
+      });
+  
+      // Initial call to set the button state correctly
+      enableSubmitButton();
+    }
+  </script>
+  
 
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -256,13 +419,15 @@
   
 
   <script>
-
     const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
       searchable: true,
       fixedHeight: false,
-      
     });
   
+    // Custom function to decode all URL-encoded characters
+    function decodeAllData(data) {
+      return decodeURIComponent(data); // Decodes any URL-encoded characters
+    }
   
     document.querySelectorAll(".export").forEach(function(el) {
       el.addEventListener("click", function(e) {
@@ -270,14 +435,28 @@
   
         var data = {
           type: type,
-          filename: "agents-" + type,
+          filename: "agents-list-{{team_name}}",
         };
   
         if (type === "csv") {
-          data.columnDelimiter = "|";
+          data.columnDelimiter = ",";
         }
   
-        dataTableSearch.export(data);
+        // Use the export functionality but prevent immediate download
+        const csvContent = dataTableSearch.export({
+          type: type,
+          download: false, // Prevent immediate download
+        });
+  
+        // Decode all URL-encoded characters
+        const decodedContent = decodeAllData(csvContent);
+  
+        // Now trigger the download with the decoded content
+        const blob = new Blob([decodedContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = data.filename + ".csv";
+        link.click();
       });
     });
   </script>
@@ -400,6 +579,24 @@
       });
     });
   });
+
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var seatSelects = document.querySelectorAll('select[id^="seat-select-"]');
+    seatSelects.forEach(function (select) {
+      new Choices(select, {
+        searchEnabled: true,
+        searchChoices: true,
+        searchFields: ['label', 'value'],
+        searchPlaceholderValue: 'Search...',
+        shouldSort: false,
+        itemSelectText: '',
+        position: 'bottom',
+        prependValueSelect: true,
+        renderChoiceLimit: 0 // Hide the list until the user starts typing
+      });
+    });
+  });
 </script>
 
 
@@ -440,22 +637,37 @@
 
 <script>
   $(document).ready(function() {
-    // Use class selector to handle all select elements with class 'agent-select'
     $('.agent-select').on('change', function() {
       var selectedStatus = $(this).val();
       var userId = $(this).data('user-id');
+      var assignedCredentials = $(this).data('has-credentials'); // Get the assigned credentials value
+      
+      // Check if assigned credentials is 'none', empty, or 'no'
+      if (assignedCredentials === 'none' || assignedCredentials === '' || assignedCredentials.toLowerCase() === 'no') {
+        Swal.fire({
+          title: 'Error!',
+          text: "You Can't Change the status since there's no assigned credentials.",
+          icon: 'error',
+          confirmButtonText: 'OK',
+          customClass: {
+            confirmButton: 'btn bg-gradient-info'
+          }
+        });
+        // Reset the select back to the previous value if needed
+        $(this).val(''); // Resetting to an empty state; you may set it to a specific value if required
+        return; // Exit the function if no credentials
+      }
       
       $.ajax({
-        url: "{% url 'update_status_admin' %}", // URL to your view
+        url: "{% url 'update_status_admin' %}",
         type: "POST",
         data: {
           status: selectedStatus,
-          user_id: userId, // Send the user ID to the server
-          csrfmiddlewaretoken: '{{ csrf_token }}', // Include CSRF token for security
+          user_id: userId,
+          csrfmiddlewaretoken: '{{ csrf_token }}',
         },
         success: function(response) {
           if (response.success) {
-            // Update the UI or show a success message
             console.log('Status updated to:', response.new_status);
           } else {
             console.error('Error:', response.error);
@@ -470,5 +682,39 @@
 </script>
 
 
+
+<script>
+
+  $(document).ready(function() {
+    // Attach a change event listener to seat-select elements
+    $('.seat-select').on('change', function() {
+      var selectedSeat = $(this).val();  // Get the selected seat ID
+      var agentId = $(this).data('user-id');  // Get the agent's ID
+
+      $.ajax({
+        url: "{% url 'update_seat_admin' %}",  // Your view's URL
+        type: "POST",
+        data: {
+          seat_id: selectedSeat,
+          agent_id: agentId,  // Send both agent ID and seat ID to the server
+          csrfmiddlewaretoken: '{{ csrf_token }}'  // Include CSRF token for security
+        },
+
+        success: function(response) {
+          if (response.success) {
+            // Handle success, e.g., display a message or update the UI
+            console.log('Seat updated successfully for agent:', agentId);
+            location.reload();
+          } else {
+            console.error('Error:', response.error);
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error('AJAX Error:', status, error);
+        }
+      });
+    });
+  });
+</script>
 
 {% endblock %}

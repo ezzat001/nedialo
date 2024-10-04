@@ -237,8 +237,9 @@ FEEDBACK_STATUS_CHOICES = (
 
 class ServerSetting(models.Model):
     
-    company_name = models.CharField(max_length=50)
+    company_name = models.CharField(max_length=50, null=True,blank=True)
     company_website = models.URLField(null=True,blank=True)
+    crm_domain = models.CharField(max_length=50, null=True,blank=True)
     logo_main = models.ImageField(upload_to="server_settings",null=True,blank=True)
     logo_login = models.ImageField(upload_to="server_settings",null=True,blank=True)
     favicon = models.ImageField(upload_to="server_settings",null=True,blank=True)
@@ -257,6 +258,10 @@ class ServerSetting(models.Model):
 
     terms = models.URLField(null=True, blank=True)
 
+    
+
+
+
     monthly_leadpoints_target= models.PositiveIntegerField(default=0, null=True, blank=True)
     negative_percentage = models.PositiveIntegerField(default=60, null=True, blank=True)
     neutral_percentage = models.PositiveIntegerField(default=80, null=True, blank=True)
@@ -264,6 +269,13 @@ class ServerSetting(models.Model):
     
     
     sales_lookerstudio = models.TextField(blank=True, null=True)
+
+    logins_webhook = models.TextField(blank=True, null=True)
+    activity_webhook = models.TextField(blank=True, null=True)
+    leads_webhook = models.TextField(blank=True, null=True)
+    requests_webhook = models.TextField(blank=True, null=True)
+    applications_webhook = models.TextField(blank=True, null=True)
+    prepayments_webhook = models.TextField(blank=True, null=True)
 
     hide_campaign_leadform = models.BooleanField(default=False)
     hide_client_leadform = models.BooleanField(default=False)
@@ -1095,7 +1107,7 @@ class SeatAssignmentLog(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)  # Time when the log entry was created
 
     def __str__(self):
-        return f"Agent {self.agent_profile.id} on Seat {self.dialer_credentials.id} from {self.start_time} to {self.end_time}"
+        return f" [{self.id}]   {self.agent_profile.full_name} on Seat {self.dialer_credentials.id} from {self.start_time} to {self.end_time}"
 
     def duration(self):
         """Calculate the duration of seat usage."""

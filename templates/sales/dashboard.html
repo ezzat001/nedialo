@@ -526,205 +526,205 @@
 
 
    // Function to initialize the jKanban board
-function initializeKanbanBoard() {
-  if (document.getElementById("myKanban")) {
-      // Clear existing Kanban board
-      const kanbanElement = document.getElementById("myKanban");
-      kanbanElement.innerHTML = '';  // Clear existing Kanban items
+  function initializeKanbanBoard() {
+    if (document.getElementById("myKanban")) {
+        // Clear existing Kanban board
+        const kanbanElement = document.getElementById("myKanban");
+        kanbanElement.innerHTML = '';  // Clear existing Kanban items
 
-      var KanbanTest = new jKanban({
-          element: "#myKanban",
-          gutter: "10px",
-          widthBoard: "350px",
-          click: el => {
-              let taskId = el.getAttribute("data-leadid");
-              let taskContact = el.getAttribute("data-contact");
-              let taskPhone = el.getAttribute("data-phone");
-              let taskEmail = el.getAttribute("data-email");
-              let taskInterestRate = el.getAttribute("data-interest_rate");
-              let taskFollowUpDate = el.getAttribute("data-followup_date");
-              let taskFollowUpTime = el.getAttribute("data-followup_time");
-              let taskNotes = el.getAttribute("data-notes");
-              let taskAgent = el.getAttribute("data-agent");
+        var KanbanTest = new jKanban({
+            element: "#myKanban",
+            gutter: "10px",
+            widthBoard: "350px",
+            click: el => {
+                let taskId = el.getAttribute("data-leadid");
+                let taskContact = el.getAttribute("data-contact");
+                let taskPhone = el.getAttribute("data-phone");
+                let taskEmail = el.getAttribute("data-email");
+                let taskInterestRate = el.getAttribute("data-interest_rate");
+                let taskFollowUpDate = el.getAttribute("data-followup_date");
+                let taskFollowUpTime = el.getAttribute("data-followup_time");
+                let taskNotes = el.getAttribute("data-notes");
+                let taskAgent = el.getAttribute("data-agent");
 
-              // Show SweetAlert
-              Swal.fire({
-                  title: 'Contact Details',
-                  html: `
-                  <input id="jkanban-task-id" class="d-none" value="${taskId}" />
-                  <div class="input-group input-group-static mb-4">
-                    <label>Contact / Organization</label>
-                    <input class="form-control" id="jkanban-contact-name" type="text" value="${taskContact}">
-                  </div>
-                  <div class="input-group input-group-static mb-4">
-                    <label>Phone</label>
-                    <input class="form-control" id="jkanban-contact-phone" type="text" value="${taskPhone}">
-                  </div>
-                  <div class="input-group input-group-static mb-4">
-                    <label>Email</label>
-                    <input class="form-control" id="jkanban-contact-email" type="text" value="${taskEmail}">
-                  </div>
-                  <div class="input-group input-group-static mb-4">
-                    <label>Interest Rate (1-5)</label>
-                    <input class="form-control" id="jkanban-contact-interest" type="text" value="${taskInterestRate}">
-                  </div>
-                  <div class="input-group input-group-static mb-4">
-                    <label>Follow Up Date</label>
-                    <input class="form-control" id="jkanban-contact-followupdate" type="date" value="${taskFollowUpDate}">
-                  </div>
-                  <div class="input-group input-group-static mb-4">
-                    <label>Follow Up Time</label>
-                    <input class="form-control" id="jkanban-contact-followuptime" type="time" value="${taskFollowUpTime}">
-                  </div>
-                  <div class="input-group input-group-static">
-                    <label>Notes</label>
-                    <textarea class="form-control" id="jkanban-contact-notes" rows="4">${taskNotes}</textarea>
-                  </div>
-                  <hr>
-                  <div class="input-group input-group-static mb-4">
-                    <label>Sales Agent</label>
-                    <input class="form-control" id="jkanban-contact-agent" type="text" value="${taskAgent}" disabled>
-                  </div>
-                  `,
-                  focusConfirm: false,
-                  preConfirm: () => {
-                      const updatedTaskId = document.getElementById('jkanban-task-id').value;
-                      const updatedTaskContact = document.getElementById('jkanban-contact-name').value;
-                      const updatedTaskPhone = document.getElementById('jkanban-contact-phone').value;
-                      const updatedTaskEmail = document.getElementById('jkanban-contact-email').value;
-                      const updatedTaskInterestRate = document.getElementById('jkanban-contact-interest').value;
-                      const updatedTaskFollowUpDate = document.getElementById('jkanban-contact-followupdate').value;
-                      const updatedTaskFollowUpTime = document.getElementById('jkanban-contact-followuptime').value;
-                      const updatedTaskNotes = document.getElementById('jkanban-contact-notes').value;
+                // Show SweetAlert
+                Swal.fire({
+                    title: 'Contact Details',
+                    html: `
+                    <input id="jkanban-task-id" class="d-none" value="${taskId}" />
+                    <div class="input-group input-group-static mb-4">
+                      <label>Contact / Organization</label>
+                      <input class="form-control" id="jkanban-contact-name" type="text" value="${taskContact}">
+                    </div>
+                    <div class="input-group input-group-static mb-4">
+                      <label>Phone</label>
+                      <input class="form-control" id="jkanban-contact-phone" type="text" value="${taskPhone}">
+                    </div>
+                    <div class="input-group input-group-static mb-4">
+                      <label>Email</label>
+                      <input class="form-control" id="jkanban-contact-email" type="text" value="${taskEmail}">
+                    </div>
+                    <div class="input-group input-group-static mb-4">
+                      <label>Interest Rate (1-5)</label>
+                      <input class="form-control" id="jkanban-contact-interest" type="text" value="${taskInterestRate}">
+                    </div>
+                    <div class="input-group input-group-static mb-4">
+                      <label>Follow Up Date</label>
+                      <input class="form-control" id="jkanban-contact-followupdate" type="date" value="${taskFollowUpDate}">
+                    </div>
+                    <div class="input-group input-group-static mb-4">
+                      <label>Follow Up Time</label>
+                      <input class="form-control" id="jkanban-contact-followuptime" type="time" value="${taskFollowUpTime}">
+                    </div>
+                    <div class="input-group input-group-static">
+                      <label>Notes</label>
+                      <textarea class="form-control" id="jkanban-contact-notes" rows="4">${taskNotes}</textarea>
+                    </div>
+                    <hr>
+                    <div class="input-group input-group-static mb-4">
+                      <label>Sales Agent</label>
+                      <input class="form-control" id="jkanban-contact-agent" type="text" value="${taskAgent}" disabled>
+                    </div>
+                    `,
+                    focusConfirm: false,
+                    preConfirm: () => {
+                        const updatedTaskId = document.getElementById('jkanban-task-id').value;
+                        const updatedTaskContact = document.getElementById('jkanban-contact-name').value;
+                        const updatedTaskPhone = document.getElementById('jkanban-contact-phone').value;
+                        const updatedTaskEmail = document.getElementById('jkanban-contact-email').value;
+                        const updatedTaskInterestRate = document.getElementById('jkanban-contact-interest').value;
+                        const updatedTaskFollowUpDate = document.getElementById('jkanban-contact-followupdate').value;
+                        const updatedTaskFollowUpTime = document.getElementById('jkanban-contact-followuptime').value;
+                        const updatedTaskNotes = document.getElementById('jkanban-contact-notes').value;
 
-                      // AJAX request to update the task
-                      return fetch('/sales-lead-update/', {
-                          method: 'POST',
-                          headers: {
-                              'Content-Type': 'application/json',
-                              'X-CSRFToken': getCookie('csrftoken'),
-                          },
-                          body: JSON.stringify({
-                              id: updatedTaskId,
-                              contact: updatedTaskContact,
-                              phone: updatedTaskPhone,
-                              email: updatedTaskEmail,
-                              interest_rate: updatedTaskInterestRate,
-                              followup_date: updatedTaskFollowUpDate,
-                              followup_time: updatedTaskFollowUpTime,
-                              notes: updatedTaskNotes,
-                          })
-                      }).then(response => {
-                          if (!response.ok) {
-                              throw new Error('Network response was not ok');
-                          }
-                          return response.json();
-                      }).then(data => {
-                          // Update task in Kanban board
-                          KanbanTest.replaceElement(updatedTaskId, {
-                              id: updatedTaskId,
-                              title: `
-                                  ${getInterestBadge(updatedTaskInterestRate)} 
-                                  <p class="text mt-2">${updatedTaskContact}</p>
-                                  <div class="d-flex justify-content-between align-items-center">
-                                      <span class="text-muted small">${updatedTaskFollowUpDate}</span>
-                                      <span class="text-muted small">${updatedTaskFollowUpTime}</span>
-                                  </div>
-                              `,
-                              class: ["border-radius-md"],
-                              "leadid": updatedTaskId,
-                              "contact": updatedTaskContact,
-                              "phone": updatedTaskPhone,
-                              "email": updatedTaskEmail,
-                              "interest_rate": updatedTaskInterestRate,
-                              "followup_date": updatedTaskFollowUpDate,
-                              "followup_time": updatedTaskFollowUpTime,
-                              "notes": updatedTaskNotes,
-                          });
-                      }).catch(error => {
-                          console.error('There was a problem with the fetch operation:', error);
-                      });
-                  },
-                  showCancelButton: true,
-                  cancelButtonText: 'Close',
-                  confirmButtonText: 'Save changes'
-              });
-          },
-          buttonClick: function(el, boardId) {
-              if (document.querySelector("[data-id='" + boardId + "'] .itemform") === null) {
-                  var formItem = document.createElement("form");
-                  formItem.setAttribute("class", "itemform");
-                  formItem.innerHTML = `<div class="input-group">
-                      <textarea class="form-control" rows="2" autofocus></textarea>
-                  </div>
-                  <div class="form-group">
-                      <button type="submit" class="btn bg-gradient-success btn-sm pull-end">Add</button>
-                      <button type="button" id="kanban-cancel-item" class="btn bg-gradient-light btn-sm pull-end me-2">Cancel</button>
-                  </div>`;
+                        // AJAX request to update the task
+                        return fetch('/sales-lead-update/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken'),
+                            },
+                            body: JSON.stringify({
+                                id: updatedTaskId,
+                                contact: updatedTaskContact,
+                                phone: updatedTaskPhone,
+                                email: updatedTaskEmail,
+                                interest_rate: updatedTaskInterestRate,
+                                followup_date: updatedTaskFollowUpDate,
+                                followup_time: updatedTaskFollowUpTime,
+                                notes: updatedTaskNotes,
+                            })
+                        }).then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        }).then(data => {
+                            // Update task in Kanban board
+                            KanbanTest.replaceElement(updatedTaskId, {
+                                id: updatedTaskId,
+                                title: `
+                                    ${getInterestBadge(updatedTaskInterestRate)} 
+                                    <p class="text mt-2">${updatedTaskContact}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted small">${updatedTaskFollowUpDate}</span>
+                                        <span class="text-muted small">${updatedTaskFollowUpTime}</span>
+                                    </div>
+                                `,
+                                class: ["border-radius-md"],
+                                "leadid": updatedTaskId,
+                                "contact": updatedTaskContact,
+                                "phone": updatedTaskPhone,
+                                "email": updatedTaskEmail,
+                                "interest_rate": updatedTaskInterestRate,
+                                "followup_date": updatedTaskFollowUpDate,
+                                "followup_time": updatedTaskFollowUpTime,
+                                "notes": updatedTaskNotes,
+                            });
+                        }).catch(error => {
+                            console.error('There was a problem with the fetch operation:', error);
+                        });
+                    },
+                    showCancelButton: true,
+                    cancelButtonText: 'Close',
+                    confirmButtonText: 'Save changes'
+                });
+            },
+            buttonClick: function(el, boardId) {
+                if (document.querySelector("[data-id='" + boardId + "'] .itemform") === null) {
+                    var formItem = document.createElement("form");
+                    formItem.setAttribute("class", "itemform");
+                    formItem.innerHTML = `<div class="input-group">
+                        <textarea class="form-control" rows="2" autofocus></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn bg-gradient-success btn-sm pull-end">Add</button>
+                        <button type="button" id="kanban-cancel-item" class="btn bg-gradient-light btn-sm pull-end me-2">Cancel</button>
+                    </div>`;
 
-                  KanbanTest.addForm(boardId, formItem);
-                  formItem.addEventListener("submit", function(e) {
-                      e.preventDefault();
-                      var text = e.target[0].value;
-                      let newTaskId = "_" + text.toLowerCase().replace(/ /g, "_") + boardId;
-                      KanbanTest.addElement(boardId, {
-                          id: newTaskId,
-                          title: text,
-                          class: []
-                      });
-                      formItem.parentNode.removeChild(formItem);
-                  });
-                  document.getElementById("kanban-cancel-item").onclick = function() {
-                      formItem.parentNode.removeChild(formItem);
-                  };
-              }
-          },
-          addItemButton: true,
-          boards: [
-              {% for status, leads in sales_leads.items %}
-              {
-                  id: "{{status}}",
-                  title: "{{ sales_lead_choices|get_item:status }} - {{leads|length}}",
-                  "data-id": "{{ status }}",
-                  item: [
-                      {% if leads %}
-                      {% for lead in leads %}
-                      {
-                          id: "{{lead.lead_id}}",
-                          title: '{% if lead.interest_rating == 1%}<span class="badge badge-sm bg-gradient-danger">Very Low</span>{%elif lead.interest_rating == 2%}<span class="badge badge-sm bg-gradient-warning">Low</span>{%elif lead.interest_rating == 3%}<span class="badge badge-sm bg-gradient-warning">Moderate</span>{%elif lead.interest_rating == 4%}<span class="badge badge-sm bg-gradient-success">High</span>{%elif lead.interest_rating == 5%}<span class="badge badge-sm bg-gradient-success">Very High</span> {%endif%}<p class="text mt-2">{{lead.contact}}</p><div class="d-flex justify-content-between align-items-center"><span class="text-muted small">{{ lead.followup_date|date:'Y-m-d'  }}</span><span class="text-muted small">{{ lead.followup_time|time:"H:i" }}</span> </div>',
-                          class: ["border-radius-md"],
-                          "leadid": "{{lead.lead_id|escapejs}}",
-                          "contact": "{{lead.contact|escapejs}}",
-                          "phone": "{{lead.phone_number|escapejs}}",
-                          "email": "{{lead.email|escapejs}}",
-                          "interest_rate": "{{lead.interest_rating}}",
-                          "followup_date": "{{ lead.followup_date|date:'Y-m-d' }}",
-                          "followup_time": "{{ lead.followup_time|time:'H:i' }}",
-                          "notes": "{{ lead.notes|escapejs }}",
-                          "agent":"{{lead.agent_profile.full_name}}",
-                      },
-                      {% endfor %}
-                      {% endif %}
-                  ]
-              },
-              {% endfor %}
-          ]
-      });
+                    KanbanTest.addForm(boardId, formItem);
+                    formItem.addEventListener("submit", function(e) {
+                        e.preventDefault();
+                        var text = e.target[0].value;
+                        let newTaskId = "_" + text.toLowerCase().replace(/ /g, "_") + boardId;
+                        KanbanTest.addElement(boardId, {
+                            id: newTaskId,
+                            title: text,
+                            class: []
+                        });
+                        formItem.parentNode.removeChild(formItem);
+                    });
+                    document.getElementById("kanban-cancel-item").onclick = function() {
+                        formItem.parentNode.removeChild(formItem);
+                    };
+                }
+            },
+            addItemButton: true,
+            boards: [
+                {% for status, leads in sales_leads.items %}
+                {
+                    id: "{{status}}",
+                    title: "{{ sales_lead_choices|get_item:status }} - {{leads|length}}",
+                    "data-id": "{{ status }}",
+                    item: [
+                        {% if leads %}
+                        {% for lead in leads %}
+                        {
+                            id: "{{lead.lead_id}}",
+                            title: '{% if lead.interest_rating == 1%}<span class="badge badge-sm bg-gradient-danger">Very Low</span>{%elif lead.interest_rating == 2%}<span class="badge badge-sm bg-gradient-warning">Low</span>{%elif lead.interest_rating == 3%}<span class="badge badge-sm bg-gradient-warning">Moderate</span>{%elif lead.interest_rating == 4%}<span class="badge badge-sm bg-gradient-success">High</span>{%elif lead.interest_rating == 5%}<span class="badge badge-sm bg-gradient-success">Very High</span> {%endif%}<p class="text mt-2">{{lead.contact}}</p><div class="d-flex justify-content-between align-items-center"><span class="text-muted small">{{ lead.followup_date|date:'Y-m-d'  }}</span><span class="text-muted small">{{ lead.followup_time|time:"H:i" }}</span> </div>',
+                            class: ["border-radius-md"],
+                            "leadid": "{{lead.lead_id|escapejs}}",
+                            "contact": "{{lead.contact|escapejs}}",
+                            "phone": "{{lead.phone_number|escapejs}}",
+                            "email": "{{lead.email|escapejs}}",
+                            "interest_rate": "{{lead.interest_rating}}",
+                            "followup_date": "{{ lead.followup_date|date:'Y-m-d' }}",
+                            "followup_time": "{{ lead.followup_time|time:'H:i' }}",
+                            "notes": "{{ lead.notes|escapejs }}",
+                            "agent":"{{lead.agent_profile.full_name}}",
+                        },
+                        {% endfor %}
+                        {% endif %}
+                    ]
+                },
+                {% endfor %}
+            ]
+        });
+    }
+    const titleButtons = document.querySelectorAll('.kanban-title-button'); // Adjust the selector if needed
+    titleButtons.forEach(button => {
+      button.style.display = 'none'; // This will hide each button
+    });
   }
-  const titleButtons = document.querySelectorAll('.kanban-title-button'); // Adjust the selector if needed
-  titleButtons.forEach(button => {
-    button.style.display = 'none'; // This will hide each button
-  });
-}
 
-// Initial load of the Kanban board
-initializeKanbanBoard();
-
-// Function to refresh the Kanban board
-function refreshKanbanBoard() {
+  // Initial load of the Kanban board
   initializeKanbanBoard();
 
-}
+  // Function to refresh the Kanban board
+  function refreshKanbanBoard() {
+    initializeKanbanBoard();
+
+  }
 
 
     

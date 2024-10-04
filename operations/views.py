@@ -8,7 +8,7 @@ from django.db.models import Count
 from django.views.decorators.http import require_POST
 from datetime import datetime,timedelta
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.views import View
 from django.contrib.auth import authenticate
 from django.utils.decorators import method_decorator
@@ -170,11 +170,12 @@ def list_all_seat_breakdowns():
 
 
 def log_end_of_session(agent_profile, seat):
-    SeatAssignmentLog.objects.filter(
+    seat = SeatAssignmentLog.objects.filter(
         agent_profile=agent_profile,
         dialer_credentials=seat,
         end_time__isnull=True
     ).update(end_time=timezone.now())
+
 
 
 @transaction.atomic
@@ -201,12 +202,23 @@ def update_seat_agent_profile(request, seat_id):
                     agent_profile = get_object_or_404(Profile, id=agent_id)
                     try:
                         old_seat = DialerCredentials.objects.get(agent_profile=agent_profile)
+
+
+                        
                         log_end_of_session(agent_profile, old_seat)
                         old_seat.agent_profile = None
                         old_seat.save()
 
-                    except DialerCredentials.DoesNotExist:
+                    except DialerCredentials.DoesNotExist as error:
                         old_seat = None
+
+                    if seat.agent_profile:
+                        old_agent_seated = seat.agent_profile
+                        log_end_of_session(old_agent_seated, seat)
+                        seat.agent_profile = None
+                        seat.save()
+                        old_agent_seated.assigned_credentials = None
+                        old_agent_seated.save()
 
                     seat.agent_profile = agent_profile
                     seat.save()
@@ -214,6 +226,7 @@ def update_seat_agent_profile(request, seat_id):
                     agent_profile.assigned_credentials = seat
                     agent_profile.save()
 
+                    
                     SeatAssignmentLog.objects.create(
                         agent_profile=agent_profile,
                         dialer_credentials=seat,
@@ -228,92 +241,6 @@ def update_seat_agent_profile(request, seat_id):
                 return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
-
-"""
-def update_seat_agent_profile(request, seat_id):
-    if request.method == 'POST':
-        # Check if the request is an AJAX request
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            agent_id = request.POST.get('agent_id')
-
-            try:
-                old_seat = None
-                # Fetch the seat object
-
-                seat = get_object_or_404(DialerCredentials, id=seat_id)
-
-                if int(agent_id) == 0:
-                    # Unassign the current agent from the seat
-                    agent_profile = seat.agent_profile
-
-                    print(agent_profile)
-
-                    if agent_profile:
-
-                        print(agent_profile)
-                        # Log the end of the current session
-                        SeatAssignmentLog.objects.filter(
-                            agent_profile=agent_profile,
-                            dialer_credentials=seat,
-                            end_time__isnull=True
-                        ).update(end_time=timezone.now())
-
-                        # Update agent and seat profiles
-                        agent_profile.assigned_credentials = None
-                        agent_profile.save()
-
-                    # Clear the seat's agent profile assignment
-                    seat.agent_profile = None
-                    seat.save()
-                
-                else:
-                    # Assign a new agent to the seat
-                    agent_profile = get_object_or_404(Profile, id=agent_id)
-
-                    # Check if this agent is already assigned to a different seat
-                    try:
-                        old_seat = DialerCredentials.objects.get(agent_profile=agent_profile)
-
-                        # Log the end of the session on the old seat
-                        SeatAssignmentLog.objects.filter(
-                            agent_profile=agent_profile,
-                            dialer_credentials=old_seat,
-                            end_time__isnull=True
-                        ).update(end_time=timezone.now())
-
-                        # Unassign the old seat
-                        old_seat.agent_profile = None
-                        old_seat.save()
-
-                    except DialerCredentials.DoesNotExist:
-                        # No previous seat assignment exists for this agent
-                        pass
-
-                    # Assign the new seat to the agent
-                    seat.agent_profile = agent_profile
-                    seat.save()
-
-                    # Update the agent profile to reflect the new seat assignment
-                    agent_profile.assigned_credentials = seat
-                    agent_profile.save()
-
-                    # Log the start of the new seat assignment session
-                    SeatAssignmentLog.objects.create(
-                        agent_profile=agent_profile,
-                        dialer_credentials=seat,
-                        start_time=timezone.now()
-                    )
-
-                # Return a successful response
-                return JsonResponse({'success': True, 'message': 'Seat agent profile updated successfully.'})
-
-            except Exception as e:
-                # Return a failure response with the error message
-                return JsonResponse({'success': False, 'message': str(e)})
-
-    # If the request is not POST or not an AJAX request, return a 405 Method Not Allowed response
-    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
-"""
 
 
 @require_POST
@@ -342,11 +269,6 @@ def unseat_agent(request, agent_id):
 
     except DialerCredentials.DoesNotExist:
         return JsonResponse({'message': 'Seat not found.'}, status=404)
-
-
-
-
-
 
 
 @method_decorator(login_required, name='dispatch')
@@ -381,36 +303,165 @@ def update_status_admin(request):
     if request.method == 'POST':
         new_status = request.POST.get('status')
         user_id = request.POST.get('user_id')
-        profile = Profile.objects.get(id=user_id)  # Get the user by ID
+        
+        # Get the agent's profile
+        profile = Profile.objects.get(id=user_id)
         profile_user = profile.user
         today = (tz.localtime(tz.now())).date()
 
-        
         if new_status in dict(WorkStatus.STATUS_CHOICES).keys():
             try:
+                # Get or create today's WorkStatus object for the user
                 work_status, created = WorkStatus.objects.get_or_create(
                     user=profile_user,
                     date=today,
                     defaults={
-                        'current_status': 'ready',
+                        'current_status': new_status,
                         'last_status_change': tz.now()
                     }
                 )
-                if not created:
-                    work_status.update_status(new_status)
-                
+
                 
 
+                # If it's not newly created, update the status
+                if not created:
+                    work_status.update_status(new_status)
+
+                # If the new status is 'offline', update the SeatAssignmentLog
+                if new_status == 'offline':
+                    try:
+                        seat = profile.assigned_credentials
+                        
+                        if seat:
+                            # Update the SeatAssignmentLog to end the session
+                            SeatAssignmentLog.objects.filter(
+                                agent_profile=profile,
+                                dialer_credentials=seat,
+                                end_time__isnull=True
+                            ).update(end_time=timezone.now())
+
+                            # Clear the seat assignment for both the agent and the seat
+                            
+                    except DialerCredentials.DoesNotExist:
+                        pass  # Handle the case where the agent does not have an assigned seat
+                else:
+                    
+                    try:
+
+                        seat = profile.assigned_credentials
+
+                        SeatAssignmentLog.objects.filter(
+                                agent_profile=profile,
+                                dialer_credentials=seat,
+                                end_time__isnull=True
+                            ).update(end_time=timezone.now())
+                        
+                        SeatAssignmentLog.objects.create(
+                            agent_profile=profile,
+                            dialer_credentials=seat,
+                            start_time=timezone.now()
+                        )
+                    except DialerCredentials.DoesNotExist:
+                        pass
                 response_data = {
                     'success': True,
                     'new_status': new_status,
                 }
                 return JsonResponse(response_data)
+
             except Exception as e:
                 return JsonResponse({'success': False, 'error': str(e)})
+
         return JsonResponse({'success': False, 'error': 'Invalid status.'})
+
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
-            
+
+@login_required
+def update_seat_admin(request):
+    if request.method == 'POST':
+        seat_id = request.POST.get('seat_id')  # Get the new seat ID from the request
+        agent_id = request.POST.get('agent_id')  # Get the agent ID from the request
+
+
+        try:
+            # Get the agent profile based on agent_id
+            agent_profile = Profile.objects.get(id=agent_id)
+            # Find the new seat object based on seat_id
+
+            if int(seat_id) == 0:
+                seat = agent_profile.assigned_credentials
+                # Log the end of the current session
+                SeatAssignmentLog.objects.filter(
+                    agent_profile=agent_profile,
+                    dialer_credentials=seat,
+                    end_time__isnull=True
+                ).update(end_time=timezone.now())
+
+                # Update agent and seat profiles
+                agent_profile.assigned_credentials = None
+                agent_profile.save()
+
+                # Clear the seat's agent profile assignment
+                seat.agent_profile = None
+                seat.save()
+
+            else:
+
+                seat = DialerCredentials.objects.get(id=seat_id)
+                try:
+                    print("is agent already seated before?")
+                    old_seat = DialerCredentials.objects.get(agent_profile=agent_profile)
+
+                    print(old_seat)
+                    
+                    log_end_of_session(agent_profile, old_seat)
+                    old_seat.agent_profile = None
+                    old_seat.save()
+
+                except DialerCredentials.DoesNotExist as error:
+                    old_seat = None
+
+                if seat.agent_profile:
+                    print('is another agent seated')
+                    old_agent_seated = seat.agent_profile
+
+                    print('old :', old_agent_seated)
+                    log_end_of_session(old_agent_seated, seat)
+                    seat.agent_profile = None
+                    seat.save()
+                    old_agent_seated.assigned_credentials = None
+                    old_agent_seated.save()
+
+                seat.agent_profile = agent_profile
+                seat.save()
+
+                agent_profile.assigned_credentials = seat
+                agent_profile.save()
+
+                SeatAssignmentLog.objects.create(
+                    agent_profile=agent_profile,
+                    dialer_credentials=seat,
+                    start_time=timezone.now()
+                )
+
+
+            # Return success response
+            response_data = {
+                'success': True,
+                'new_seat': seat.id,
+            }
+            return JsonResponse(response_data)
+
+        except Profile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Agent not found.'})
+        except DialerCredentials.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Seat not found.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+
 @permission_required('agents_table')
 @login_required
 def agents_list_company(request):
@@ -435,12 +486,13 @@ def agents_list_company(request):
     agents = Profile.objects.filter(team__in=callers_teams, active=True)
     context['agents'] = agents
 
+    context['team_name'] = "company"
+
+    seats = DialerCredentials.objects.all()
+    context['seats'] = seats
 
 
-
-        
-
-
+  
 
     return render(request,'operations/agents/agents_list.html',context)
 
@@ -465,8 +517,14 @@ def agents_list_team(request, team_id):
 
     team = Team.objects.get(id=team_id)
 
+    context['team_name'] = team.team_name
+
     agents = Profile.objects.filter(team=team, active=True)
     context['agents'] = agents
+
+    seats = DialerCredentials.objects.all()
+    context['seats'] = seats
+
 
 
 
@@ -596,6 +654,7 @@ def working_hours_team(request, team_id, month, year):
     agents = Profile.objects.filter(team=team, active=True)
     context['agents'] = agents
     context['team_id'] = team.id
+    context['team_name'] = team.team_name
 
     # Define status field mapping
     status_field_mapping = {
@@ -887,6 +946,7 @@ def salary_company(request, month,year):
         agent_totals['salary'] = round(salary_final,2)
     context['status_totals'] = status_totals
 
+
     return render(request, 'salaries/salaries_company.html', context)
 
 
@@ -912,6 +972,8 @@ def salary_team(request, team_id, month,year):
     team = Team.objects.get(id=team_id)
 
     context['teamid'] = team_id
+
+    context['team_name'] = team.team_name
     
     agents = Profile.objects.filter(team=team, active=True)
     context['agents'] = agents
@@ -1170,7 +1232,6 @@ def invoice(request, agent_id,month, year):
 
     context['invoice'] = status_totals
 
-    print(status_totals)
     
     return render(request,'salaries/invoice.html', context)
 
@@ -1339,7 +1400,6 @@ def attendance_agent(request, agent_id, month, year):
     work_status_objects = WorkStatus.get_workstatus_with_login_time(agent_profile, month, year)
     attendance_count = work_status_objects.count()
 
-    print(work_status_objects)
     context['attendance'] = work_status_objects
     context['attendance_count'] = attendance_count
 
@@ -1921,6 +1981,30 @@ def camp_hours_monthly(request, camp_id, month, year):
 
 
 
+@csrf_exempt
+@require_POST
+def update_agent_login_time(request):
+    try:
+        # Parse the JSON body of the request
+        data = json.loads(request.body)
+        agent_id = data.get('agent_id')
+        login_time = data.get('login_time')
+
+        # Get the Profile object for the agent
+        profile = Profile.objects.get(id=agent_id)
+
+        # Update the login_time and save the profile
+        profile.login_time = login_time
+        profile.save()
+
+        # Return a success response
+        return JsonResponse({'success': True, 'message': 'Login time updated successfully.'})
+    except Profile.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Agent not found.'}, status=404)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Invalid JSON.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)    
 
 
 

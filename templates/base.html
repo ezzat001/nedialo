@@ -66,6 +66,52 @@ crossorigin=""/>
 
 
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+
+            
+
+            var heartbeatInterval = 60000;  // Heartbeat interval in milliseconds (30 seconds)
+            var heartbeatTimer;  // Variable to hold the interval timer
+
+            function startHeartbeat() {
+                heartbeatTimer = setInterval(function() {
+                    $.ajax({
+                        url: '/heartbeat/',
+                        method: 'GET',
+                        success: function(data) {
+                            console.log('Heartbeat successful.');
+                        },
+                        error: function(xhr, status, error) {
+                            if (xhr.status === 0) {
+                                console.log('Connection timed out.');
+                                handleConnectionTimeout();
+                            }
+                        }
+                    });
+                }, heartbeatInterval);
+            }
+
+            function handleConnectionTimeout() {
+                // Action when connection times out (e.g., show message to the user)
+                location.reload();
+
+            }
+
+            // Start heartbeat on page load
+            $(document).ready(function() {
+                startHeartbeat();
+            });
+
+            // Stop heartbeat when the page is being unloaded (e.g., user closes the page)
+            $(window).on('beforeunload', function() {
+                clearInterval(heartbeatTimer);
+            });
+
+    </script>
+
+
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         // Function to format duration from seconds to HH:MM:SS
@@ -128,6 +174,23 @@ crossorigin=""/>
     
         // Function to update work status and UI
         function updateWorkStatus(status) {
+          const userId = document.querySelector('select[data-user-id]').dataset.userId;
+          const assignedCredentials = document.querySelector('select[data-user-id]').dataset.hasCredentials;
+          
+          if (assignedCredentials === 'none' || assignedCredentials === '' || assignedCredentials.toLowerCase() === 'no') {
+            Swal.fire({
+              title: 'Error!',
+              text: "You Can't Change the status since there's no assigned credentials.",
+              icon: 'error',
+              confirmButtonText: 'OK',
+              customClass: {
+                confirmButton: 'btn bg-gradient-info'
+              }
+            });
+            // Reset the select back to the previous value if needed
+            $(this).val(''); // Resetting to an empty state; you may set it to a specific value if required
+            return; // Exit the function if no credentials
+          }  
             fetch('/update-status/', {
                 method: 'POST',
                 headers: {
@@ -275,7 +338,11 @@ crossorigin=""/>
         document.getElementById('work_status').addEventListener('change', handleStatusChange);
     
         function handleStatusChange() {
+
+          
+
             const selectedStatus = document.getElementById('work_status').value;
+           
             updateWorkStatus(selectedStatus);
 
         }
@@ -383,14 +450,14 @@ crossorigin=""></script>
     <div class="collapse navbar-collapse  w-auto h-auto" id="sidenav-collapse-main">
       <ul class="navbar-nav">
         <li class="nav-item mb-2 mt-0">
-          <a data-bs-toggle="collapse" href="#ProfileNav" class="nav-link text-white" aria-controls="ProfileNav" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#ProfileNav" class="nav-link text-white" aria-controls="ProfileNav" role="button" aria-expanded="{% if request.path == '/settings' %}true{% endif %}">
               <img src="{% if profile.picture and profile.picture.url %} {{profile.picture.url}} {% else %} ../static/img/default-profile.png{% endif %}" class="avatar">
             <span class="nav-link-text ms-2 ps-1">{% if profile %}{{profile.full_name}}{% else %} Guest {% endif %}</span>
           </a>
-          <div class="collapse" id="ProfileNav" style="">
+          <div class="collapse {% if request.path == '/settings' %}show{% endif %}" id="ProfileNav" style="">
             <ul class="nav ">
-              <li class="nav-item">
-                <a class="nav-link text-grey" href="/settings" target="_parent">
+              <li class="nav-item {% if request.path == '/settings' %}active{% endif %}">
+                <a class="nav-link text-grey {% if request.path == '/settings' %}active{% endif %}" href="/settings" target="_parent">
                   <span class="material-icons"> person </span>
                   <span class="sidenav-normal  ms-3  ps-1"> My Profile </span>
                 </a>
@@ -407,12 +474,14 @@ crossorigin=""></script>
         </li>
         <hr class="horizontal light mt-0">
 
+        {% if perms.caller_dashboard %}
         <li class="nav-item">
-          <a class="nav-link"  href="/" target="_parent">
+          <a class="nav-link {% if request.path == '/' %}active{% endif %}"  href="/" target="_parent">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">widgets</i>
             <span class="nav-link-text ms-2 ps-1">Dashboard</span>
           </a>
         </li>
+        {% endif %}
 
         <!--
         <li class="nav-item">
@@ -476,173 +545,254 @@ crossorigin=""></script>
         </li>
         -->
 
+        
+        {% if perms.my_leads or perms.lead_scoring or perms.leaderboard %}
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#leadscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">house   </i>
-            <span class="nav-link-text ms-2 ps-1">Leads</span>
+          <a data-bs-toggle="collapse" href="#leadscategory" class="nav-link text-white {% if '/my-leads/' in request.path or '/lead-scoring/' in request.path or '/leads-leaderboard/' in request.path or '/lead-report/' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/my-leads/' in request.path or '/lead-scoring/' in request.path or '/leads-leaderboard/' in request.path or '/lead-report/' in request.path %}true{% else %}false{% endif %}">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">house</i>
+            <span class="nav-link-text ms-2 ps-1 active">Leads</span>
           </a>
-          <div class="collapse " id="leadscategory">
-            <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/my-leads/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> home </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> My Leads <b class="caret"></b></span>
+          <div class="collapse {% if '/my-leads/' in request.path or '/lead-scoring/' in request.path or '/leads-leaderboard/' in request.path  or '/lead-report/' in request.path %}show{% endif %}" id="leadscategory">
+            <ul class="nav">
+              {% if perms.my_leads %}
+
+              <li class="nav-item {% if '/my-leads/' in request.path or '/lead-report/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/my-leads/' in request.path or '/lead-report/' in request.path %}active{% endif %}" href="/my-leads/{{ current_month }}-{{ current_year }}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">home</span>
+                  <span class="sidenav-normal ms-2 ps-1">My Leads <b class="caret"></b></span>
                 </a>
               </li>
 
-              
+              {% endif %}
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/lead-scoring/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> star_border </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Leads Scoring </span>
+              {% if perms.lead_scoring %}
+
+        
+              <li class="nav-item {% if '/lead-scoring/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/lead-scoring/' in request.path %}active{% endif %}" href="/lead-scoring/{{ current_month }}-{{ current_year }}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">star_border</span>
+                  <span class="sidenav-normal ms-2 ps-1">Leads Scoring</span>
                 </a>
               </li>
-              <!--
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/quality-fb/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> verified_user </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Leads Quality </span>
-                </a>
-              </li>-->
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/leads-leaderboard/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> emoji_events </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Leaderboard </span>
+        
+              {% endif %}
+
+              {% if perms.leaderboard %}
+
+              <li class="nav-item {% if '/leads-leaderboard/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/leads-leaderboard/' in request.path %}active{% endif %}" href="/leads-leaderboard/{{ current_month }}-{{ current_year }}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">emoji_events</span>
+                  <span class="sidenav-normal ms-2 ps-1">Leaderboard</span>
                 </a>
               </li>
-              
+
+              {% endif %}
             </ul>
           </div>
         </li>
 
+        {% endif %}
+        
+        
+        
+        
+        
+
+
+        {% if perms.leave_request or perms.prepayment_request or perms.action_request %}
 
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#requestscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#requestscategory" class="nav-link text-white {% if '/leave-requests' in request.path or '/prepayment-requests' in request.path or '/action-requests' in request.path %}active{% endif %}" aria-controls="requestscategory" role="button" aria-expanded="{% if '/leave-requests' in request.path or '/prepayment-requests' in request.path or '/action-requests' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">flag</i>
             <span class="nav-link-text ms-2 ps-1">Requests</span>
           </a>
-          <div class="collapse " id="requestscategory">
-            <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/leave-requests" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> event_busy </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Leaves Request <b class="caret"></b></span>
+          <div class="collapse {% if '/leave-requests' in request.path or '/prepayment-requests' in request.path or '/action-requests' in request.path %}show{% endif %}" id="requestscategory">
+            <ul class="nav">
+
+              {% if perms.leave_request  %}
+
+              <li class="nav-item {% if '/leave-requests' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/leave-requests' in request.path %}active{% endif %}" href="/leave-requests" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">event_busy</span>
+                  <span class="sidenav-normal ms-2 ps-1">Leaves Request <b class="caret"></b></span>
                 </a>
               </li>
 
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/prepayment-requests" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> attach_money </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Prepayments Request <b class="caret"></b></span>
+              {% endif %}
+
+              {% if perms.prepayment_request %}
+        
+              <li class="nav-item {% if '/prepayment-requests' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/prepayment-requests' in request.path %}active{% endif %}" href="/prepayment-requests" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">attach_money</span>
+                  <span class="sidenav-normal ms-2 ps-1">Prepayments Request <b class="caret"></b></span>
                 </a>
               </li>
-            
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/action-requests" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> report_problem </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Actions Request </span>
+
+              {% endif %}
+
+
+              {% if perms.action_request%}
+        
+              <li class="nav-item {% if '/action-requests' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/action-requests' in request.path %}active{% endif %}" href="/action-requests" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">report_problem</span>
+                  <span class="sidenav-normal ms-2 ps-1">Actions Request</span>
                 </a>
               </li>
               
+              {% endif %}
+            
             </ul>
           </div>
         </li>
 
+        {% endif %}
+        
+
+        {% if perms.leave_handling or perms.prepayment_handling or perms.action_handling %}
+
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#requestshandlingcategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}"> eject  </i>
+          <a data-bs-toggle="collapse" href="#requestshandlingcategory" class="nav-link text-white {% if '/leave-handling' in request.path or '/prepayments-handling' in request.path or '/action-handling' in request.path or '/leave-report/' in request.path or '/action-report/' in request.path or '/prepayment-report/' in request.path  %}active{% endif %}" aria-controls="requestshandlingcategory" role="button" aria-expanded="{% if '/leave-handling' in request.path or '/prepayments-handling' in request.path or '/action-handling' in request.path or '/leave-report/' in request.path or '/action-report/' in request.path or '/prepayment-report/' in request.path %}true{% else %}false{% endif %}">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">eject</i>
             <span class="nav-link-text ms-2 ps-1">Requests Handling</span>
           </a>
-          <div class="collapse " id="requestshandlingcategory">
-            <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/leave-handling" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> event_busy </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Leaves Handling <b class="caret"></b></span>
+          <div class="collapse {% if '/leave-handling' in request.path or '/prepayments-handling' in request.path or '/action-handling' in request.path or '/leave-report/' in request.path or '/action-report/' in request.path or '/prepayment-report/' in request.path %}show{% endif %}" id="requestshandlingcategory">
+            <ul class="nav">
+
+              {% if perms.leave_handling %}
+
+              <li class="nav-item {% if '/leave-handling' in request.path  or '/leave-report/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/leave-handling' in request.path or '/leave-report/' in request.path %}active{% endif %}" href="/leave-handling" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">event_busy</span>
+                  <span class="sidenav-normal ms-2 ps-1">Leaves Handling <b class="caret"></b></span>
                 </a>
               </li>
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/prepayments-handling" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> attach_money </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Prepayments Handling </span>
+              {% endif %}
+
+              
+              {% if perms.prepayment_handling %}
+              <li class="nav-item {% if '/prepayments-handling' in request.path or '/prepayment-report/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/prepayments-handling' in request.path or '/prepayment-report/' in request.path %}active{% endif %}" href="/prepayments-handling" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">attach_money</span>
+                  <span class="sidenav-normal ms-2 ps-1">Prepayments Handling</span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/action-handling" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> report_problem </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Actions Handling </span>
+
+              {% endif %}
+        
+              {% if perms.action_handling %}
+
+              <li class="nav-item {% if '/action-handling' in request.path or '/action-report/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/action-handling' in request.path or '/action-report/' in request.path %}active{% endif %}" href="/action-handling" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">report_problem</span>
+                  <span class="sidenav-normal ms-2 ps-1">Actions Handling</span>
                 </a>
               </li>
+
+              {% endif %}
               
             </ul>
           </div>
         </li>
+        
+
+        {% endif %}
+
+
+        {% if perms.qa_pending or perms.qa_lead_reports or perms.qa_auditing or perms.qa_agents_table %}
 
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#qualitycategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}"> verified_user   </i>
+          <a data-bs-toggle="collapse" href="#qualitycategory" class="nav-link text-white {% if '/quality-pending' in request.path or '/lead-reports/' in request.path or '/feedbacks' == request.path or '/quality-agents/' in request.path or '/lead-handling/' in request.path or '/feedback-report/' in request.path %}active{% endif %}" aria-controls="qualitycategory" role="button" aria-expanded="{% if '/quality-pending' in request.path or '/lead-reports/' in request.path or '/feedbacks' == request.path or '/quality-agents/' in request.path or '/lead-handling/' in request.path or '/feedback-report/' in request.path %}true{% else %}false{% endif %}">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">verified_user</i>
             <span class="nav-link-text ms-2 ps-1">QA & Auditing</span>
           </a>
-          <div class="collapse " id="qualitycategory">
-            <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/quality-pending" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> update   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Pending Leads <b class="caret"></b></span>
+          <div class="collapse {% if '/quality-pending' in request.path or '/lead-reports/' in request.path or '/feedbacks' == request.path or '/quality-agents/' in request.path or '/lead-handling/' in request.path or '/feedback-report/' in request.path %}show{% endif %}" id="qualitycategory">
+            <ul class="nav">
+
+              {% if perms.qa_pending %}
+              <li class="nav-item {% if '/quality-pending' in request.path or '/lead-handling/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/quality-pending' in request.path or '/lead-handling/' in request.path %}active{% endif %}" href="/quality-pending" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">update</span>
+                  <span class="sidenav-normal ms-2 ps-1">Pending Leads <b class="caret"></b></span>
+                </a>
+              </li>
+              {% endif %}
+
+
+              {% if perms.qa_lead_reports  %}
+        
+              <li class="nav-item {% if '/lead-reports/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/lead-reports/' in request.path %}active{% endif %}" href="/lead-reports/{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">description</span>
+                  <span class="sidenav-normal ms-2 ps-1">Lead Reports</span>
                 </a>
               </li>
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/lead-reports/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> description   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Lead Reports </span>
+              {% endif %}
+        
+
+              {% if perms.qa_auditing %}
+              <li class="nav-item {% if '/feedbacks' == request.path or '/feedback-report/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/feedbacks' == request.path or '/feedback-report/' in request.path %}active{% endif %}" href="/feedbacks" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">feedback</span>
+                  <span class="sidenav-normal ms-2 ps-1">Auditing Feedbacks</span>
                 </a>
               </li>
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/feedbacks" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> feedback   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Auditing Feedbacks </span>
+              {% endif %}
+
+
+              {% if perms.qa_agents_table %}
+
+        
+              <li class="nav-item {% if '/quality-agents/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/quality-agents/' in request.path %}active{% endif %}" href="/quality-agents/{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">supervisor_account</span>
+                  <span class="sidenav-normal ms-2 ps-1">QA Agents</span>
                 </a>
               </li>
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/quality-agents/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> supervisor_account   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> QA Agents </span>
-                </a>
-              </li>
-
-              
+              {% endif %}
+        
             </ul>
           </div>
         </li>
+        
+        {% endif %}
 
+
+
+        {% if perms.seats or perms.camp_hours  %}
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#campaignhours" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#campaignhours" class="nav-link text-white {% if '/seats' in request.path or '/camphours-daily/' in request.path or '/camphours-monthly/' in request.path or '/camphours-yearly/' in request.path or '/agent-seat-breakdown/' in request.path or '/seat-breakdown/' in request.path %}active{% endif %}" aria-controls="campaignhours" role="button" aria-expanded="{% if '/seats' in request.path or '/camphours-daily/' in request.path or '/camphours-monthly/' in request.path or '/camphours-yearly/' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">timer</i>
             <span class="nav-link-text ms-2 ps-1">Campaign Hours</span>
           </a>
-          <div class="collapse " id="campaignhours">
+          <div class="collapse {% if '/seats' in request.path or '/camphours-daily/' in request.path or '/camphours-monthly/' in request.path or '/camphours-yearly/' in request.path or '/agent-seat-breakdown/' in request.path or '/seat-breakdown/' in request.path %}show{% endif %}" id="campaignhours">
             <ul class="nav ">
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/seats" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> group </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Seats </span>
+
+              {% if perms.seats %}
+              <li class="nav-item {% if '/seats' in request.path or '/agent-seat-breakdown/' in request.path or '/seat-breakdown/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/seats' in request.path or '/agent-seat-breakdown/' in request.path or '/seat-breakdown/' in request.path %}active{% endif %}" href="/seats" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">group</span>
+                  <span class="sidenav-normal ms-2 ps-1">Seats</span>
                 </a>
               </li>
+
+              {% endif %}
               
+              {% if perms.camp_hours %}
 
               {% for caller_camp in callers_campaigns %}
               <li class="nav-item ">
-                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#camphours-{{caller_camp}}">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="{% if '/camphours-daily/'|add:caller_camp.id|add:'-'|add:current_month|add:'-'|add:current_year in request.path %}true{% else %}false{% endif %}" href="#camphours-{{caller_camp}}">
                   <span class="sidenav-mini-icon material-icons">  </span>
                   <span class="sidenav-normal  ms-2  ps-1"> {{caller_camp}} <b class="caret"></b></span>
                 </a>
@@ -668,132 +818,174 @@ crossorigin=""></script>
               </li>
               {% endfor %}
 
+              {% endif %}
+
               
             </ul>
           </div>
         </li>
 
+        {% endif %}
+
+        {% if perms.camp_leads %}
+
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#campaignleads" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#campaignleads" class="nav-link text-white {% if '/all-campaigns-performance/' in request.path or '/campleads-daily/' in request.path or '/campleads-monthly/' in request.path or '/campleads-yearly/' in request.path %}active{% endif %}" aria-controls="campaignleads" role="button" aria-expanded="{% if '/all-campaigns-performance/' in request.path or '/campleads-daily/' in request.path or '/campleads-monthly/' in request.path or '/campleads-yearly/' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">trending_up</i>
             <span class="nav-link-text ms-2 ps-1">Campaign Leads</span>
           </a>
-          <div class="collapse " id="campaignleads">
+          <div class="collapse {% if '/all-campaigns-performance/' in request.path or '/campleads-daily/' in request.path or '/campleads-monthly/' in request.path or '/campleads-yearly/' in request.path %}show{% endif %}" id="campaignleads">
             <ul class="nav ">
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/all-campaigns-performance/{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> bar_chart </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Overall Performance </span>
+              <li class="nav-item {% if '/all-campaigns-performance/' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/all-campaigns-performance/' in request.path %}active{% endif %}" href="/all-campaigns-performance/{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">bar_chart</span>
+                  <span class="sidenav-normal ms-2 ps-1"> Overall Performance </span>
                 </a>
               </li>
-              
-
+        
               {% for caller_camp in callers_campaigns %}
               <li class="nav-item ">
-                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#campleads-{{caller_camp}}">
-                  <span class="sidenav-mini-icon material-icons">  </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> {{caller_camp}} <b class="caret"></b></span>
+                <a class="nav-link text-grey" data-bs-toggle="collapse" aria-expanded="{% if '/campleads-daily/'|add:caller_camp.id|add:'-'|add:current_month|add:'-'|add:current_year in request.path %}true{% else %}false{% endif %}" href="#campleads-{{caller_camp}}">
+                  <span class="sidenav-mini-icon material-icons"> </span>
+                  <span class="sidenav-normal ms-2 ps-1"> {{caller_camp}} <b class="caret"></b></span>
                 </a>
                 <div class="collapse " id="campleads-{{caller_camp}}">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
                       <a class="nav-link text-muted " href="/campleads-daily/{{caller_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
-                        <span class="sidenav-normal  ms-2  ps-1"> Daily Reports </span>
+                        <span class="sidenav-normal ms-2 ps-1"> Daily Reports </span>
                       </a>
                     </li>
                     <li class="nav-item">
                       <a class="nav-link text-muted " href="/campleads-monthly/{{caller_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
-                        <span class="sidenav-normal  ms-2  ps-1"> Monthly Reports </span>
+                        <span class="sidenav-normal ms-2 ps-1"> Monthly Reports </span>
                       </a>
-                    </li>   
+                    </li>
                     <li class="nav-item">
                       <a class="nav-link text-muted " href="/campleads-yearly/{{caller_camp.id}}-{{current_year}}" target="_parent">
-                        <span class="sidenav-normal  ms-2  ps-1"> Yearly Reports </span>
+                        <span class="sidenav-normal ms-2 ps-1"> Yearly Reports </span>
                       </a>
-                    </li>   
+                    </li>
                   </ul>
                 </div>
               </li>
               {% endfor %}
-
-              
             </ul>
           </div>
         </li>
 
+        {% endif %}      
+        
+        
+        {% if perms.sales_dashboard or perms.sales_lookerstudio or perms.sales_performance %}
+
+
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#salesoutleads" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+
+          <a data-bs-toggle="collapse" href="#salesoutleads" class="nav-link text-white 
+            {% if '/sales-dashboard' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}active{% endif %}" 
+            aria-controls="salesoutleads" role="button" aria-expanded="{% if '/sales-dashboard' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">attach_money</i>
             <span class="nav-link-text ms-2 ps-1">Sales & Outreach</span>
           </a>
-          <div class="collapse " id="salesoutleads">
-            <ul class="nav ">
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/sales-dashboard-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> dashboard </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Sales Dashboard</span>
+
+          
+          <div class="collapse {% if '/sales-dashboard' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}show{% endif %}" id="salesoutleads">
+            <ul class="nav">
+
+              {% if perms.sales_dashboard %}
+
+              
+              <li class="nav-item {% if '/sales-dashboard' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/sales-dashboard' in request.path %}active{% endif %}" href="/sales-dashboard-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">dashboard</span>
+                  <span class="sidenav-normal ms-2 ps-1">Sales Dashboard</span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/sales-calendar-{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> today </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Sales Calendar </span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/sales-lookerstudio" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> query_stats </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Looker Studio</span>
+              
+              {% endif %}
+
+
+              {% if perms.sales_dashboard  %}
+              <li class="nav-item {% if '/sales-calendar' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/sales-calendar' in request.path %}active{% endif %}" href="/sales-calendar-{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">today</span>
+                  <span class="sidenav-normal ms-2 ps-1">Sales Calendar</span>
                 </a>
               </li>
 
+              {% endif %}
               
-              <!--
-              {% for sales_camp in sales_campaigns %}
-              <li class="nav-item ">
-                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#campleadsoutreach">
-                  <span class="sidenav-mini-icon material-icons">  </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> {{sales_camp}} <b class="caret"></b></span>
+
+              {% if perms.sales_lookerstudio %}
+
+              <li class="nav-item {% if '/sales-lookerstudio' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/sales-lookerstudio' in request.path %}active{% endif %}" href="/sales-lookerstudio" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">query_stats</span>
+                  <span class="sidenav-normal ms-2 ps-1">Looker Studio</span>
                 </a>
-                <div class="collapse " id="campleadsoutreach">
+              </li>
+
+              {% endif %}
+              
+              <!-- 
+              {% for sales_camp in sales_campaigns %}
+              <li class="nav-item {% if '/campleads-sales' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey" data-bs-toggle="collapse" href="#campleadsoutreach-{{sales_camp.id}}" aria-expanded="{% if '/campleads-sales-' in request.path %}true{% else %}false{% endif %}">
+                  <span class="sidenav-normal ms-2 ps-1">{{sales_camp}} <b class="caret"></b></span>
+                </a>
+                <div class="collapse {% if '/campleads-sales-' in request.path %}show{% endif %}" id="campleadsoutreach-{{sales_camp.id}}">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
-                      <a class="nav-link text-muted " href="/campleads-sales-daily/{{sales_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
-                        <span class="sidenav-normal  ms-2  ps-1"> Daily Reports </span>
+                      <a class="nav-link text-muted {% if '/campleads-sales-daily/' in request.path %}active{% endif %}" href="/campleads-sales-daily/{{sales_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal ms-2 ps-1">Daily Reports</span>
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link text-muted " href="/campleads-sales-monthly/{{sales_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
-                        <span class="sidenav-normal  ms-2  ps-1"> Monthly Reports </span>
+                      <a class="nav-link text-muted {% if '/campleads-sales-monthly/' in request.path %}active{% endif %}" href="/campleads-sales-monthly/{{sales_camp.id}}-{{current_month}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal ms-2 ps-1">Monthly Reports</span>
                       </a>
-                    </li>   
+                    </li>
                     <li class="nav-item">
-                      <a class="nav-link text-muted " href="/campleads-sales-yearly/{{sales_camp.id}}-{{current_year}}" target="_parent">
-                        <span class="sidenav-normal  ms-2  ps-1"> Yearly Reports </span>
+                      <a class="nav-link text-muted {% if '/campleads-sales-yearly/' in request.path %}active{% endif %}" href="/campleads-sales-yearly/{{sales_camp.id}}-{{current_year}}" target="_parent">
+                        <span class="sidenav-normal ms-2 ps-1">Yearly Reports</span>
                       </a>
-                    </li>   
+                    </li>
                   </ul>
                 </div>
               </li>
               {% endfor %}
+
               -->
               
             </ul>
           </div>
         </li>
+        
+        {% endif %}
+
+        {% if perms.agents_table or  perms.working_hours or perms.attendance_monitor or perms.lateness_monitor  %}
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#agentscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#agentscategory" class="nav-link text-white {% if '/agents-list' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path  or '/lateness-monitor' in request.path or '/agent-leads/' in request.path or '/feedbacks-agent/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/agents-list' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path or '/lateness-monitor' in request.path or '/agent-leads/' in request.path or  '/feedbacks-agent/' in request.path  %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">people</i>
             <span class="nav-link-text ms-2 ps-1">Agents</span>
           </a>
-          <div class="collapse " id="agentscategory">
+          <div class="collapse {% if '/agents-list' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path  or '/lateness-monitor' in request.path or '/agent-leads/'  in request.path or '/feedbacks-agent/' in request.path %}show{% endif %} " id="agentscategory">
             <ul class="nav ">
+
+              
               <li class="nav-item ">
+                {% if perms.agents_table %}
+
                 <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#aglistdata">
                   <span class="sidenav-mini-icon material-icons"> account_circle </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Agents List <b class="caret"></b></span>
                 </a>
+
+                {% endif %}
+
+
                 <div class="collapse " id="aglistdata">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
@@ -810,7 +1002,11 @@ crossorigin=""></script>
                     {% endfor %}
                   </ul>
                 </div>
+
               </li>
+
+              {% if perms.working_hours %}
+
               <li class="nav-item ">
                 <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#whdata">
                   <span class="sidenav-mini-icon material-icons"> timer </span>
@@ -833,6 +1029,11 @@ crossorigin=""></script>
                   </ul>
                 </div>
               </li>
+              
+              {% endif %}
+
+              {% if perms.attendance_monitor %}
+
               <li class="nav-item">
                 <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#amdata" >
                   <span class="sidenav-mini-icon material-icons"> today </span>
@@ -856,6 +1057,9 @@ crossorigin=""></script>
                 </div>
               </li>
 
+              {% endif %}
+
+              {% if perms.lateness_monitor %}
               <li class="nav-item">
                 <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#saltabdata" >
                   <span class="sidenav-mini-icon material-icons"> access_time </span>
@@ -879,6 +1083,8 @@ crossorigin=""></script>
                 </div>
               </li>
 
+              {% endif %}
+
               
             <!--
               <li class="nav-item">
@@ -892,22 +1098,29 @@ crossorigin=""></script>
           </div>
         </li>
 
+        {% endif %}
+
+        {% if perms.salaries_table or perms.adjusting_hours %}
+
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#salariescategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#salariescategory" class="nav-link text-white {% if '/salaries-table' in request.path or '/adjusting-hours' in request.path  %}active{% endif %} " aria-controls="authExamples" role="button" aria-expanded="{% if '/salaries-table' in request.path or '/adjusting-hours' in request.path  %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">monetization_on</i>
             <span class="nav-link-text ms-2 ps-1">Salaries</span>
           </a>
-          <div class="collapse " id="salariescategory">
+          <div class="collapse {% if '/salaries-table' in request.path or '/adjusting-hours' in request.path  %}show{% endif %}" id="salariescategory">
             <ul class="nav ">
+
+              {% if perms.salaries_table%}
+
               <li class="nav-item">
-                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="false" href="#lmdata" >
+                <a class="nav-link text-grey "  data-bs-toggle="collapse" aria-expanded="false" href="#lmdata" >
                   <span class="sidenav-mini-icon material-icons"> account_balance </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Salaries Table </span>
                 </a>
                 <div class="collapse " id="lmdata">
                   <ul class="nav nav-sm flex-column">
                     <li class="nav-item">
-                      <a class="nav-link text-muted " href="/salaries-table-company/{{current_month}}-{{current_year}}" target="_parent">
+                      <a class="nav-link text-muted  "  href="/salaries-table-company/{{current_month}}-{{current_year}}" target="_parent" >
                         <span class="sidenav-normal  ms-2  ps-1"> Company Data </span>
                       </a>
                     </li>
@@ -921,12 +1134,19 @@ crossorigin=""></script>
                   </ul>
                 </div>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/adjusting-hours" target="_parent">
+
+              {% endif %}
+
+              {% if perms.adjusting_hours %}
+
+              <li class="nav-item {% if '/adjusting-hours' in request.path%}active{% endif %}">
+                <a class="nav-link text-grey {% if '/adjusting-hours' in request.path%}active{% endif %}" href="/adjusting-hours" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> more_time </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Adjusting Hours </span>
                 </a>
               </li>
+              
+              {% endif %}
 
               <!--
               <li class="nav-item ">
@@ -954,6 +1174,8 @@ crossorigin=""></script>
             </ul>
           </div>
         </li>
+
+        {% endif %}
 
         <!--
         <li class="nav-item">
@@ -1037,13 +1259,14 @@ crossorigin=""></script>
           </div>
         </li>
         -->
-
+        {% if perms.admin_home %}
         <li class="nav-item">
           <a class="nav-link"  href="/admin" target="_parent" >
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">admin_panel_settings</i>
             <span class="nav-link-text ms-2 ps-1">Admin</span>
           </a>
         </li>
+        {% endif %}
 
 
 
@@ -1073,7 +1296,8 @@ crossorigin=""></script>
           </a>
         </div>
         <div class="input-group input-group-outline" style="max-width: 150px;">
-          <select class="form-control" name="work_status" id="work_status">
+          <select class="form-control" data-user-id="{{ profile.id }}" 
+          data-has-credentials="{% if profile.assigned_credentials %}{{ profile.assigned_credentials }}{% else %}none{% endif %}" name="work_status" id="work_status">
             {% if work_status %}
               <option value="ready" {% if work_status.current_status == 'ready' %}selected{% endif %}>Ready</option>
               <option value="break" {% if work_status.current_status == 'break' %}selected{% endif %}>Break</option>

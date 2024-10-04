@@ -322,14 +322,48 @@
 
 
     <script>
-    
         const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
           searchable: true,
           fixedHeight: false,
-          
         });
       
-    </script>
+        // Custom function to decode all URL-encoded characters
+        function decodeAllData(data) {
+          return decodeURIComponent(data); // Decodes any URL-encoded characters
+        }
+      
+        document.querySelectorAll(".export").forEach(function(el) {
+          el.addEventListener("click", function(e) {
+            var type = el.dataset.type;
+      
+            var data = {
+              type: type,
+              filename: "{{campaign.name}}-hours-yearly-reports-{{year}}",
+            };
+      
+            if (type === "csv") {
+              data.columnDelimiter = ",";
+            }
+      
+            // Use the export functionality but prevent immediate download
+            const csvContent = dataTableSearch.export({
+              type: type,
+              download: false, // Prevent immediate download
+            });
+      
+            // Decode all URL-encoded characters
+            const decodedContent = decodeAllData(csvContent);
+      
+            // Now trigger the download with the decoded content
+            const blob = new Blob([decodedContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = data.filename + ".csv";
+            link.click();
+          });
+        });
+      </script>
+      
     
     <script>
         var ctx1 = document.getElementById("chart-line").getContext("2d");

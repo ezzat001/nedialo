@@ -167,117 +167,155 @@ body {
         </li>
         -->
 
-        <li class="nav-item">
-          <a class="nav-link"  href="/admin">
+        {% if perms.admin_home %}
+
+        <li class="nav-item ">
+          <a class="nav-link {% if request.path == '/admin' or '/application-form' in request.path %}active{% endif %}"  href="/admin">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">email</i>
             <span class="nav-link-text ms-2 ps-1">Applications</span>
           </a>
         </li>
 
-        <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#adminusers" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">person </i>
-            <span class="nav-link-text ms-2 ps-1">Account Management</span>
-          </a>
-          <div class="collapse " id="adminusers">
-            <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/admin-agents" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> support_agent   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Accounts <b class="caret"></b></span>
-                </a>
-              </li>
-              
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/admin-clients" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> work </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Clients <b class="caret"></b></span>
-                </a>
-              </li>
+        {% endif %}
 
-              <!--
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/admin-affiliates" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> group   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Affiliates <b class="caret"></b></span>
-                </a>
-              </li>
-              -->
-              
-            </ul>
+        {% if perms.admin_accounts or perms.clients %}
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#adminusers" class="nav-link text-white {% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path %}true{% else %}false{% endif %}">
+              <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">person</i>
+              <span class="nav-link-text ms-2 ps-1">Account Management</span>
+          </a>
+          <div class="collapse {% if '/admin-agents' in request.path or '/admin-clients' in request.path or '/agent-modify/' in request.path or '/client-modify/' in request.path %}show{% endif %}" id="adminusers">
+              <ul class="nav">
+
+                {% if perms.admin_accounts %}
+                
+                  <li class="nav-item {% if '/admin-agents' in request.path or  '/agent-modify/' in request.path  %}active{% endif %}">
+                      <a class="nav-link text-grey {% if '/admin-agents'  in request.path or  '/agent-modify/' in request.path  %}active{% endif %}" href="/admin-agents" target="_parent">
+                          <span class="sidenav-mini-icon material-icons">support_agent</span>
+                          <span class="sidenav-normal ms-2 ps-1">Accounts <b class="caret"></b></span>
+                      </a>
+                  </li>
+
+                {% endif %}
+
+                {% if perms.admin_clients %}
+
+                  <li class="nav-item {% if '/admin-clients' in request.path or  '/client-modify/' in request.path  %}active{% endif %}">
+                      <a class="nav-link text-grey {% if '/admin-clients' in request.path or  '/client-modify/' in request.path  %}active{% endif %}" href="/admin-clients" target="_parent">
+                          <span class="sidenav-mini-icon material-icons">work</span>
+                          <span class="sidenav-normal ms-2 ps-1">Clients <b class="caret"></b></span>
+                      </a>
+                  </li>
+
+                {% endif %}
+              </ul>
           </div>
         </li>
 
+        {% endif %}
+      
+        {% if perms.admin_campaigns or perms.admin_contactlists %}
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#scoringcategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#scoringcategory" class="nav-link text-white {% if '/admin-campaigns' in request.path or '/campaign-modify' in request.path or '/dialercredentials' in request.path or '/sourcecredentials' in request.path %} active {% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-campaigns' in request.path or '/campaign-modify' in request.path or '/dialercredentials' in request.path or '/sourcecredentials' in request.path %}true{% else%}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">ads_click </i>
             <span class="nav-link-text ms-2 ps-1">Campaign Settings</span>
           </a>
-          <div class="collapse " id="scoringcategory">
+          <div class="collapse {% if '/admin-campaigns' in request.path or '/campaign-modify' in request.path or '/dialercredentials' in request.path or '/sourcecredentials' in request.path %} show {% endif %}" id="scoringcategory">
             <ul class="nav ">
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/admin-campaigns" target="_parent">
+              {% if perms.admin_campaigns %}
+              <li class="nav-item {% if '/admin-campaigns' in request.path or '/campaign-modify' in request.path or '/dialercredentials' in request.path or '/sourcecredentials' in request.path %} active {% endif %}">
+                <a class="nav-link text-grey {% if '/admin-campaigns' in request.path or '/campaign-modify' in request.path or '/dialercredentials' in request.path or '/sourcecredentials' in request.path %} active {% endif %}" href="/admin-campaigns" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> bar_chart   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Campaigns <b class="caret"></b></span>
                 </a>
               </li>
+
+              {% endif %}
+              <!--
+
+              {% if perms.admin_contactlists %}
+
               <li class="nav-item ">
                 <a class="nav-link text-grey " href="/admin-contactlists" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> contacts </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Contact Lists <b class="caret"></b></span>
                 </a>
               </li>
-              
+
+              {% endif %}
+            -->
 
               
             </ul>
           </div>
         </li>
+        {% endif %}
 
+        {% if perms.admin_roles or  perms.admin_provided_services or perms.admin_dialers or perms.admin_sources or perms.admin_server_settings %}
+        
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#serversettings" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#serversettings" class="nav-link text-white {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">settings </i>
             <span class="nav-link-text ms-2 ps-1">General Settings</span>
           </a>
-          <div class="collapse " id="serversettings">
+          <div class="collapse {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path %}show{% endif %}" id="serversettings">
             <ul class="nav ">
+              <!--
               <li class="nav-item ">
                 <a class="nav-link text-grey " href="/admin-roles" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> supervisor_account   </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Roles <b class="caret"></b></span>
                 </a>
               </li>
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/admin-services" target="_parent">
+              -->
+              {% if perms.admin_provided_services %}
+
+              <li class="nav-item {% if '/admin-services' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/admin-services' in request.path %}active{% endif %}" href="/admin-services" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> headset_mic </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Provided Services <b class="caret"></b></span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/admin-dialers" target="_parent">
+
+              {% endif %}
+              
+              {% if perms.admin_dialers %}
+
+              <li class="nav-item {% if '/admin-dialers' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/admin-dialers' in request.path %}active{% endif %}" href="/admin-dialers" target="_parent">
                   <span class="sidenav-mini-icon material-icons medal"> call  </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Dialers </span>
                 </a>
               </li>
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/admin-datasources" target="_parent">
+              {% endif %}
+
+              {% if perms.admin_sources %}
+              <li class="nav-item {% if '/admin-datasources' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/admin-datasources' in request.path %}active{% endif %}" href="/admin-datasources" target="_parent">
                   <span class="sidenav-mini-icon material-icons medal"> find_in_page </span>
                   <span class="sidenav-normal  ms-2  ps-1"> Lead Generation Sources </span>
                 </a>
               </li>
+
+              {% endif %}
               <hr>
+
+              <!--
               <li class="nav-item">
                 <a class="nav-link text-grey " href="reschedule-request" target="_parent">
                   <span class="sidenav-mini-icon material-icons medal"> tune </span>
                   <span class="sidenav-normal  ms-2  ps-1">Server Settings </span>
                 </a>
               </li>
+              -->
 
               
             </ul>
           </div>
         </li>
+
+        {% endif %}
 
 
         <li class="nav-item">
@@ -331,13 +369,7 @@ body {
                 </div>
             </div>
           <ul class="navbar-nav  justify-content-end">
-            <li class="nav-item">
-              <a href="static/pages/authentication/signin/illustration.html" class="nav-link text-body p-0 position-relative" target="_blank">
-                <i class="material-icons me-sm-1">
-              account_circle
-            </i>
-              </a>
-            </li>
+            
             <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
               <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
                 <div class="sidenav-toggler-inner">

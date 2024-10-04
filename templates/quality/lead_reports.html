@@ -257,6 +257,8 @@
             <table class="table table-flush" id="datatable-search">
               <thead class="thead-light">
                 <tr>
+                  <th>Lead ID</th>
+
                   <th>Pushed Time</th>
                   <th>Agent ID</th>
                   <th>Agent Name</th>
@@ -275,10 +277,13 @@
               <tbody>
                 {% for lead in all_leads %}
                 <tr>
+                  <td class="text-xs font-weight-normal">
+                    #{{lead.lead_id}}
+                  </td>
                   <td>
                     <div class="d-flex align-items-center">
   
-                      <p class="text-xs font-weight-normal ms-2 mb-0">{{lead.pushed}}</p>
+                      <p class="text-xs font-weight-normal ms-2 mb-0">{{ lead.pushed|date:"Y-m-d\\TH:i" }}</p>
                     </div>
                   </td>
                   <td class="font-weight-normal">
@@ -341,7 +346,7 @@
 
                   </td>
                   <td class="text-xs font-weight-normal">
-                    {{lead.handled}}
+                    {{lead.handled|date:"Y-m-d\\TH:i" }}
                   </td>
 
   
@@ -379,32 +384,49 @@
   
     
   
-    <script>
-  
-      const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
-        searchable: true,
-        fixedHeight: false,
-        
+<script>
+  const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
+    searchable: true,
+    fixedHeight: false,
+  });
+
+  // Custom function to decode all URL-encoded characters
+  function decodeAllData(data) {
+    return decodeURIComponent(data); // Decodes any URL-encoded characters
+  }
+
+  document.querySelectorAll(".export").forEach(function(el) {
+    el.addEventListener("click", function(e) {
+      var type = el.dataset.type;
+
+      var data = {
+        type: type,
+        filename: "lead-reports-{{month}}-{{year}}",
+      };
+
+      if (type === "csv") {
+        data.columnDelimiter = ",";
+      }
+
+      // Use the export functionality but prevent immediate download
+      const csvContent = dataTableSearch.export({
+        type: type,
+        download: false, // Prevent immediate download
       });
-    
-    
-      document.querySelectorAll(".export").forEach(function(el) {
-        el.addEventListener("click", function(e) {
-          var type = el.dataset.type;
-    
-          var data = {
-            type: type,
-            filename: "agents-" + type,
-          };
-    
-          if (type === "csv") {
-            data.columnDelimiter = "|";
-          }
-    
-          dataTableSearch.export(data);
-        });
-      });
-    </script>
+
+      // Decode all URL-encoded characters
+      const decodedContent = decodeAllData(csvContent);
+
+      // Now trigger the download with the decoded content
+      const blob = new Blob([decodedContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = data.filename + ".csv";
+      link.click();
+    });
+  });
+</script>
+
   
   
   

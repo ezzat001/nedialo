@@ -11,8 +11,10 @@ from django.views.decorators.http import require_http_methods
 from django.core.exceptions import ValidationError
 from django.db.models import Avg, Count, Q, Sum
 from collections import defaultdict
-
-
+from .signals import *
+from discord.views import *
+from pytz import timezone
+import pytz
 from django.apps import apps
 from .models import *
 from datetime import datetime,timedelta
@@ -59,6 +61,13 @@ def format_percentage(number):
     return formatted.rstrip('0').rstrip('.')
 
 
+
+
+def maintenance(request):
+    return render(request, 'maintenance.html')
+
+
+
 def loginview(request):
     context = {}
     if request.user.is_authenticated:
@@ -90,6 +99,13 @@ def loginview(request):
             if active and userprofile.status in active_statuses:
                     
                 login(request,usera)
+
+
+                try:
+                    discord_crm_login(userprofile.full_name,True,request)
+                except:
+                    pass     
+            
                 return redirect('/')
                 
     
@@ -98,7 +114,21 @@ def loginview(request):
 @login_required
 def logoutview(request):
 
+    try:
+        userprofile = Profile.objects.get(user=request.user)
+
+    except:
+        userprofile = ClientProfile.objects.get(user=request.user)
+
+    try:
+        discord_crm_login(userprofile.full_name,False,request)
+    except:
+        pass  
+
     logout(request)
+
+
+
 
     return redirect('/login')
 
@@ -161,6 +191,7 @@ def home(request):
             status="disqualified",
         ).count()
         monthly_disqualified_count.append(leads_count)
+        
     context['qualified_count'] = monthly_qualified_count
     context['disqualified_count'] = monthly_disqualified_count
 
@@ -291,6 +322,35 @@ def lead_submission(request):
             state=state,
             county=county,
         )
+
+
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+        try:
+
+           
+            lead_id = lead.lead_id
+
+            content = f'**Agent:** {profile.full_name}\n\n**Action:** Posted a New Lead on **{str(lead.campaign).upper()}**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+            send_discord_message_lead(content,lead_id)
+            
+        except:
+            pass
+    
+
         return redirect('/')
 
 
@@ -1321,8 +1381,7 @@ def lead_handling(request, lead_id):
 
         
         dialer_list = data.get('dialer_list')
-        contact_list = ContactList.objects.get(id=dialer_list)
-        lead.contact_list = contact_list
+
         lead.seller_name = data.get('owner_name')
         lead.seller_phone = data.get('phone_number')
         lead.seller_email = data.get('email')
@@ -1638,6 +1697,28 @@ def handle_audio_upload(request):
             new_application.shift = request.POST.get('shift')
             new_application.experience = request.POST.get('previous_experience')
             new_application.save()
+
+            app = new_application
+
+            utc_now = datetime.utcnow()
+
+            # Get the timezone object for 'America/New_York'
+            est_timezone = pytz.timezone('America/New_York')
+
+            # Convert UTC time to Eastern timezone
+            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+            # Format the time as HH:MM:SS string
+            est = est_time.strftime('%I:%M:%S %p')
+
+            # Construct the content of the embed with quote formatting
+            request_ip = request.META.get('REMOTE_ADDR')
+
+            content = f'\n**APPLICATION**\n\n\n**Applicant:** {app.full_name}\n\n**Position:** {app.get_position_display()}\n\n**Can Start on:** {app.start_date}\n\n**Shift:** {app.get_shift_display()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
+            try:
+                send_discord_message_application(content,app.id)
+            except:
+                pass
             
             return redirect('/')
         except Exception as e:
@@ -1826,6 +1907,26 @@ def leave_request(request):
             file=file if file else None  # Assign file only if it exists
         )
 
+
+        request_ip = request.META.get('REMOTE_ADDR')
+
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+        content = f'**Agent:** {profile.full_name}\n\n**Action:** Requested a Leave on **[{leave.requested_date}]**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
+        try:
+            send_discord_message_requests(content,leave.id,'leave')
+        except:
+            pass
+
     
         
 
@@ -1971,6 +2072,25 @@ def action_request(request):
             file=file if file else None  # Assign file only if it exists
         )
 
+        request_ip = request.META.get('REMOTE_ADDR')
+        
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+ 
+        content = f'**Agent:** {profile.full_name}\n\n**Action:** Requested an Action  on **{action.agent_profile.full_name}**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+        try:
+            send_discord_message_requests(content,action.id,'action')
+        except:
+            pass
+
         return redirect('/action-requests')
     return render(request,'requests/action.html', context)
 
@@ -2089,7 +2209,24 @@ def prepayment_request(request):
             payment_account=payment_account,
         )
 
-        print(prepayment)
+        request_ip = request.META.get('REMOTE_ADDR')
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        utc_now = datetime.utcnow()
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+        mention4 = f'<@979421026976927785>'
+
+        requestid = prepayment.id
+        content = f'**Agent:** {profile.full_name}\n\n**Action:** Requested a prepayment\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+        try:
+            send_discord_message_prepayment(content,requestid) 
+        except:
+            pass
+
     
         
 
@@ -2181,6 +2318,22 @@ def format_duration(seconds):
     return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
 
 
+
+
+
+
+
+@csrf_exempt
+@login_required
+def heartbeat_view(request):
+    user = request.user
+    # Trigger the user_heartbeat_signal to update last seen timestamp
+    user_heartbeat_signal.send(sender=None, user=user, request=request)
+    return JsonResponse({'status': 'ok'})
+
+
+
+
 @permission_required('work_status')
 @login_required
 def update_status(request):
@@ -2188,18 +2341,57 @@ def update_status(request):
     user = request.user
     today = (tz.localtime(tz.now())).date()
     
+    profile = Profile.objects.get(user=user)
+
     if new_status in dict(WorkStatus.STATUS_CHOICES).keys():
         try:
             work_status, created = WorkStatus.objects.get_or_create(
                 user=user,
                 date=today,
                 defaults={
-                    'current_status': 'ready',
+                    'current_status': new_status,
                     'last_status_change': tz.now()
                 }
             )
             if not created:
                 work_status.update_status(new_status)
+
+
+            if new_status == 'offline':
+                    try:
+                        seat = profile.assigned_credentials
+                        
+                        if seat:
+                            # Update the SeatAssignmentLog to end the session
+                            SeatAssignmentLog.objects.filter(
+                                agent_profile=profile,
+                                dialer_credentials=seat,
+                                end_time__isnull=True
+                            ).update(end_time=timezone.now())
+
+                            # Clear the seat assignment for both the agent and the seat
+                            
+                    except DialerCredentials.DoesNotExist:
+                        pass  # Handle the case where the agent does not have an assigned seat
+            else:
+                
+                try:
+                    seat = profile.assigned_credentials
+
+                    SeatAssignmentLog.objects.filter(
+                                agent_profile=profile,
+                                dialer_credentials=seat,
+                                end_time__isnull=True
+                            ).update(end_time=timezone.now())
+                    
+
+                    SeatAssignmentLog.objects.create(
+                        agent_profile=profile,
+                        dialer_credentials=seat,
+                        start_time=timezone.now()
+                    )
+                except DialerCredentials.DoesNotExist:
+                    pass
             
             # Calculate updated total times in seconds
             ready_time_seconds = work_status.ready_time.total_seconds()
@@ -2208,10 +2400,37 @@ def update_status(request):
             offline_time_seconds = work_status.offline_time.total_seconds()
             login_time = str((work_status.get_login_time_in_timezone()).strftime('%I:%M %p'))
             # Format times
+
+            utc_now = datetime.utcnow()
+
+            # Get the timezone object for 'America/New_York'
+            est_timezone = pytz.timezone('America/New_York')
+
+            # Convert UTC time to Eastern timezone
+            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+            # Format the time as HH:MM:SS string
+            est = est_time.strftime('%I:%M:%S %p')
+
+            # Construct the content of the embed with quote formatting
+            request_ip = request.META.get('REMOTE_ADDR')
+            
+            content = f'**Agent:** {profile.full_name}\n\n**Action:** Changed Working Status to **{new_status.upper()}**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}'
+
+            try:
+                send_discord_message_activity(content)
+            except:
+                pass
+
+
             def format_duration(seconds):
                 hours, remainder = divmod(seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
                 return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+            
+
+
+            
 
             # Prepare response
             response_data = {
@@ -2228,6 +2447,9 @@ def update_status(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid status.'})
+
+
+
 
 
 

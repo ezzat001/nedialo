@@ -888,14 +888,13 @@ def client_modify(request,username):
     context = {}
     user = User.objects.get(username=username)
 
-    context['agent_profile'] = Profile.objects.get(user=user)
+    context['agent_profile'] = ClientProfile.objects.get(user=user)
     context['profile'] = Profile.objects.get(user=request.user)
     context['us_states'] = us_states
     context['discovery_options'] = discovery_options
     context['services'] = Service.objects.filter(active=True, status="active")
 
-    if context['agent_profile'].role.role_name != "Client":
-        return redirect('/admin')
+ 
 
     if request.method == "POST":
 

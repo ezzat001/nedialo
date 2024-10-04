@@ -13,6 +13,9 @@ urlpatterns = [
 
 
     path('admin', applications_table),
+    path('maintenance/', maintenance, name='maintenance'),
+    path('heartbeat/', heartbeat_view, name='heartbeat'),
+
     #path('applications', applications_table),
     path('application-form/<int:app_id>', application_report),
     path('crm-admin/', admin.site.urls),
@@ -156,6 +159,10 @@ urlpatterns = [
 
     path('agents-list-company', agents_list_company),
     path('agents-list-team/<int:team_id>', agents_list_team),
+    path('agent-login-update/', update_agent_login_time, name='update_agent_login_time'),
+
+    path('agent-seat-update/', update_seat_admin, name='update_seat_admin'),
+
 
     path('update_status_admin/', update_status_admin, name='update_status_admin'),
 

@@ -37,9 +37,7 @@
     </div>
     <div class="d-flex">
       <div class="dropdown d-inline">
-        <a href="javascript:;" class="btn btn-outline-info dropdown-toggle " data-bs-toggle="dropdown" id="navbarDropdownMenuLink2">
-          Filters
-        </a>
+
         <ul class="dropdown-menu dropdown-menu-lg-start px-2 py-3" aria-labelledby="navbarDropdownMenuLink2" data-popper-placement="left-start">
           <li><a class="dropdown-item border-radius-md text-success" href="javascript:;">Status: Active</a></li>
           <li><a class="dropdown-item border-radius-md text-danger" href="javascript:;">Status: Inactive</a></li>
@@ -182,13 +180,15 @@
   
 
   <script>
-
     const dataTableSearch = new simpleDatatables.DataTable("#datatable-search", {
       searchable: true,
       fixedHeight: false,
-      
     });
   
+    // Custom function to decode all URL-encoded characters
+    function decodeAllData(data) {
+      return decodeURIComponent(data); // Decodes any URL-encoded characters
+    }
   
     document.querySelectorAll(".export").forEach(function(el) {
       el.addEventListener("click", function(e) {
@@ -196,17 +196,32 @@
   
         var data = {
           type: type,
-          filename: "agents-" + type,
+          filename: "contactlists-list",
         };
   
         if (type === "csv") {
-          data.columnDelimiter = "|";
+          data.columnDelimiter = ",";
         }
   
-        dataTableSearch.export(data);
+        // Use the export functionality but prevent immediate download
+        const csvContent = dataTableSearch.export({
+          type: type,
+          download: false, // Prevent immediate download
+        });
+  
+        // Decode all URL-encoded characters
+        const decodedContent = decodeAllData(csvContent);
+  
+        // Now trigger the download with the decoded content
+        const blob = new Blob([decodedContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = data.filename + ".csv";
+        link.click();
       });
     });
   </script>
+  
 
 
 
