@@ -202,7 +202,7 @@
                             <div class="col-12 col-sm-6">
                                 <label class="form-label">Hourly Rate</label>
                                 <div class="input-group input-group-dynamic">
-                                    <input class="multisteps-form__input form-control" type="number" name="hourly_rate" id="hourly_rate_input" disabled>
+                                    <input class="multisteps-form__input form-control" type="number" name="hourly_rate" step="0.5" id="hourly_rate_input" disabled>
                                 </div>
                             </div>
                         
@@ -280,6 +280,10 @@
 
 
 <script>
+
+
+ 
+
 document.addEventListener('DOMContentLoaded', function() {
     const nextButton1 = document.getElementById('nextButton1');
     const nextButton2 = document.getElementById('nextButton2');
@@ -323,6 +327,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+const hourlyRateInput = document.getElementById('hourly_rate_input');
+
+    hourlyRateInput.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        if (isNaN(value)) {
+            this.setCustomValidity('Please enter a valid number.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
 
 </script>
 

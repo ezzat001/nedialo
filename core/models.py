@@ -470,13 +470,7 @@ class ClientProfile(models.Model): #Profile Standard Information
         return self.full_name
 
     def save(self, *args, **kwargs):
-        if not self.id:  # Check if the object has an ID (i.e., it's a new object)
-            # Get the last ID in the table and increment by 1
-            last_agent = Profile.objects.order_by('-id').first()
-            if last_agent:
-                self.id = last_agent.id + 1
-            else:
-                self.id = 1000  # Start with ID 1000 if no agents exist yet
+        # No need to manually assign the id
         super().save(*args, **kwargs)
 
 class Campaign(models.Model): # Client Campaigns

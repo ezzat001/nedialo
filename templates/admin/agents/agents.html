@@ -94,12 +94,9 @@
                 <td class="text-xs font-weight-normal">
                   {{account.user}}
                 </td>
-                <td class="password-cell font-weight-normal">
-                  <span class="password-hidden">*********</span>
+                <td class="text-xs font-weight-normal">
                   <span class="password-visible">{{ account.password }}</span>
-                  <a href="#" class="toggle-password">
-                    <i class="material-icons text-secondary position-relative text-lg">visibility</i>
-                  </a>
+
                 </td> 
                 <td class="text-xs font-weight-normal">
                     {{account.role}}
@@ -340,46 +337,8 @@
 
 
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    
-    document.querySelectorAll('.toggle-password').forEach(function(toggle) {
-      toggle.addEventListener('click', function(event) {
-        event.preventDefault();
-  
-        const passwordCell = this.closest('td.password-cell');
-        const passwordHidden = passwordCell.querySelector('.password-hidden');
-        const passwordVisible = passwordCell.querySelector('.password-visible');
-  
-        if (passwordVisible.style.display === 'none') {
-          passwordVisible.style.display = 'inline';
-          passwordHidden.style.display = 'none';
-          this.querySelector('i').textContent = 'visibility_off'; // Change icon to 'visibility_off'
-        } else {
-          passwordVisible.style.display = 'none';
-          passwordHidden.style.display = 'inline';
-          this.querySelector('i').textContent = 'visibility'; // Change icon back to 'visibility'
-        }
-      });
-    });
-  });
-  
-</script>
-
-<style>
-  .password-hidden {
-    display: inline;
-  }
-  
-  .password-visible {
-    display: none;
-  }
-  
-  .toggle-password i {
-    cursor: pointer;
-  }
-  
-</style>
+ 
+ 
 
 
 {% endblock %}
