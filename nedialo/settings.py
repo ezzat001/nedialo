@@ -98,8 +98,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'nedialo',
-        'USER': 'zeo',
-        'PASSWORD': 'ahmedezzat001qq',
+        'USER': 'zeo',    
+        'PASSWORD': 'nedialodb123_10_2024',
         'HOST': 'localhost',  # Or use the IP of your MySQL server
         'PORT': '3306',       # Default MySQL port
     }
