@@ -42,7 +42,7 @@ def send_discord_message_application(content,application_id):
     color = 65280
 
     
-    application_link =  f"https://{settings.crm_domain}/application-view/"+ str(application_id)
+    application_link =  f"https://{settings.crm_domain}/application-form/"+ str(application_id)
 
     payload = {
         'embeds': [

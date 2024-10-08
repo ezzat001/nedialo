@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Avg, Count, Q, Sum
 from collections import defaultdict
 from .signals import *
-from discord.views import *
+from discord_app.views import *
 from pytz import timezone
 import pytz
 from django.apps import apps
@@ -24,12 +24,12 @@ from django.template.defaultfilters import date as _date
  
 import calendar
 from django.utils.timezone import now
-import asyncio
 from django.utils.safestring import mark_safe
-import os
 import requests
 from django.views.decorators.http import require_http_methods
 from core.decorators import *
+
+from discord_app.bot import queue_message as discord_private
 
 
 
@@ -97,8 +97,10 @@ def loginview(request):
                 errormessage = "Your Account has been suspended Please Contact Nedialo Admin."
                 return render(request, "errors/error-403.html", context={"error_message":errormessage,})            
             if active and userprofile.status in active_statuses:
-                    
+
+                
                 login(request,usera)
+
 
 
                 try:

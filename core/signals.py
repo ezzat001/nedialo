@@ -7,6 +7,7 @@ import time
 from .models import Profile, WorkStatus  # Import your Profile and WorkStatus models
 import pytz
 from datetime import datetime
+from discord_app.bot import queue_message as discord_private
 
 from .models import DialerCredentials,SeatAssignmentLog
 
@@ -80,9 +81,15 @@ def handle_user_timeout(sender, user, request, **kwargs):
         except DialerCredentials.DoesNotExist:
             pass  # Handle the case where the agent does not have an assigned seat
 
+
+
+        try:
+            message = "Your Connection Timed out from the CRM! Please Login back and re-set your working status."
+            discord_private(int(profile.discord),message)
+        except Exception as e:
+            print(e)
         logout(request)
 
-        print("Timed out")
     
 
                 
