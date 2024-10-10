@@ -899,8 +899,8 @@ def salary_company(request, month,year):
         total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
 
         # Fetch added and removed manual hours
-        added_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
-        removed_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+        added_minutes = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+        removed_minutes = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
         deductions = Action.objects.filter(
             agent=agent.user,
             action_type="deduction",
@@ -922,17 +922,45 @@ def salary_company(request, month,year):
         prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
         
         # Convert manual hours to seconds (assuming manual hours are in hours)
-        added_seconds = added_hours * 3600
-        removed_seconds = removed_hours * 3600
+        added_seconds = added_minutes * 60
+        removed_seconds = removed_minutes * 60
         deduction_seconds = ded_total * 3600
+
+        total_seconds = int(added_seconds)
+        hours = total_seconds // 3600  # Get the total hours
+        minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+        seconds = total_seconds % 60  # Get the remaining seconds
+
+        # Format the time in HH:MM:SS
+        formatted_added_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
         
+
+        total_seconds = int(removed_seconds)
+        hours = total_seconds // 3600  # Get the total hours
+        minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+        seconds = total_seconds % 60  # Get the remaining seconds
+
+        # Format the time in HH:MM:SS
+        formatted_removed_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
 
         # Adjust total payable time with manual hours
         total_payable_time_seconds += added_seconds - removed_seconds - deduction_seconds
 
-        agent_totals['added_hours'] = str(timedelta(seconds=added_seconds))
-        agent_totals['removed_hours'] = str(timedelta(seconds=removed_seconds))
-        agent_totals['deductions'] = str(timedelta(seconds=deduction_seconds))
+
+        total_seconds = int(deduction_seconds)
+        hours = total_seconds // 3600  # Get the total hours
+        minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+        seconds = total_seconds % 60  # Get the remaining seconds
+
+        # Format the time in HH:MM:SS
+        formatted_deduction_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        # Adjust total payable time with manual hours
+        total_payable_time_seconds += added_seconds - removed_seconds - deduction_seconds
+
+        agent_totals['added_minutes'] = str(formatted_added_seconds)
+        agent_totals['removed_minutes'] = str(formatted_removed_seconds)
+        agent_totals['deductions'] = str(formatted_deduction_seconds)
         agent_totals['prepayments'] = str(prepayment_total)
 
         agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
@@ -1035,8 +1063,8 @@ def salary_team(request, team_id, month,year):
         total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
 
         # Fetch added and removed manual hours
-        added_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
-        removed_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+        added_minutes = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+        removed_minutes = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
         deductions = Action.objects.filter(
             agent=agent.user,
             action_type="deduction",
@@ -1058,17 +1086,41 @@ def salary_team(request, team_id, month,year):
         prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
         
         # Convert manual hours to seconds (assuming manual hours are in hours)
-        added_seconds = added_hours * 3600
-        removed_seconds = removed_hours * 3600
+        added_seconds = added_minutes * 60
+        removed_seconds = removed_minutes * 60
         deduction_seconds = ded_total * 3600
+
+        total_seconds = int(added_seconds)
+        hours = total_seconds // 3600  # Get the total hours
+        minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+        seconds = total_seconds % 60  # Get the remaining seconds
+
+        # Format the time in HH:MM:SS
+        formatted_added_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
         
+
+        total_seconds = int(removed_seconds)
+        hours = total_seconds // 3600  # Get the total hours
+        minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+        seconds = total_seconds % 60  # Get the remaining seconds
+
+        # Format the time in HH:MM:SS
+        formatted_removed_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        total_seconds = int(deduction_seconds)
+        hours = total_seconds // 3600  # Get the total hours
+        minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+        seconds = total_seconds % 60  # Get the remaining seconds
+
+        # Format the time in HH:MM:SS
+        formatted_deduction_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
 
         # Adjust total payable time with manual hours
         total_payable_time_seconds += added_seconds - removed_seconds - deduction_seconds
 
-        agent_totals['added_hours'] = str(timedelta(seconds=added_seconds))
-        agent_totals['removed_hours'] = str(timedelta(seconds=removed_seconds))
-        agent_totals['deductions'] = str(timedelta(seconds=deduction_seconds))
+        agent_totals['added_minutes'] = str(formatted_added_seconds)
+        agent_totals['removed_minutes'] = str(formatted_removed_seconds)
+        agent_totals['deductions'] = str(formatted_deduction_seconds)
         agent_totals['prepayments'] = str(prepayment_total)
 
         agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
@@ -1084,7 +1136,6 @@ def salary_team(request, team_id, month,year):
 
     return render(request, 'salaries/salaries_team.html', context)
 
-@permission_required('agents_table')
 @login_required
 def invoice(request, agent_id,month, year):
     context = {}
@@ -1101,7 +1152,14 @@ def invoice(request, agent_id,month, year):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    context['agent_profile'] = Profile.objects.get(id=agent_id)
+    agent_profile = Profile.objects.get(id=agent_id)
+    context['agent_profile'] = agent_profile
+
+    if profile != agent_profile:
+        if not profile.role.agents_table:
+            return redirect('/')
+
+
 
     formatted_date = f"{month:02d}/01/{year}"
 
@@ -1178,8 +1236,8 @@ def invoice(request, agent_id,month, year):
     total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
 
     # Fetch added and removed manual hours
-    added_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
-    removed_hours = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+    added_minutes = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+    removed_minutes = ManualHours.objects.filter(created__month=month, created__year=year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
     deductions = Action.objects.filter(
         agent=agent.user,
         action_type="deduction",
@@ -1201,20 +1259,55 @@ def invoice(request, agent_id,month, year):
     prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
 
     # Convert manual hours to seconds (assuming manual hours are in hours)
-    added_seconds = added_hours * 3600
-    removed_seconds = removed_hours * 3600
+    added_seconds = added_minutes * 60
+    removed_seconds = removed_minutes * 60
     deduction_seconds = ded_total * 3600
+
+    added_hours = added_minutes / 60
+
+    removed_hours = added_minutes / 60
 
     # Adjust total payable time with manual hours
     total_positive = total_payable_time_seconds + added_seconds
     total_payable =  total_positive - removed_seconds - deduction_seconds
 
-    status_totals['added_hours'] = str(timedelta(seconds=added_seconds))
+
+        # Convert manual hours to seconds (assuming manual hours are in hours)
+    added_seconds = added_minutes * 60
+    removed_seconds = removed_minutes * 60
+    deduction_seconds = ded_total * 3600
+
+    total_seconds = int(added_seconds)
+    hours = total_seconds // 3600  # Get the total hours
+    minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+    seconds = total_seconds % 60  # Get the remaining seconds
+
+    # Format the time in HH:MM:SS
+    formatted_added_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
+    
+
+    total_seconds = int(removed_seconds)
+    hours = total_seconds // 3600  # Get the total hours
+    minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+    seconds = total_seconds % 60  # Get the remaining seconds
+
+    # Format the time in HH:MM:SS
+    formatted_removed_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+    total_seconds = int(deduction_seconds)
+    hours = total_seconds // 3600  # Get the total hours
+    minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
+    seconds = total_seconds % 60  # Get the remaining seconds
+
+    # Format the time in HH:MM:SS
+    formatted_deduction_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+    status_totals['added_hours'] = str(formatted_added_seconds)
     status_totals['added_hours_total'] = round(added_hours * agent.hourly_rate, 2)
-    status_totals['removed_hours'] = str(timedelta(seconds=removed_seconds))
+    status_totals['removed_hours'] = str(formatted_removed_seconds)
     status_totals['removed_hours_total'] = round(removed_hours * agent.hourly_rate, 2)
 
-    status_totals['deductions'] = str(timedelta(seconds=deduction_seconds))
+    status_totals['deductions'] = str(formatted_deduction_seconds)
     status_totals['deductions_total'] = round(ded_total * agent.hourly_rate, 2)
 
     status_totals['prepayments'] = str(prepayment_total)

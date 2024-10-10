@@ -96,6 +96,13 @@ class ActionAdmin(admin.ModelAdmin):
 class FeedbackAdmin(admin.ModelAdmin):
     list_display = ('agent_profile', 'auditor_profile','type', 'positive', 'status')
 
+
+
+@admin.register(ManualHours)
+class ManualHoursAdmin(admin.ModelAdmin):
+    list_display = ('agent_profile','created', 'positive','hours', 'active')
+
+
 admin.site.register(WorkStatus)
 
 
