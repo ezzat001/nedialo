@@ -43,10 +43,9 @@
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
                   <div class="bg-gradient-info shadow-info border-radius-lg pt-4 pb-3">
                     <div class="multisteps-form__progress">
-                      <button class="multisteps-form__progress-btn js-active" type="button" title="Account Info">
-                        <span>Account Info</span>
+                      <button class="multisteps-form__progress-btn js-active" type="button" title="Invoice Info">
+                        <span>Invoice Info</span>
                       </button>
-                      <button class="multisteps-form__progress-btn" type="button" title="Work Info">Work</button>
                     </div>
                   </div>
                 </div>
@@ -56,140 +55,62 @@
 
                     <!--single form panel-->
                     <div class="multisteps-form__panel border-radius-xl bg-white js-active" data-animation="FadeIn">
-                      <h5 class="font-weight-bolder mb-0">Account Info</h5>
+                      <h5 class="font-weight-bolder mb-0">Invoice Info for {{affiliate.full_name}}</h5>
                       <p class="mb-0 text-sm">Mandatory information</p>
                       <div class="multisteps-form__content" id="pageone">
                         <div class="row mt-3">
-                          <div class="col-12 col-sm-6">
-                            <label class="form-label">Full Name *</label>
-                            <div class="input-group input-group-dynamic">
-                              <input class="multisteps-form__input form-control" type="text" name="full_name" required/>
-                            </div>
-                          </div>
                           <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                            <label class="form-label">Email *</label>
+                            <label class="form-label">Client *</label>
                             <div class="input-group input-group-dynamic">
-                              <input class="multisteps-form__input form-control" type="email" name="email" required/>
+                                <select class="form-control" name="client" id="client" placeholder="search">
+                                    <option value="">Select Client</option> <!-- Blank option for initial selection -->
+                                    {% for client in clients %}
+                                      <option value="{{client.id}}">{{client.full_name}}</option>
+                                    {% endfor%}
+
+                                </select>
+                            </div>
+                        </div>
+
+
+
+                          <div class="col-12 col-sm-6">
+                            <label class="form-label">Date *</label>
+                            <div class="input-group input-group-dynamic">
+                              <input class="multisteps-form__input form-control" type="date" name="date" required/>
                             </div>
                           </div>
                         </div>
+                        
+
                         <div class="row mt-3">
-                          <div class="col-12 col-sm-6">
-                            <label class="form-label">Username *</label>
-                            <div class="input-group input-group-dynamic">
-                              <input class="multisteps-form__input form-control" type="text" name="username" required/>
-                            </div>
-                          </div>
+
                           <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                            <label class="form-label">Password *</label>
-
+                            <label class="form-label">Revenue *</label>
                             <div class="input-group input-group-dynamic">
-                              <input class="multisteps-form__input form-control" type="text" name="password" required/>
+                              <input class="multisteps-form__input form-control" type="number" name="revenue" min=0 step="0.5" required/>
                             </div>
                           </div>
-                        </div>
 
-                        <div class="row mt-3">
+
                             <div class="col-12 col-sm-6">
-                              <label class="form-label">Phone number *</label>
+                              <label class="form-label">Notes</label>
                               <div class="input-group input-group-dynamic">
-                                <input class="multisteps-form__input form-control" type="phone" name="phone" required/>
+                                <input class="multisteps-form__input form-control" type="text" name="notes" />
                               </div>
                             </div>
-                            <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                <label class="form-label">Residence *</label>
-                                <div class="input-group input-group-dynamic">
-                                    <select class="form-control" name="residence" id="residence" placeholder="search">
-                                        <option value="">Select State</option> <!-- Blank option for initial selection -->
-                                        {% for key,value in us_states.items %}
-                                          <option value="{{key}}">{{value}}</option>
-                                        {% endfor%}
-
-                                    </select>
-                                </div>
-                            </div>
+                            
 
                       </div>
 
                         <div class="button-row d-flex mt-4">
-                          <button id="nextButton1" class="btn bg-gradient-dark ms-auto mb-0 js-btn-next" type="button" title="Next" disabled>Next</button>
+                          <button class="btn bg-gradient-info ms-auto mb-0" type="submit" title="Save">Save</button>
                         </div>
                       </div>
                     </div>
  
                     <!--single form panel--> 
-                    <div class="multisteps-form__panel border-radius-xl bg-white" data-animation="FadeIn">
-                      <h5 class="font-weight-bolder mb-0">Work Information</h5>
-                      <p class="mb-0 text-sm">Please provide all the details asked below</p>
-                      <div class="multisteps-form__content">
-
-
-                        <div class="row mt-3">
-
-                              <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                  <label class="form-label">Joining Date *</label>
-                                  <div class="input-group input-group-dynamic">
-                                      <input class="multisteps-form__input form-control" type="date" name="joining_date" required/>
-                                  </div>
-                              </div>
-
-
-                              <div class="col-12 col-sm-6 mt-3 mt-sm-0">
-                                <label class="form-label">How did we reach him? *</label>
-                                <div class="input-group input-group-dynamic">
-                                  <select class="form-control" name="discovery_method" id="choices-reach" placeholder="search" required>
-                                      <option value="">Select..</option> <!-- Blank option for initial selection -->
-                                      {% for key,value in discovery_options.items %}
-                                        <option value="{{key}}">{{value}}</option>
-                                      {% endfor %}
-                                        
-                                  </select>
-                                </div>                              
-                              </div>
-                              
-                        </div>
-
-                        <div class="row mt-3">
-
-                            <label class="form-label">Affiliate *</label>
-                            <div class="input-group input-group-dynamic">
-                              <select class="form-control" name="affiliate" id="affiliate" placeholder="search" required>
-                                  <option value="0">None</option> <!-- Blank option for initial selection -->
-                                  {% for aff in affiliates %}
-                                    <option value="{{aff.id}}">{{aff.full_name}}</option>
-                                  {% endfor %}
-                                    
-                              </select>
-                            </div>   
-                      
-                        </div>
-
-                        <div class="row mt-3">
-
-                             <label class="form-label">Services *</label>
-                            <div class="input-group input-group-dynamic">
-                              <select class="form-control" id="choices-services" name="services" multiple required>
-                                {% for service in services %}
-                                  <option value={{service.id}}>{{service.name}}</option>
-                                {% endfor %}
-                              </select>                                  
-                            </div>
-                        
-                        </div>
-
-
-       
-
-                        <div class="row">    
-
-                          <div class="button-row d-flex mt-4 col-12">
-                            <button class="btn bg-gradient-light mb-0 js-btn-prev" type="button" title="Prev">Prev</button>
-                            <button class="btn bg-gradient-info ms-auto mb-0" type="submit" title="Save">Save</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
+                     
                   </form>
                 </div>
               </div>
@@ -293,9 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
 
-        if (document.getElementById('role')) {
-            var role = document.getElementById('role');
-            const example = new Choices(role, {
+        if (document.getElementById('client')) {
+            var client = document.getElementById('client');
+            const example = new Choices(client, {
                 searchEnabled: true,
                 searchChoices: true,
                 searchFields: ['label', 'value'], // Fields to search within
@@ -324,23 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderChoiceLimit: 10, // This will limit the number of choices displayed at once
           });
         }
-
-        if (document.getElementById('affiliate')) {
-          var affiliate = document.getElementById('affiliate');
-          const example = new Choices(affiliate, {
-              searchEnabled: true,
-              searchChoices: true,
-              searchFields: ['label', 'value'], // Fields to search within
-              searchPlaceholderValue: 'Search...', // Placeholder for the search input
-              shouldSort: false, // Disable sorting of choices
-              itemSelectText: '', // Text shown in the dropdown when an item is selected
-              fuseOptions: {
-                  includeScore: true, // Include score in search results
-                  threshold: 0.3, // Match threshold for search results
-                  keys: ['label', 'value'] // Fields to search within
-              }
-          });
-      }
 
         if (document.getElementById('choices-reach')) {
           var reach = document.getElementById('choices-reach');

@@ -149,33 +149,18 @@
                               
                         </div>
 
-                        <div class="row mt-3">
-
-                            <label class="form-label">Affiliate *</label>
-                            <div class="input-group input-group-dynamic">
-                              <select class="form-control" name="affiliate" id="affiliate" placeholder="search" required>
-                                  <option value="0">None</option> <!-- Blank option for initial selection -->
-                                  {% for aff in affiliates %}
-                                    <option value="{{aff.id}}">{{aff.full_name}}</option>
-                                  {% endfor %}
-                                    
-                              </select>
-                            </div>   
-                      
-                        </div>
 
                         <div class="row mt-3">
+                            <div class="col-12 col-sm-6 mt-3 mt-sm-0">
 
-                             <label class="form-label">Services *</label>
-                            <div class="input-group input-group-dynamic">
-                              <select class="form-control" id="choices-services" name="services" multiple required>
-                                {% for service in services %}
-                                  <option value={{service.id}}>{{service.name}}</option>
-                                {% endfor %}
-                              </select>                                  
+                                <label class="form-label">Commission Percentage * %</label>
+                                <div class="input-group input-group-dynamic">
+                                    <input type="number" class="form-control" id="commission-percentage" name="commission_percentage" min="0" max="100" step="0.1" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
                             </div>
-                        
                         </div>
+                        
 
 
        
@@ -324,23 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderChoiceLimit: 10, // This will limit the number of choices displayed at once
           });
         }
-
-        if (document.getElementById('affiliate')) {
-          var affiliate = document.getElementById('affiliate');
-          const example = new Choices(affiliate, {
-              searchEnabled: true,
-              searchChoices: true,
-              searchFields: ['label', 'value'], // Fields to search within
-              searchPlaceholderValue: 'Search...', // Placeholder for the search input
-              shouldSort: false, // Disable sorting of choices
-              itemSelectText: '', // Text shown in the dropdown when an item is selected
-              fuseOptions: {
-                  includeScore: true, // Include score in search results
-                  threshold: 0.3, // Match threshold for search results
-                  keys: ['label', 'value'] // Fields to search within
-              }
-          });
-      }
 
         if (document.getElementById('choices-reach')) {
           var reach = document.getElementById('choices-reach');

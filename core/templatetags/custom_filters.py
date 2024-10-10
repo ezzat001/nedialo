@@ -1,6 +1,6 @@
 from django import template
 
-from core.models import DialerCredentials,DataSourceCredentials,Profile
+from core.models import DialerCredentials,DataSourceCredentials,Profile, ClientProfile, AffiliateInvoice
 register = template.Library()
 
 
@@ -22,6 +22,78 @@ def format_float(value):
 def count_services(queryset):
     return queryset.count()
 
+
+
+@register.filter
+def get_affiliate_clients_count(affiliate):
+
+    clients_count =  len(ClientProfile.objects.filter(affiliate=affiliate))
+    account = " Clients"
+    if clients_count == 1:
+        account = " Client"
+
+    return str(clients_count) + account
+
+@register.filter
+def get_affiliate_client_revenue(client,combined_date):
+
+
+    year, month = map(int, combined_date.split('-'))
+
+
+    total_rev = 0
+    invoices = AffiliateInvoice.objects.filter(client=client, date__month=month, date__year=year)
+    
+    # Calculate total revenue
+    for invoice in invoices:
+        total_rev += invoice.revenue  # Assuming 'amount' is a field on the AffiliateInvoice model
+    
+    return total_rev
+
+
+@register.filter
+def get_affiliate_client_commission(client,combined_date):
+
+
+    year, month = map(int, combined_date.split('-'))
+
+    total_comm = 0
+    total_rev = 0
+    invoices = AffiliateInvoice.objects.filter(client=client, date__month=month, date__year=year)
+    
+    # Calculate total revenue
+    for invoice in invoices:
+        total_rev += invoice.revenue  # Assuming 'amount' is a field on the AffiliateInvoice model
+    
+    affiliate_comm = client.affiliate.commission_percentage
+
+    total_comm = total_rev * (affiliate_comm/100)
+
+    return round(total_comm,2)
+
+@register.filter
+def get_affiliate_notes(client,combined_date):
+
+
+    year, month = map(int, combined_date.split('-'))
+
+    
+    invoice = AffiliateInvoice.objects.filter(client=client, date__month=month, date__year=year).last()
+    
+    if invoice:
+        notes = invoice.notes 
+    else: 
+        notes = "None"
+
+    return notes
+
+@register.filter
+def get_affiliate_clients(affiliate):
+
+    clients =  ClientProfile.objects.filter(affiliate=affiliate)
+
+
+    return clients
 
 @register.filter
 def get_dialer_credentials(campaign):

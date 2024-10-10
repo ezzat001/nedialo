@@ -107,3 +107,6 @@ admin.site.register(Prepayment)
 
 
 admin.site.register(SalesLead)
+
+admin.site.register(AffiliateInvoice)
+admin.site.register(AffiliateProfile)

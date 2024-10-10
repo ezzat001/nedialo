@@ -180,11 +180,11 @@ body {
 
         {% if perms.admin_accounts or perms.clients %}
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#adminusers" class="nav-link text-white {% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path %}true{% else %}false{% endif %}">
+          <a data-bs-toggle="collapse" href="#adminusers" class="nav-link text-white {% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path or '/admin-affiliates' in request.path or '/affiliate-modify/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path or '/admin-affiliates' in request.path or '/affiliate-modify/' in request.path %}true{% else %}false{% endif %}">
               <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">person</i>
               <span class="nav-link-text ms-2 ps-1">Account Management</span>
           </a>
-          <div class="collapse {% if '/admin-agents' in request.path or '/admin-clients' in request.path or '/agent-modify/' in request.path or '/client-modify/' in request.path %}show{% endif %}" id="adminusers">
+          <div class="collapse {% if '/admin-agents' in request.path or '/admin-clients' in request.path or '/agent-modify/' in request.path or '/client-modify/' in request.path or '/admin-affiliates' in request.path or '/affiliate-modify/' in request.path  %}show{% endif %}" id="adminusers">
               <ul class="nav">
 
                 {% if perms.admin_accounts %}
@@ -205,6 +205,16 @@ body {
                           <span class="sidenav-mini-icon material-icons">work</span>
                           <span class="sidenav-normal ms-2 ps-1">Clients <b class="caret"></b></span>
                       </a>
+                  </li>
+
+                {% endif %}
+
+                {% if perms.admin_affiliates %}
+                  <li class="nav-item {% if '/admin-affiliates' in request.path or  '/affiliate-modify/' in request.path  %}active{% endif %}">
+                    <a class="nav-link text-grey {% if '/admin-affiliates' in request.path or  '/affiliate-modify/' in request.path  %}active{% endif %}" href="/admin-affiliates" target="_parent">
+                        <span class="sidenav-mini-icon material-icons">person_add</span>
+                        <span class="sidenav-normal ms-2 ps-1">Affiliates <b class="caret"></b></span>
+                    </a>
                   </li>
 
                 {% endif %}

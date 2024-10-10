@@ -133,6 +133,8 @@ SALARY_TYPE = (
 )
 
 DISCOVERY_TYPE = (
+
+    ("affiliate", "Affiliate"),
     ("facebook", "Facebook"),
     ("instagram", "Instagram"),
     ("batchservice", "Batchservice"),
@@ -287,10 +289,13 @@ class Role(models.Model):
     work_status = models.BooleanField(default=False)
 
     caller_dashboard = models.BooleanField(default=False)
+    affiliate_dashboard = models.BooleanField(default=False)
 
+    lead_submission = models.BooleanField(default=False)
     my_leads = models.BooleanField(default=False)
     lead_scoring = models.BooleanField(default=False)
     leaderboard = models.BooleanField(default=False)
+    
 
     leave_request = models.BooleanField(default=False)
     prepayment_request = models.BooleanField(default=False)
@@ -333,6 +338,8 @@ class Role(models.Model):
 
     admin_accounts = models.BooleanField(default=False)
     admin_clients = models.BooleanField(default=False)
+    admin_affiliates = models.BooleanField(default=False)
+
     admin_campaigns = models.BooleanField(default=False)
     admin_contactlists = models.BooleanField(default=False)
 
@@ -441,6 +448,44 @@ class DataSource(models.Model): # List Pull & Skip Tracing Sources
 
 
 
+class AffiliateProfile(models.Model): #Profile Standard Information
+    id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, blank=True, null=True)
+    picture = models.ImageField(upload_to=random_name_profile_pic, blank=True, null=True)
+    full_name = models.CharField(max_length=50, blank=True, null=True)
+    password = models.CharField(max_length=50,blank=True,null=True)
+    joining_date = models.DateField(blank=True, null=True)
+    role = models.ForeignKey(Role, blank=True, null=True, related_name="affiliate_profile_role", on_delete=models.SET_NULL)
+
+    email = models.EmailField(blank=True, null=True)
+    phone_number = models.CharField(max_length=50,null=True,blank=True)
+    state = models.CharField(max_length=50, choices=US_STATES_CHOICES, null=True, blank=True)
+    client_status = models.CharField(max_length=50, choices=CAMP_ACTIVITY, default='active',null=True, blank=True)
+    discovery_method = models.CharField(max_length=20 , choices=DISCOVERY_TYPE, blank=True, null=True)
+
+    commission_percentage = models.FloatField(blank=True, null=True)
+
+
+    settings_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
+    maps_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
+
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.full_name
+
+    def save(self, *args, **kwargs):
+        if not self.id:  # Check if the object has an ID (i.e., it's a new object)
+            # Get the last ID in the table and increment by 1
+            last_agent = AffiliateProfile.objects.order_by('-id').first()
+            if last_agent:
+                self.id = last_agent.id + 1
+            else:
+                self.id = 8000  # Start with ID 1000 if no agents exist yet
+        super().save(*args, **kwargs)
+
+
+
 class ClientProfile(models.Model): #Profile Standard Information
     id = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.SET_NULL, blank=True, null=True)
@@ -459,9 +504,9 @@ class ClientProfile(models.Model): #Profile Standard Information
     client_status = models.CharField(max_length=50, choices=CAMP_ACTIVITY, default='active',null=True, blank=True)
     discovery_method = models.CharField(max_length=20 , choices=DISCOVERY_TYPE, blank=True, null=True)
 
+    affiliate = models.ForeignKey(AffiliateProfile, blank=True, null=True, related_name="client_affiliate_profile", on_delete=models.SET_NULL )
 
-
-    settings_theme = models.CharField(max_length=50,default="white", choices=THEME_CHOICES)
+    settings_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
     maps_theme = models.CharField(max_length=50,default="dark", choices=THEME_CHOICES)
 
     active = models.BooleanField(default=True)
@@ -478,6 +523,20 @@ class ClientProfile(models.Model): #Profile Standard Information
             else:
                 self.id = 5000  # Start with ID 1000 if no agents exist yet
         super().save(*args, **kwargs)
+
+
+
+
+class AffiliateInvoice(models.Model):
+    id = models.AutoField(primary_key=True)
+    affiliate = models.ForeignKey(AffiliateProfile, blank=True, null=True, related_name="invoice_affiliate_profile", on_delete=models.SET_NULL )
+    client = models.ForeignKey(ClientProfile, blank=True, null=True, related_name="invoice_client_profile", on_delete=models.SET_NULL )
+    revenue =  models.FloatField(null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+
+
+
 
 class Campaign(models.Model): # Client Campaigns
     time = models.TimeField(null=True, blank=True)

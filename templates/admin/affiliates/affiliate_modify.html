@@ -170,35 +170,17 @@
               <br>
               <div class="row">
 
-                <label class="form-label">Affiliate *</label>
-                <div class="input-group input-group-dynamic">
-                  <select class="form-control" name="affiliate" id="affiliate" placeholder="search" required>
-                      <option value="0">None</option> <!-- Blank option for initial selection -->
-                      {% for aff in affiliates %}
-                        <option value="{{aff.id}}" {% if agent_profile.affiliate.id == aff.id%} selected {% endif %}>{{aff.full_name}}</option>
-                      {% endfor %}
-                        
-                  </select>
-                </div>   
-              </div>
-              <br>
-              <div class="row">
+                <div class="col-12 col-sm-6 mt-3 mt-sm-0">
 
-                    <label class="form-label">Services *</label>
+                    <label class="form-label">Commission Percentage * %</label>
                     <div class="input-group input-group-dynamic">
-                      <select class="form-control" id="choices-services" name="services" multiple>
-                        {% for service in services %}
-                            {% if service in agent_profile.services.all %}
-                                <option value={{service.id}} selected>{{service.name}}</option>
-                            {% else %}
-                                <option value={{service.id}}>{{service.name}}</option>
-                            {% endif%}
-                        {% endfor %}
-                      </select>                                  
+                        <input type="number" class="form-control" id="commission-percentage" name="commission_percentage" min="0" max="100" step="0.1" value="{{agent_profile.commission_percentage}}"required>
+                        <span class="input-group-text">%</span>
                     </div>
+                </div>
               </div>
               <br>
-
+              
               
               <button type="submit"  name="account_info" class="btn bg-gradient-info btn-sm float-end mt-6 mb-0">Update Account</button>
 

@@ -113,6 +113,9 @@ def loginview(request):
     
     return render(request,'login.html',context)
 
+
+
+
 @login_required
 def logoutview(request):
 
@@ -148,6 +151,8 @@ def home(request):
                "work_status":work_status,
                }
     profile = Profile.objects.get(user=request.user)
+
+
     context['profile'] = profile
 
     now = tz.now()
@@ -266,6 +271,7 @@ def user_profile(request):
 
     return render(request,'profile.html', context)
 
+@permission_required('lead_submission')
 @login_required
 def lead_submission(request):
     context = {"settings":settings,"api_token":django_settings.HERE_API}
@@ -704,8 +710,10 @@ def leads_leaderboard(request, month, year):
     context['month_name'] = month_name
     context['full_month_name'] = calendar.month_name[month]
     # Get the first and last days of the month
-    role = Role.objects.get(role_name='Admin')
-    active_coldcallers = Profile.objects.filter(active=True, role=role)
+    callers_list = ['callers', 'sales']
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
+    
+    active_coldcallers = Profile.objects.filter(team__in=callers_teams, active=True)
 
     # Initialize leaderboard
     leaderboard = []
@@ -899,7 +907,7 @@ def quality_lead_reports(request, month, year):
 
 
     
-
+    
 
     context['profile'] = Profile.objects.get(user=request.user)
 

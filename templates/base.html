@@ -72,7 +72,7 @@ crossorigin=""/>
 
             
 
-            var heartbeatInterval = 50000;  // Heartbeat interval in milliseconds (30 seconds)
+            var heartbeatInterval = 50000;  // Heartbeat interval in milliseconds (50 seconds)
             var heartbeatTimer;  // Variable to hold the interval timer
 
             function startHeartbeat() {
@@ -479,6 +479,16 @@ crossorigin=""></script>
           <a class="nav-link {% if request.path == '/' %}active{% endif %}"  href="/" target="_parent">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">widgets</i>
             <span class="nav-link-text ms-2 ps-1">Dashboard</span>
+          </a>
+        </li>
+        {% endif %}
+
+
+        {% if perms.affiliate_dashboard %}
+        <li class="nav-item">
+          <a class="nav-link {% if  '/affiliate-dashboard/' in request.path %}active{% endif %}"  href="/affiliate-dashboard/{{current_month}}-{{current_year}}" target="_parent">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">widgets</i>
+            <span class="nav-link-text ms-2 ps-1">Affiliate Dashboard</span>
           </a>
         </li>
         {% endif %}
@@ -1176,6 +1186,9 @@ crossorigin=""></script>
         </li>
 
         {% endif %}
+
+
+        
 
         <!--
         <li class="nav-item">

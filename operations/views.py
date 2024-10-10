@@ -41,7 +41,7 @@ def seats(request):
     context['month'] = current_month
     context['year'] = current_year
     
-    callers_list = ['callers',]
+    callers_list = ['callers','sales']
     callers_teams = Team.objects.filter(team_type__in=callers_list)
 
     agents = Profile.objects.filter(team__in=callers_teams, active=True)
@@ -480,7 +480,7 @@ def agents_list_company(request):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    callers_list = ['callers', ]
+    callers_list = ['callers', 'sales']
     callers_teams = Team.objects.filter(team_type__in=callers_list)
 
     agents = Profile.objects.filter(team__in=callers_teams, active=True)

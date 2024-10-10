@@ -4,6 +4,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from functools import wraps
 from .models import Role, Profile
+from django.utils import timezone as tz
 
 def permission_required(permission_name):
     """
@@ -17,6 +18,7 @@ def permission_required(permission_name):
             if not request.user.is_authenticated:  # Check if the user is logged in
                 return redirect('/login')
             
+            
             profile = Profile.objects.get(user=request.user)
             user_role = profile.role  # Modify as necessary            
             try:
@@ -28,7 +30,13 @@ def permission_required(permission_name):
             if getattr(role_permission, permission_name, False):
                 return view_func(request, *args, **kwargs)
             else:
-                return redirect('/')
+                if str(role_permission) == "Affiliate":
+                    now = tz.now()
+                    current_year = now.year
+                    current_month = now.month
+                    return redirect(f'/affiliate-dashboard/{current_month}-{current_year}')
+                else:
+                    return redirect('/')
         
         return _wrapped_view
     return decorator

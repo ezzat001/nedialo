@@ -76,13 +76,10 @@ def send_discord_message_requests(content,request,request_type):
     if request_type == "leave":
         color = 65280
 
-        request_link = f"https://{settings.crm_domain}/leave-handle/"+ str(request)
-    elif request_type == "reschedule":
-        color = 65280
-
-        request_link = f"https://{settings.crm_domain}/reschedule-handle/"+ str(request)
+        request_link = f"https://{settings.crm_domain}/leave-report/"+ str(request)
+    
     elif request_type == "action":
-        request_link = f"https://{settings.crm_domain}/action-handle/"+ str(request)
+        request_link = f"https://{settings.crm_domain}/action-report/"+ str(request)
         color = 16711680
     payload = {
         'embeds': [
@@ -140,7 +137,7 @@ def send_discord_message_prepayment(content,request):
 
 
 
-    request_link = f"https://{settings.crm_domain}/prepayment-handle/"+ str(request)
+    request_link = f"https://{settings.crm_domain}/prepayment-report/"+ str(request)
     color = 65280  # Green color in Discord embed (decimal)
 
     payload = {

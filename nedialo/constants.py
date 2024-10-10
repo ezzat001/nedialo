@@ -305,6 +305,7 @@ us_states = {
 }
 
 discovery_options = {
+        'affiliate': 'Affiliate',
         'facebook': 'Facebook',
         'instagram': 'Instagram',
         'batchservice': 'Batchservice',

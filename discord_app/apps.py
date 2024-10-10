@@ -8,3 +8,4 @@ class DiscordConfig(AppConfig):
 
     def ready(self):
         start_bot_in_thread()
+ 

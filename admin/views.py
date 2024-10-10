@@ -16,6 +16,8 @@ from django.middleware.csrf import CsrfViewMiddleware
 from nedialo.constants import countries, us_states, discovery_options
 import json
 from core.decorators import *
+from datetime import datetime,timedelta
+import calendar
 
 
 @login_required
@@ -843,6 +845,8 @@ def client_create(request):
     context['services'] = Service.objects.filter(active=True, status="active")
     context['discovery_options'] = discovery_options
 
+    context['affiliates'] = AffiliateProfile.objects.filter(client_status='active')
+
 
     if request.method == "POST":
         data = request.POST
@@ -855,6 +859,12 @@ def client_create(request):
         joining_date = data.get('joining_date')
         selected_services_ids = data.getlist('services')
         discovery_method = data.get('discovery_method')
+        affiliate_id = data.get('affiliate')
+
+        if affiliate_id == "0":
+            affiliate_profile = None
+        else:  
+            affiliate_profile = AffiliateProfile.objects.get(id=affiliate_id)
 
         services = Service.objects.filter(id__in=selected_services_ids)
         role = Role.objects.get(role_name="Client")
@@ -871,6 +881,8 @@ def client_create(request):
             role=role,
             joining_date=joining_date,
             discovery_method=discovery_method,
+            affiliate = affiliate_profile,
+
         )
         agent.services.add(*services)
         return redirect('/admin-clients')
@@ -893,8 +905,8 @@ def client_modify(request,username):
     context['us_states'] = us_states
     context['discovery_options'] = discovery_options
     context['services'] = Service.objects.filter(active=True, status="active")
+    context['affiliates'] = AffiliateProfile.objects.filter(client_status='active')
 
- 
 
     if request.method == "POST":
 
@@ -907,6 +919,13 @@ def client_modify(request,username):
             discovery_method = data.get('discovery_method')
             selected_services_ids = data.getlist('services')
             state = data.get('residence')
+            affiliate_id = data.get('affiliate')
+
+            if affiliate_id == "0":
+                affiliate_profile = None
+            else:  
+                affiliate_profile = AffiliateProfile.objects.get(id=affiliate_id)
+
             
             services = Service.objects.filter(id__in=selected_services_ids)
             
@@ -919,6 +938,7 @@ def client_modify(request,username):
             agent_profile.joining_date = joining_date
             agent_profile.state = state
             agent_profile.discovery_method = discovery_method
+            agent_profile.affiliate = affiliate_profile
             if not selected_services_ids:
                 agent_profile.services.clear()  
             else:
@@ -957,6 +977,280 @@ class DeleteClientView(View):
         
         else:
             return JsonResponse({'error': 'Invalid password.'}, status=401)
+
+
+
+
+
+@permission_required('affiliate_dashboard')
+@login_required
+def affiliate_dashboard(request, month, year):
+
+
+    context = {}
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+
+    combined_date = f"{year}-{month:02d}"  # Ensure month is always two digits
+    context['combined_date'] = combined_date
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+
+
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['us_states'] = us_states
+    context['discovery_options'] = discovery_options
+
+    affiliate = AffiliateProfile.objects.get(user=request.user)
+   
+    context['affiliate'] = affiliate
+    clients =  ClientProfile.objects.filter(affiliate=affiliate)
+
+    context['clients'] = clients
+
+    return render(request,'admin/affiliates/affiliate_dashboard.html',context)
+
+
+
+@permission_required('admin_affiliates')
+@login_required
+def affiliates_table(request):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    client_role = Role.objects.get(role_name='Affiliate')
+    context['accounts'] = AffiliateProfile.objects.filter(active=True, role=client_role)
+
+    return render(request,'admin/affiliates/affiliates.html',context)
+
+
+
+@permission_required('admin_affiliates')
+@login_required
+def affiliate_data(request, username, month, year):
+
+
+    context = {}
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+
+    combined_date = f"{year}-{month:02d}"  # Ensure month is always two digits
+    context['combined_date'] = combined_date
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+
+
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['us_states'] = us_states
+    context['discovery_options'] = discovery_options
+
+    affiliate = AffiliateProfile.objects.get(user=User.objects.get(username=username))
+   
+    context['affiliate'] = affiliate
+    clients =  ClientProfile.objects.filter(affiliate=affiliate)
+
+    context['clients'] = clients
+
+    return render(request,'admin/affiliates/affiliate_data.html',context)
+
+
+
+
+
+
+@permission_required('admin_affiliates')
+@login_required
+def affiliate_invoice_create(request, username):
+
+    now = timezone.now()
+    current_year = now.year
+    current_month = now.month
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    affiliate = AffiliateProfile.objects.get(user=User.objects.get(username=username))
+   
+    context['affiliate'] = affiliate
+    clients =  ClientProfile.objects.filter(affiliate=affiliate)
+
+    context['clients'] = clients
+
+
+    if request.method == "POST":
+        data = request.POST
+        client_id = data.get('client')
+        date = data.get('date')
+        revenue = data.get('revenue')
+        notes = data.get('notes')
+        
+        client = ClientProfile.objects.get(id=client_id)        
+
+        AffiliateInvoice.objects.create(
+
+            affiliate=affiliate,
+            client=client,
+            revenue=revenue,
+            notes=notes,
+            date=date,
+        )
+
+        redirecturl = '/affiliate-data/'+str(affiliate.user)+'-'+str(current_month)+'-'+str(current_year)
+        
+        return redirect(redirecturl)
+            
+    
+    return render(request,'admin/affiliates/affiliate_invoice_create.html',context)
+
+
+
+@permission_required('admin_affiliates')
+@login_required
+def affiliate_create(request):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['us_states'] = us_states
+    context['discovery_options'] = discovery_options
+
+
+    if request.method == "POST":
+        data = request.POST
+        full_name = data.get('full_name')
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+        phone = data.get('phone')
+        state = data.get('residence')
+        joining_date = data.get('joining_date')
+        discovery_method = data.get('discovery_method')
+        commission_percentage = data.get('commission_percentage')
+        role = Role.objects.get(role_name="Affiliate")
+        agent_user = User.objects.create(username=username)
+        agent_user.set_password(password)
+        agent_user.save()        
+
+        agent_affiliate = AffiliateProfile.objects.create(
+            full_name=full_name,
+            user=agent_user,
+            password=password,
+            email=email,
+            phone_number=phone,
+            state=state,
+            role=role,
+            joining_date=joining_date,
+            discovery_method=discovery_method,
+            commission_percentage=commission_percentage,
+        )
+
+
+        agent_profile = Profile.objects.create(
+            full_name=full_name,
+            user=agent_user,
+            password=password,
+           
+            phone_number=phone,
+             
+            role=role,
+        )
+
+        
+
+
+        return redirect('/admin-affiliates')
+            
+    
+    return render(request,'admin/affiliates/affiliate_create.html',context)
+
+
+
+@permission_required('admin_affiliates')
+@login_required
+def affiliate_modify(request,username):
+
+    context = {}
+    user = User.objects.get(username=username)
+
+    context['agent_profile'] = AffiliateProfile.objects.get(user=user)
+    context['profile'] = Profile.objects.get(user=request.user)
+    context['us_states'] = us_states
+    context['discovery_options'] = discovery_options
+
+
+    if request.method == "POST":
+
+        if 'account_info' in request.POST :
+            data = request.POST
+            full_name = data.get('full_name')
+            email = data.get('email')
+            phone_number = data.get('phone_number')
+            joining_date = data.get('joining_date')
+            discovery_method = data.get('discovery_method')
+            state = data.get('residence')
+            commission_percentage = data.get('commission_percentage')
+            
+            
+
+
+            agent_profile = AffiliateProfile.objects.get(user=user)
+            agent_profile.full_name = full_name
+            agent_profile.email = email
+            agent_profile.phone_number = phone_number
+            agent_profile.joining_date = joining_date
+            agent_profile.state = state
+            agent_profile.discovery_method = discovery_method
+            agent_profile.commission_percentage = commission_percentage
+                
+            agent_profile.save()
+
+            return redirect(request.get_full_path())
+    return render(request,'admin/affiliates/affiliate_modify.html',context)
+
+
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(require_http_methods(["POST"]), name='dispatch')
+class DeleteAffiliateView(View):
+    def post(self, request, username):
+        current_user = request.user
+
+        # Ensure correct data access
+        try:
+            body = json.loads(request.body)
+            password = body['password']
+        except (KeyError, json.JSONDecodeError):
+            return JsonResponse({'error': 'Password not provided.'}, status=400)
+
+        # Authenticate user based on current_user and provided password
+        user = authenticate(username=current_user.username, password=password)
+
+        if user is not None:
+            # Check if the authenticated user can delete the target user
+            target_user = get_object_or_404(User, username=username)
+            target_profile = get_object_or_404(AffiliateProfile, user=target_user)
+            target_profile.active=False
+            target_profile.save()
+            return JsonResponse({'message': 'Account deleted successfully.'}, status=200)
+        
+        else:
+            return JsonResponse({'error': 'Invalid password.'}, status=401)
+
+
 
 
 @permission_required('admin_provided_services')

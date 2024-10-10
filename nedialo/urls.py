@@ -20,6 +20,7 @@ urlpatterns = [
     path('application-form/<int:app_id>', application_report),
     path('crm-admin/', admin.site.urls),
     path('', home),
+    path('affiliate-dashboard/<int:month>-<int:year>',affiliate_dashboard),
     path('login', loginview),
     path('logout/',logoutview),
     path('settings',account_settings),
@@ -61,6 +62,15 @@ urlpatterns = [
     path('client-create',client_create),
     path('client-modify/<str:username>',client_modify),
     path('client-delete/<str:username>/', DeleteClientView.as_view()),
+
+    path('admin-affiliates', affiliates_table),
+    path('affiliate-data/<str:username>-<int:month>-<int:year>', affiliate_data),
+    path('affiliate-create', affiliate_create),
+    path('affiliate-invoice-create/<str:username>', affiliate_invoice_create),
+
+    path('affiliate-modify/<str:username>', affiliate_modify),
+    path('affiliate-delete/<str:username>/', DeleteAffiliateView.as_view()),
+
 
 
     path('admin-services', services_table),
