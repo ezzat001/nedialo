@@ -74,8 +74,9 @@
                 <th>Team</th>
                 <th>Login</th>
                 <th>Working Status</th>
+                <!--
                 <th class="dialer-seat">Dialer Seat</th>
-
+                -->
                 <th>Leads</th>
                 <th>Auditing</th>
                 <th>Attendance</th>
@@ -119,7 +120,7 @@
                     </div>
                 </td>
 
-
+                
                 <td>                    
                   <div class="input-group input-group-dynamic me-2" style="flex: 1;">
                     <select class="form-control agent-select" name="agent" data-user-id="{{ agent.id }}" 
@@ -133,6 +134,7 @@
                     </select>
                   </div>
                 </td>  
+                
 
                 
                 <!--
@@ -149,7 +151,7 @@
                   {% endif %}
                 </td>-->
 
-
+              <!--
                 <td class="dialer-seat">
                   <div class="input-group input-group-dynamic me-2" style="flex: 1;">
                       <select class="form-control seat-select" name="seat" data-user-id="{{ agent.id }}" id="seat-select-{{ agent.id }}" required>
@@ -160,6 +162,7 @@
                       </select>
                   </div>
               </td>
+                  -->
 
                 <td class="text-xs font-weight-normal">
                   <div class="d-flex align-items-center">
@@ -642,6 +645,7 @@
       var userId = $(this).data('user-id');
       var assignedCredentials = $(this).data('has-credentials'); // Get the assigned credentials value
       
+      /*
       // Check if assigned credentials is 'none', empty, or 'no'
       if (assignedCredentials === 'none' || assignedCredentials === '' || assignedCredentials.toLowerCase() === 'no') {
         Swal.fire({
@@ -657,6 +661,7 @@
         $(this).val(''); // Resetting to an empty state; you may set it to a specific value if required
         return; // Exit the function if no credentials
       }
+        */
       
       $.ajax({
         url: "{% url 'update_status_admin' %}",

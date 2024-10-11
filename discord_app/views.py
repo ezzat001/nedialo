@@ -193,7 +193,7 @@ def discord_crm_login(agent_name, logged,request):
         color = 65280  # Green color in Discord embed (decimal)
     else:
         action_text = "LOGGED OUT"
-        color = 16711680  # Red color in Discord embed (decimal)
+        color = 16747520  # Red color in Discord embed (decimal)
     
     try:
         settings = ServerSetting.objects.first()
@@ -244,5 +244,64 @@ def discord_crm_login(agent_name, logged,request):
     else:
         print(f'Failed to send message: {response.status_code}')
 
+
+
+
+
+
+def discord_crm_timeout(agent_name,request):
+
+
+    action_text = "TIMED OUT"
+    color = 16711680  # Red color in Discord embed (decimal)
+    
+    try:
+        settings = ServerSetting.objects.first()
+    except:
+        settings = None
+    url = settings.logins_webhook
+
+    
+    headers = {'Content-Type': 'application/json'}
+
+
+
+    # Get current time in UTC
+    utc_now = datetime.utcnow()
+
+    # Get the timezone object for 'America/New_York'
+    est_timezone = pytz.timezone('America/New_York')
+
+    # Convert UTC time to Eastern timezone
+    est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+    # Format the time as HH:MM:SS string
+    est = est_time.strftime('%I:%M:%S %p')
+
+    # Construct the content of the embed with quote formatting
+    request_ip = request.META.get('REMOTE_ADDR')
+    data = get_ip_info(request_ip)
+    location = data['location']
+    isp = data['isp']
+
+    content = f'**Agent:** {agent_name}\n\n**Action:** {action_text}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}\n\n**Location:** {location}\n\n**Service Provider:** {isp}'
+
+    # Construct the embed payload with color and content
+    payload = {
+        'embeds': [
+            {
+                'description': f' {content}',  # Using '>' for quote formatting
+                'color': color,  # Setting the color based on 'logged' status
+            }
+        ]
+    }
+
+    # Send the POST request to the Discord webhook
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        print('Message sent successfully')
+    else:
+        print(f'Failed to send message: {response.status_code}')
 
 

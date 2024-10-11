@@ -1265,7 +1265,7 @@ def invoice(request, agent_id,month, year):
 
     added_hours = added_minutes / 60
 
-    removed_hours = added_minutes / 60
+    removed_hours = removed_minutes / 60
 
     # Adjust total payable time with manual hours
     total_positive = total_payable_time_seconds + added_seconds

@@ -94,7 +94,7 @@ class ActionAdmin(admin.ModelAdmin):
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ('agent_profile', 'auditor_profile','type', 'positive', 'status')
+    list_display = ('agent_profile', 'auditor_profile','type', 'feedback_type', 'status')
 
 
 

@@ -226,7 +226,7 @@ REQUESTS_STATUS_CHOICES = (
 
 FEEDBACK_CHOICES = (
     ('single','Single'),
-    ('multiple','Multiple'),
+    ('monthly','Monthly'),
 )
 
 
@@ -235,6 +235,12 @@ FEEDBACK_STATUS_CHOICES = (
     ('pending','Pending'),
     ('approved','Approved'),
     ('rejected','Rejected'),
+)
+
+FEEDBACK_TYPE_CHOICES = (
+    ('positive', 'Positive'),
+    ('negative', 'Negative'),
+    ('neutral', 'Neutral'),
 )
 
 class ServerSetting(models.Model):
@@ -1049,7 +1055,7 @@ class Feedback(models.Model):
     type = models.CharField(max_length=50, choices=FEEDBACK_CHOICES,null=True, blank=True)
     phone = models.CharField(max_length=50, null=True, blank=True)
     feedback_text = models.TextField(null=True, blank=True)
-    positive = models.BooleanField(default=True)
+    feedback_type = models.CharField(max_length=50, choices=FEEDBACK_TYPE_CHOICES, null=True, blank=True)
     status = models.CharField(max_length=50,default="pending", choices=FEEDBACK_STATUS_CHOICES,null=True, blank=True)
 
     active = models.BooleanField(default=True)

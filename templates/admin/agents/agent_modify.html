@@ -229,14 +229,14 @@
                 <div class="col-12 col-sm-6">
                     <label class="form-label">Hourly Rate</label>
                     <div class="input-group input-group-dynamic">
-                        <input class="multisteps-form__input form-control" type="number" name="hourly_rate" value="{{agent_profile.hourly_rate}}" id="hourly_rate_input" disabled>
+                        <input class="multisteps-form__input form-control" type="number" name="hourly_rate" step="0.5" value="{{agent_profile.hourly_rate}}" id="hourly_rate_input" disabled>
                     </div>
                 </div>
             
                 <div class="col-12 col-sm-6 mt-3 mt-sm-0">
                     <label class="form-label">Monthly Salary</label>
                     <div class="input-group input-group-dynamic">
-                        <input class="multisteps-form__input form-control" type="number" name="monthly_salary" value="{{agent_profile.monthly_salary}}" id="monthly_salary_input" disabled>
+                        <input class="multisteps-form__input form-control" type="number" name="monthly_salary" step="0.5" value="{{agent_profile.monthly_salary}}" id="monthly_salary_input" disabled>
                     </div>
                 </div>
             </div>

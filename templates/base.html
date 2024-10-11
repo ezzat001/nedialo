@@ -177,6 +177,7 @@ crossorigin=""/>
           const userId = document.querySelector('select[data-user-id]').dataset.userId;
           const assignedCredentials = document.querySelector('select[data-user-id]').dataset.hasCredentials;
           
+          /*
           if (assignedCredentials === 'none' || assignedCredentials === '' || assignedCredentials.toLowerCase() === 'no') {
             Swal.fire({
               title: 'Error!',
@@ -191,6 +192,8 @@ crossorigin=""/>
             $(this).val(''); // Resetting to an empty state; you may set it to a specific value if required
             return; // Exit the function if no credentials
           }  
+          */
+          
             fetch('/update-status/', {
                 method: 'POST',
                 headers: {

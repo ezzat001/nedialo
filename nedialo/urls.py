@@ -112,7 +112,7 @@ urlpatterns = [
     path('feedbacks-agent/<int:agent_id>', feedbacks_agent),
 
     path('feedback-single', feedback_single),
-    path('feedback-multiple', feedback_multiple),
+    path('feedback-monthly', feedback_monthly),
     path('feedback-report/<int:id>',feedback_report),
 
     path('quality-agents/<int:month>-<int:year>',quality_agents),

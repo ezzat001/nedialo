@@ -695,8 +695,8 @@
                             class: ["border-radius-md"],
                             "leadid": "{{lead.lead_id|escapejs}}",
                             "contact": "{{lead.contact|escapejs}}",
-                            "phone": "{{lead.phone_number|escapejs}}",
-                            "email": "{{lead.email|escapejs}}",
+                            "phone": "{{lead.contact_phone|escapejs}}",
+                            "email": "{{lead.contact_email|escapejs}}",
                             "interest_rate": "{{lead.interest_rating}}",
                             "followup_date": "{{ lead.followup_date|date:'Y-m-d' }}",
                             "followup_time": "{{ lead.followup_time|time:'H:i' }}",
@@ -843,7 +843,7 @@
       });
 
       swalWithBootstrapButtons.fire({
-        title: `New Lead`,
+        title: `New Contact`,
         html: `
           <div class="card border-0 shadow-sm input-group input-group-static">
             <form id="leadForm" class="text-center p-3">

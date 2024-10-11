@@ -128,7 +128,6 @@ class SalesLeadSubmitView(View):
         data = json.loads(request.body)
 
 
-        print(data)
         agent_user = request.user
         agent_profile = Profile.objects.get(user=request.user)
         # Create a new SalesLead object
@@ -143,6 +142,7 @@ class SalesLeadSubmitView(View):
             followup_time=data['time'],
             notes=data['notes']
         )
+
         
         return JsonResponse({'status': 'success', 'id': lead.lead_id})
     

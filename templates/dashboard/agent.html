@@ -92,22 +92,22 @@
         <div class="card-body p-3 position-relative">
           <div class="row">
             <div class="col-7 text-start">
-              <p class="text-sm mb-1 text-capitalize font-weight-bold">Assigned Campaign </p>
+              <p class="text-sm mb-1 text-capitalize font-weight-bold">Total Hours </p>
 
-              <span class="font-weight-normal text-secondary text-sm">{{profile.assigned_credentials|dialer_username}}</span>
-                <br>
+              <h5 class="font-weight-bolder mb-0">
+                {{total_time}}
+              </h5>
 
-              <span class="font-weight-normal text-secondary text-sm">{{profile.assigned_credentials|dialer_password}}</span>
+              <span class="text-sm text-end text-info font-weight-bolder mt-auto mb-0">
+                <span class="font-weight-normal text-secondary">-</span></span>
+
 
             </div>
             <div class="col-5">
               <div class="dropdown text-end">
-                <h5 class="font-weight-bolder mb-0">
-                  <a href="/">
-                    {{profile.assigned_credentials.campaign}}
-                    
-                  </a>
-                </h5>
+                <a href="javascript:;" class="cursor-pointer text-secondary" id="dropdownUsers2" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="text-xs text-secondary">{{month_name}}, {{current_year}}</span>
+                </a>
                 
               </div>
             </div>

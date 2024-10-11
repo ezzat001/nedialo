@@ -34,8 +34,8 @@
       <a href="/feedback-single" class="btn btn-icon bg-gradient-info  me-2" target="_parent">
         Single Feedback
       </a>
-      <a href="/feedback-multiple" class="btn btn-icon bg-gradient-info" target="_parent">
-        Multiple Feedbacks
+      <a href="/feedback-monthly" class="btn btn-icon bg-gradient-info" target="_parent">
+        Monthly Feedback
       </a>
     </div>
     <div class="d-flex">
@@ -108,12 +108,29 @@
                 </div>                
               </td>
                 <td class="text-xs font-weight-normal">
-                  {% if feedback.positive %}
-                  <i class="material-icons text-success position-relative text-lg">check</i>
+                  {% if feedback.feedback_type == "positive" %}
 
-                  {% else %}
-                  <i class="material-icons text-danger position-relative text-lg">close</i>
+                    <span class="badge text-center badge-dot me-4">
+                      
+                      <i class="bg-success text-center"></i>  
 
+                      <span class="text-dark text-s"> Positive</span>
+                    </span>
+                  {% elif feedback.feedback_type == "neutral" %}
+                  <span class="badge text-center badge-dot me-4">
+                      
+                    <i class="bg-warning text-center"></i>  
+
+                    <span class="text-dark text-s"> Neutral </span>
+                  </span>
+
+                  {% elif feedback.feedback_type == "negative" %}
+                  <span class="badge text-center badge-dot me-4">
+                      
+                    <i class="bg-danger text-center"></i>  
+
+                    <span class="text-dark text-s"> Negative </span>
+                  </span>
                   {% endif %}
                 </td>
 

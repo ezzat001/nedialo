@@ -147,7 +147,13 @@ def home(request):
         work_status = WorkStatus.objects.get(user=user, date=today)
     except:
         work_status = None
-    context = {"settings":settings,
+
+    try:
+        settings = ServerSetting.objects.first()
+    except:
+        pass
+    context = {
+               
                "work_status":work_status,
                }
     profile = Profile.objects.get(user=request.user)
@@ -259,6 +265,110 @@ def home(request):
         ]
 
 
+
+    agent = profile
+
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    try:
+        settings = ServerSetting.objects.first()
+        break_paid = settings.break_paid
+    except:
+        break_paid = False
+    # Calculate total time for each status per agent
+    status_totals = {}
+    agent_totals = {}
+    for status in ['ready', 'meeting', 'break', 'offline']:
+        total_time = WorkStatus.objects.filter(
+            user=agent.user,
+            date__month=current_month,
+            date__year=current_year
+        ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+        total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = int(total_seconds % 60)
+        formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        status_totals[status] = formatted_time
+        if status == "break":
+            status_totals[f"{status}_total"] = round((total_seconds / 3600) * agent.hourly_rate, 2) if break_paid else 0
+        else:
+            status_totals[f"{status}_total"] = round((total_seconds / 3600) * agent.hourly_rate, 2)
+
+
+    total_worked_time_seconds = sum([
+        (WorkStatus.objects.filter(user=agent.user, date__month=current_month, date__year=current_year).aggregate(
+            total_ready_time=Sum('ready_time'),
+            total_meeting_time=Sum('meeting_time'),
+            total_break_time=Sum('break_time')
+        )[field] or timedelta()).total_seconds()
+        for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+    ])
+    status_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+
+
+    total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=current_month, date__year=current_year).aggregate(
+        total_ready_time=Sum('ready_time')
+    )['total_ready_time'] or timedelta()).total_seconds()
+    total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=current_month, date__year=current_year).aggregate(
+        total_meeting_time=Sum('meeting_time')
+    )['total_meeting_time'] or timedelta()).total_seconds()
+    total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=current_month, date__year=current_year).aggregate(
+        total_break_time=Sum('break_time')
+    )['total_break_time'] or timedelta()).total_seconds()
+
+    total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+
+    # Fetch added and removed manual hours
+    added_minutes = ManualHours.objects.filter(created__month=current_month, created__year=current_year, agent_profile=agent, positive=True, active=True).aggregate(total_added=Sum('hours'))['total_added'] or 0
+    removed_minutes = ManualHours.objects.filter(created__month=current_month, created__year=current_year, agent_profile=agent, positive=False, active=True).aggregate(total_removed=Sum('hours'))['total_removed'] or 0
+    deductions = Action.objects.filter(
+        agent=agent.user,
+        action_type="deduction",
+        status="approved",
+        active=True,
+        submission_date__month=current_month,
+        submission_date__year=current_year
+    )
+
+    ded_total = deductions.aggregate(total_deductions=Sum('deduction_amount'))['total_deductions'] or 0
+    payments = Prepayment.objects.filter(
+        agent=agent.user,
+        status="approved",
+        active=True,
+        submission_date__month=current_month,
+        submission_date__year=current_year
+    )
+
+    prepayment_total = payments.aggregate(total_prepayments=Sum('amount'))['total_prepayments'] or 0
+
+    # Convert manual hours to seconds (assuming manual hours are in hours)
+    added_seconds = added_minutes * 60
+    removed_seconds = removed_minutes * 60
+    deduction_seconds = ded_total * 3600
+
+     
+
+    # Adjust total payable time with manual hours
+    total_positive = total_payable_time_seconds + added_seconds
+    total_payable =  total_positive - removed_seconds - deduction_seconds
+
+
+    
+
+    
+    status_totals['total_payable'] = f"{int(total_payable // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+    context['total_time'] = status_totals['total_payable']
     
     return render(request,'dashboard/agent.html',context)
 
@@ -274,7 +384,7 @@ def user_profile(request):
 @permission_required('lead_submission')
 @login_required
 def lead_submission(request):
-    context = {"settings":settings,"api_token":django_settings.HERE_API}
+    context = {"api_token":django_settings.HERE_API}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
     context['campaigns'] = Campaign.objects.filter(campaign_type="calling", status="active")
@@ -625,7 +735,7 @@ def leads_quality(request, month, year):
 @permission_required('lead_scoring')
 @login_required
 def lead_scoring(request, month, year):
-    context = {"settings": settings}
+    context = {}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
@@ -696,7 +806,7 @@ def lead_scoring(request, month, year):
 @permission_required('leaderboard')
 @login_required
 def leads_leaderboard(request, month, year):
-    context = {"settings": settings}
+    context = {}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
@@ -1470,41 +1580,42 @@ def feedback_single(request):
         data = request.POST
 
         agent_id = data.get('agent')
-        camp_id = data.get('campaign')
-        phone_number = data.get('phone_number')
         feedback_type = data.get('feedback_type')
         feedback_text = data.get('feedback_text')
+        selected_camp_ids = data.getlist('campaigns')
 
         if int(feedback_type) == 1:
-            feedback_type = True
-        else:
-            feedback_type = False
+            feedback_type = "positive"
+        elif int(feedback_type) == 2:
+            feedback_type = "negative"
+        
+        elif int(feedback_type) == 3:
+            feedback_type = "neutral"
 
         agent_profile = Profile.objects.get(id=agent_id)
-        campaign = Campaign.objects.get(id=camp_id)
+        camps = Campaign.objects.filter(id__in=selected_camp_ids)
 
         feedback = Feedback.objects.create(agent=agent_profile.user,
                                 agent_profile=agent_profile,
                                 auditor=profile.user,
                                 auditor_profile=profile,
-                                phone=phone_number,
-                                positive=feedback_type,
+                                feedback_type=feedback_type,
                                 type="single",
                                 feedback_text = feedback_text,
 
                                 )
-        feedback.campaign.add(campaign)
+        feedback.campaign.add(*camps)
 
         return redirect('/feedbacks')
 
             
     
-    return render(request,'quality/feedback_single.html',context)
+    return render(request,'quality/feedback_multiple.html',context)
 
 
 @permission_required('qa_auditing')
 @login_required
-def feedback_multiple(request):
+def feedback_monthly(request):
 
 
     context = {}
@@ -1526,9 +1637,12 @@ def feedback_multiple(request):
         selected_camp_ids = data.getlist('campaigns')
 
         if int(feedback_type) == 1:
-            feedback_type = True
-        else:
-            feedback_type = False
+            feedback_type = "positive"
+        elif int(feedback_type) == 2:
+            feedback_type = "negative"
+        
+        elif int(feedback_type) == 3:
+            feedback_type = "neutral"
 
         agent_profile = Profile.objects.get(id=agent_id)
         camps = Campaign.objects.filter(id__in=selected_camp_ids)
@@ -1537,8 +1651,8 @@ def feedback_multiple(request):
                                 agent_profile=agent_profile,
                                 auditor=profile.user,
                                 auditor_profile=profile,
-                                positive=feedback_type,
-                                type="multiple",
+                                feedback_type=feedback_type,
+                                type="single",
                                 feedback_text = feedback_text,
 
                                 )
@@ -1584,7 +1698,7 @@ def feedback_report(request, id):
 @permission_required('qa_agents_table')
 @login_required
 def quality_agents(request, month, year):
-    context = {"settings": settings}
+    context = {}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
@@ -2366,7 +2480,7 @@ def update_status(request):
             if not created:
                 work_status.update_status(new_status)
 
-
+            """
             if new_status == 'offline':
                     try:
                         seat = profile.assigned_credentials
@@ -2402,7 +2516,9 @@ def update_status(request):
                     )
                 except DialerCredentials.DoesNotExist:
                     pass
-            
+            """
+
+
             # Calculate updated total times in seconds
             ready_time_seconds = work_status.ready_time.total_seconds()
             meeting_time_seconds = work_status.meeting_time.total_seconds()
