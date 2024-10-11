@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'nedialo.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DISCORD_TOKEN = 'MTI1MDg3NDk3OTA5Mjc5MTQyNw.GXAr10.C0NTwXy44GD8013b411bkVsn8VmJVYsOrp4Abo'
 
-
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -105,7 +105,7 @@ DATABASES = {
         'PORT': '3306',       # Default MySQL port
     }
 }
-"""
+
 
 
 # Password validation
