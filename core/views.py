@@ -2588,7 +2588,12 @@ def work_status_data(request):
     try:
         work_status = WorkStatus.objects.get(user=user, date=today)
     except WorkStatus.DoesNotExist:
-        work_status = WorkStatus.objects.create(user=user, date=today, current_status='offline')
+        try:
+            work_status = WorkStatus.objects.create(user=user, date=today, current_status='offline')
+        except Exception as e:
+            print(e)
+    except Exception as e:
+        print(e)
 
     # Calculate total times in seconds
     ready_time_seconds = work_status.ready_time.total_seconds()

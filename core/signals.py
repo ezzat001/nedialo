@@ -21,7 +21,7 @@ user_last_seen = {}
 user_requests = {}
 
 # Timeout duration (5 minutes = 300 seconds)
-TIMEOUT_DURATION = 300  # 5 minutes
+TIMEOUT_DURATION = 300  # 300 - 5 minutes
 
 def check_user_timeouts():
     while True:
@@ -58,15 +58,14 @@ def handle_user_timeout(sender, user, request, **kwargs):
 
     last_status = work_status.current_status
     if last_status != "offline":
-        updated_count = WorkStatus.objects.filter(
-        user=user,
-        date=today
-            ).update(
-                current_status="offline",
-                last_status_change=timezone.now()
-            )
-        
         try:
+            work_status = WorkStatus.objects.get(user=user, date=today)
+            work_status.update_status("offline")
+        except WorkStatus.DoesNotExist:
+            # Handle the case where WorkStatus doesn't exist, create a new one, or log an error
+            pass
+        
+        """try:
             seat = profile.assigned_credentials
             
             if seat:
@@ -80,7 +79,7 @@ def handle_user_timeout(sender, user, request, **kwargs):
                 # Clear the seat assignment for both the agent and the seat
                 
         except DialerCredentials.DoesNotExist:
-            pass  # Handle the case where the agent does not have an assigned seat
+            pass  # Handle the case where the agent does not have an assigned seat"""
 
 
 
