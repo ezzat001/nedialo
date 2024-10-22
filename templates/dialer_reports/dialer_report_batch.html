@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% load hours_filters %}
+{% load dialer_hours %}
 
 {% block head %}
 
@@ -34,93 +34,119 @@
   <div class="d-sm-flex justify-content-between">
     <div>
       <button type="button" class="datepicker btn btn-outline-info dropdown-toggle">
-        {{full_month_name}},  {{year}}
-      </button>
+        {{start_date}} - {{end_date}}
+     </button>
     </div>
     <div class="d-flex">
-      
+
+
+
       <button class="btn btn-icon btn-outline-success ms-2 export" data-type="csv" type="button">
         <i class="material-icons text-xs position-relative">archive</i>
         Export CSV
       </button>
+
+
     </div>
 
   </div>
-  <div class="calendar-container">  </div>
-
+  <div class="calendar-container"> <!-- Add margin-top to separate from buttons -->
+  </div>
   <div class="row">
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">Breakdown Reports</h5>
+          <h5 class="mb-0">{{campaign.name}} Dialer Reports</h5>
           <p class="text-sm mb-0">
-            Working Hours of {{agent.full_name}} #{{agent.id}}
+            {{campaign.get_dialer_type_display}} Reports
           </p>
         </div>
         <div class="table-responsive">
           <table class="table table-flush" id="datatable-search">
             <thead class="thead-light">
               <tr>
-                <th>Date</th>
-                <th>Login</th>
-                <th>Ready</th>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Leads</th>
+                <th>Total Calls</th>
+                <th>Total Time</th>
+                <th>Calls Duration</th>
+                <th>Available</th>
+                <th>After Call</th>
+                <th>On Call</th>
                 <th>Meeting</th>
+                <th>Prep Work</th>
                 <th>Break</th>
-                <th>Total Worked</th>
-                <th>Total Payable</th>
-                <th>Logout</th>
+                <th>Lunch</th>
+                <th>Wrap up</th>
+                <th>Auto Pause</th>
+                <th>Out of Desk</th>
+                <th>Training</th>
+               
+
               </tr>
             </thead>
-            <tbody>
-              {% for day in breakdown_data %}
-              <tr>
-                <td>
-                  <div class="d-flex align-items-center">
+            
 
-                    <p class="text-xs font-weight-normal ms-2 mb-0">{{ day.date|date:"Y-m-d" }}</p>
+
+            <tbody id="tableBody">
+                <tr>
+                    <td><b>Totals:</b></td>  
+
+
+
+                    <td>-</td>
+                    <td><b> {{totals.leads }}</b></td>
+                    <td><b> {{totals.callstotal }}</b></td>
+                    <td><b> {{totals.totaltime|seconds_to_hhmmss  }}</b></td>
+                    <td><b> {{totals.callsduration|seconds_to_hhmmss  }}</b></td>
+
+                    <td><b>{{ totals.presences|get_item_and_format:"Available" }}</b></td>
+
+                    <td><b>{{ totals.presences|get_item_and_format:"After Call" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"On Call" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"In Meeting" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"PrepWork" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"Break" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"Lunch" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"Wrap Up Time" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"Auto Pause" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"Out of desk" }}</b></td>
+                    <td><b>{{ totals.presences|get_item_and_format:"In training" }}</b></td>
+                </tr>
+                <tr></tr>
+            {% for agent in response %}
+              <tr>
+                <td> 
+                    
+                    <div class="d-flex align-items-center">
+
+                    <p class="text-xs font-weight-normal ms-2 mb-0">#{{agent.id}}</p>
                   </div>
                 </td>
-                <td class="text-xs font-weight-normal">
-                {% if day.login_time %}
-                    {{ day.login_time|date:"g:i A" }}
-                {% else %}
-                    No login time
-                {% endif %}
-                </td>
-                <td class="text-xs font-weight-normal">
-                  {{day.ready_time|duration_to_hms }}
-                </td>
-                <td class="text-xs font-weight-normal">
-                    {{day.meeting_time|duration_to_hms}} 
-                </td>
-                <td class="text-xs font-weight-normal">
-                    {{ day.break_time|duration_to_hms }}
-                </td>
-                <td class="text-xs font-weight-normal">
-                    {{ day|instance_total_worked_time  }}
-                </td>
-                <td class="text-xs font-weight-normal">
-                    {{ day|instance_total_payable_time  }}
-                </td>
+                <td> {{agent.firstname}}&nbsp;{{agent.lastname}}</td>
+                <td> {{agent.leads }}</td>
+                <td> {{agent.callstotal }}</td>
+                <td> {{agent.totaltime|seconds_to_hhmmss  }}</td>
+                <td> {{agent.callsduration|seconds_to_hhmmss  }}</td>
 
-                
+                <td>{{ agent.presences|get_item_and_format:"Available" }}</td>
 
-                <td class="text-xs font-weight-normal">
-                    {% if day.logout_time %}
-                        {{ day.logout_time|date:"g:i A" }}
-                    {% else %}
-                        No Logout time
-                    {% endif %}
-                </td>
-
-                
-
-
+                <td>{{ agent.presences|get_item_and_format:"After Call" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"On Call" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"In Meeting" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"PrepWork" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"Break" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"Lunch" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"Wrap Up Time" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"Auto Pause" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"Out of desk" }}</td>
+                <td>{{ agent.presences|get_item_and_format:"In training" }}</td>
+   
               </tr>
               {% endfor %}
-              
-
             </tbody>
+
           </table>
         </div>
       </div>
@@ -128,38 +154,57 @@
   </div>
 
 
+
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/rangePlugin.js"></script>
-  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
-
+  
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Hidden inputs for range selection -->
+  <input type="hidden" id="startDate" />
+  <input type="hidden" id="endDate" />
+  
   <script>
     document.addEventListener("DOMContentLoaded", function() {
         var button = document.querySelector(".datepicker");
         var calendarContainer = document.querySelector(".calendar-container");
-  
-        // Set camp-id dynamically or statically here
-  
+    
+        // Initialize flatpickr for range selection
         var fp = flatpickr(calendarContainer, {
-            dateFormat: "Y-m", // Internal format
+            dateFormat: "Y-m-d", // Internal format
             altInput: true, // Use an alternative input
-            altFormat: "F Y", // Display format in the button
+            altFormat: "F j, Y", // Display format for button
             allowInput: true, // Allow manual input
+            mode: "range", // Enables date range selection
+            plugins: [new rangePlugin({ input: "#endDate" })], // Input for the end date
             onChange: function(selectedDates, dateStr, instance) {
-                var selectedDate = selectedDates[0];
-                if (selectedDate) {
-                    var formattedDate = instance.formatDate(selectedDate, "F Y");
-                    button.textContent = formattedDate;
-
-                    // Construct the URL and redirect
-                    var year = instance.formatDate(selectedDate, "Y");
-                    var month = instance.formatDate(selectedDate, "m");
-                    var id = {{agent.id}};
-                    var redirectUrl = `/agent-hours/${id}-${month}-${year}`;
-                    window.location.href = redirectUrl; // Redirect to the constructed URL
+                var startDate = selectedDates[0];
+                var endDate = selectedDates[1];
+    
+                if (startDate && endDate) {
+                    // Format the selected dates
+                    var formattedStartDate = instance.formatDate(startDate, "F j, Y");
+                    var formattedEndDate = instance.formatDate(endDate, "F j, Y");
+    
+                    // Update the button text with the date range
+                    button.textContent = formattedStartDate + " to " + formattedEndDate;
+    
+                    // Construct the redirect URL with the selected date range
+                    var yearStart = instance.formatDate(startDate, "Y");
+                    var monthStart = instance.formatDate(startDate, "m");
+                    var dayStart = instance.formatDate(startDate, "d");
+    
+                    var yearEnd = instance.formatDate(endDate, "Y");
+                    var monthEnd = instance.formatDate(endDate, "m");
+                    var dayEnd = instance.formatDate(endDate, "d");
+    
+                    // Redirect to the current page with the date range as query parameters
+                    var redirectUrl = `/dialer-report/{{camp_id}}?start=${yearStart}-${monthStart}-${dayStart}&end=${yearEnd}-${monthEnd}-${dayEnd}`;
+                    window.location.href = redirectUrl;
                 }
             },
             onOpen: function() {
@@ -174,12 +219,12 @@
                 calendarContainer.style.display = 'none';
             }
         });
-  
+    
         // Open flatpickr calendar when the button is clicked
         button.addEventListener("click", function() {
             fp.open();
         });
-  
+    
         // Close flatpickr calendar when clicking outside
         document.addEventListener("click", function(event) {
             if (!fp.calendarContainer.contains(event.target) && !event.target.closest(".datepicker")) {
@@ -188,9 +233,8 @@
         });
     });
   </script>
-
-
-
+  
+  
 
   
 
@@ -211,7 +255,7 @@
   
         var data = {
           type: type,
-          filename: "working-hours-{{agent.full_name}}-{{month}}-{{year}}",
+          filename: "dialer-reports-{{month}}-{{year}}",
         };
   
         if (type === "csv") {

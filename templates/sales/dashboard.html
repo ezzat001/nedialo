@@ -536,6 +536,8 @@
             element: "#myKanban",
             gutter: "10px",
             widthBoard: "350px",
+            dragBoards: false,  // Disable dragging of boards
+
             click: el => {
                 let taskId = el.getAttribute("data-leadid");
                 let taskContact = el.getAttribute("data-contact");

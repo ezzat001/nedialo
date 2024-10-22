@@ -96,6 +96,30 @@ SALES_LEAD_CHOICES = (
 
     )
 
+
+TASK_DEPARTMENTS = (
+    ('executive_dep','Executive Management'),
+    #('ops_dep', 'Operations Management'),
+    ('data_dep', 'Data Management'),
+    ('workforce_dep','Workforce'),
+    ('quality_dep','Quality'),
+    ('dev_dep','Development'),
+    ('sales_dep', 'Sales'),
+    ('hr_dep','Human Resources'),
+    ('accounting_dep','Accounting'),
+    ('archive','Archive')
+)
+
+TASK_RESULT_CHOICES = (
+    ('in_progress', 'In Progress'),
+    ('on_hold', 'On Hold'),
+    ('blocked','Blocked'),
+    ('cancelled','Cancelled'),
+    ('completed', 'Completed'),
+
+
+)
+
 PROPERTY_CHOICES = (
     ('house','House'),
     ('vacant_land','Vacant Land'),
@@ -163,6 +187,21 @@ SERVICE_TYPES = (
 DIALER_TYPES = (
     ('calling','Calling'),
     ('texting','Texting'),
+
+)
+
+DIALERS = (
+    ('batchdialer', 'BatchDialer'),
+    ('east1_calltools', 'east-1.calltools.io'),
+    ('east2_calltools', 'east-2.calltools.io'),
+    ('west2_calltools', 'west-2.calltools.io'),
+    ('west3_calltools', 'west-3.calltools.io'),
+    ('west4_calltools', 'west-4.calltools.io'),
+    ('app_calltools', 'app.calltools.io'),
+    ('staging_calltools', 'staging.calltools.io'),
+
+
+
 
 )
 
@@ -292,10 +331,19 @@ class ServerSetting(models.Model):
 class Role(models.Model):
     role_name = models.CharField(max_length=50, null=True, blank=True)
 
+
+
+
+
     work_status = models.BooleanField(default=False)
 
-    caller_dashboard = models.BooleanField(default=False)
+    client_dashboard = models.BooleanField(default=False)
+    client_lookerstudio = models.BooleanField(default=False)
+    client_campaign_performance = models.BooleanField(default=False)
+
     affiliate_dashboard = models.BooleanField(default=False)
+
+    caller_dashboard = models.BooleanField(default=False)
 
     lead_submission = models.BooleanField(default=False)
     my_leads = models.BooleanField(default=False)
@@ -324,6 +372,8 @@ class Role(models.Model):
     camp_hours = models.BooleanField(default=False)
     camp_leads = models.BooleanField(default=False)
 
+    dialer_reports = models.BooleanField(default=False)
+
     sales_dashboard = models.BooleanField(default=False)
     sales_lookerstudio = models.BooleanField(default=False)
     sales_performance = models.BooleanField(default=False)
@@ -336,6 +386,10 @@ class Role(models.Model):
 
     salaries_table = models.BooleanField(default=False)
     adjusting_hours = models.BooleanField(default=False)
+
+    company_tasks = models.BooleanField(default=False)
+
+    operations = models.BooleanField(default=False)
 
 
     admin_home = models.BooleanField(default=False)
@@ -533,6 +587,8 @@ class ClientProfile(models.Model): #Profile Standard Information
 
 
 
+
+
 class AffiliateInvoice(models.Model):
     id = models.AutoField(primary_key=True)
     affiliate = models.ForeignKey(AffiliateProfile, blank=True, null=True, related_name="invoice_affiliate_profile", on_delete=models.SET_NULL )
@@ -558,10 +614,15 @@ class Campaign(models.Model): # Client Campaigns
     campaign_type = models.CharField(max_length=50, choices=SERVICE_TYPES, null=True, blank=True)
 
     lead_points = models.PositiveIntegerField(default=0)
+
+    lookerstudio = models.TextField(null=True , blank=True)
     
     dialer = models.ForeignKey(Dialer, on_delete=models.SET_NULL,null=True, blank=True)
+
+    dialer_type = models.CharField(max_length=50, choices=DIALERS, null=True, blank=True)
     
-    
+    dialer_api_key = models.TextField(null=True, blank=True)
+
 
 
     status = models.CharField(max_length=50,default="active", choices=CAMP_ACTIVITY, null=True, blank=True)
@@ -694,6 +755,23 @@ class Campaign(models.Model): # Client Campaigns
 
         return account_data
     
+
+
+
+class DialerReport(models.Model): 
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    client_profile = models.ForeignKey(ClientProfile, on_delete=models.SET_NULL, blank=True, null=True)
+    campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, blank=True, null=True)
+
+    dialer = models.CharField(max_length=50, choices=DIALERS ,null=True, blank=True)
+    api_key = models.TextField(null=True, blank=True)
+
+
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.client_profile
 
 
 class DialerCredentials(models.Model):
@@ -986,6 +1064,56 @@ class SalesLead(models.Model):
 
 
 
+class Task(models.Model):
+    created = models.DateTimeField(default=timezone.now)
+    due =  models.DateField(null=True, blank=True)
+    completed = models.DateTimeField(null=True, blank=True)
+    updated = models.DateTimeField(null=True, blank=True)
+
+
+    id = models.AutoField(primary_key=True)
+    agent_user = models.ForeignKey(User, on_delete=models.SET_NULL,related_name="task_agent_user", null=True, blank=True)
+    agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL,related_name="task_agent_profile", null=True, blank=True, )
+
+    title = models.CharField(max_length=50, null=True, blank=True)
+    description = models.TextField(null=True , blank=True)
+    notes = models.TextField(null=True , blank=True)
+
+    priority = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], default=1)
+
+    executive_dep = models.BooleanField(default=False)
+    ops_dep = models.BooleanField(default=False)
+    data_dep = models.BooleanField(default=False)
+    workforce_dep = models.BooleanField(default=False)
+    quality_dep = models.BooleanField(default=False)
+    dev_dep = models.BooleanField(default=False)
+    sales_dep = models.BooleanField(default=False)
+    hr_dep = models.BooleanField(default=False)
+
+    assigned_department = models.CharField(max_length=50, choices=TASK_DEPARTMENTS, null=True, blank=True)
+
+
+    notes = models.TextField(null=True,blank=True)
+
+
+
+    status = models.CharField(max_length=50, choices=TASK_RESULT_CHOICES, default='in_progress', null=True, blank=True)
+
+    
+    modified_by = models.ForeignKey(Profile,on_delete=models.SET_NULL, related_name="task_modified_by",null=True,blank=True)
+
+
+    
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return str(self.title) +" #"+str(self.id)
+    
+
+
+
+
+
 
 
 class Leave(models.Model):
@@ -1146,7 +1274,18 @@ class WorkStatus(models.Model):
         if self.login_time:
             return timezone.localtime(self.login_time)
         return None
+    
 
+    def get_current_duration(self):
+        """
+        Returns the time spent in the current status since the last status change,
+        with the microseconds removed.
+        """
+        now = timezone.now()
+        duration = now - self.last_status_change
+        # Remove microseconds from the timedelta
+        return duration - timedelta(microseconds=duration.microseconds)
+    
     @classmethod
     def get_workstatus_with_login_time(cls, agent_profile, month, year):
         return cls.objects.filter(

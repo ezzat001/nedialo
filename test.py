@@ -1,15 +1,29 @@
+import requests
+import json
 
-# Initialize Nominatim API
-geolocator = Nominatim(user_agent="my_app")
+# Define the API URL
 
-# Address you want to geocode
-address = "1600 Amphitheatre Parkway, Mountain View, CA"
 
-# Perform geocoding
-location = geolocator.geocode(address)
+start_date = '2023-10-16'  # Replace with your desired start date
+end_date = '2023-10-16'
 
-# Print latitude and longitude
-if location:
-    print(f"Latitude: {location.latitude}, Longitude: {location.longitude}")
+url = f'https://app.calltools.io/api/agentperformance/?start_date={start_date}&end_date={end_date}'
+
+# Set the headers with the API key included
+headers = {
+    'accept': 'application/json',
+    'Authorization': 'Token 2b0ab0c0114701629c8ad8b787780f2fa2fe9081',  # Replace YOUR_API_KEY with the actual key
+}
+
+# Make the GET request
+response = requests.get(url, headers=headers)
+
+# Check if the request was successful
+if response.status_code == 200:
+    # Parse and print the JSON response
+    data = response.json()
+
+    # Print the indented JSON response
+    print(json.dumps(data, indent=4))
 else:
-    print("Location not found.")
+    print(f"Error: {response.status_code}, {response.text}")

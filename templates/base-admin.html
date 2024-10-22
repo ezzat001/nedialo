@@ -141,12 +141,7 @@ body {
                   <span class="sidenav-normal  ms-3  ps-1"> My Profile </span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/settings" target="_parent">
-                  <span class="material-icons">settings</span>
-                  <span class="sidenav-normal  ms-3  ps-1"> Settings </span>
-                </a>
-              </li>
+            
               <li class="nav-item">
                 <a class="nav-link text-grey " href="/logout" target="_parent">
                   <span class="material-icons">logout</span>
@@ -178,7 +173,7 @@ body {
 
         {% endif %}
 
-        {% if perms.admin_accounts or perms.clients %}
+        {% if perms.admin_accounts or perms.admin_clients %}
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#adminusers" class="nav-link text-white {% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path or '/admin-affiliates' in request.path or '/affiliate-modify/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-agents' in request.path or '/admin-clients' in request.path or  '/agent-modify/' in request.path  or  '/client-modify/' in request.path or '/admin-affiliates' in request.path or '/affiliate-modify/' in request.path %}true{% else %}false{% endif %}">
               <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">person</i>
@@ -392,7 +387,7 @@ body {
             <li class="nav-item px-3">
               <a href="/settings" class="nav-link text-body p-0" target="_parent">
                 <i class="material-icons fixed-plugin-button-nav cursor-pointer">
-              settings
+                  account_circle
             </i>
               </a>
             </li>

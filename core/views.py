@@ -70,10 +70,13 @@ def maintenance(request):
 
 def loginview(request):
     context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
     if request.user.is_authenticated:
         profile = Profile.objects.get(user=request.user)
-        if str(profile.role) == "client":
-            return redirect('/client-dashboard')
+        if str(profile.role) == "Client":
+            return redirect(f'/client-dashboard/{current_month}-{current_year}')
         else:
             return redirect('/')
     else:
@@ -142,6 +145,9 @@ def logoutview(request):
 @login_required
 def home(request):
     today = (tz.localtime(tz.now())).date()
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
     user = request.user
     try:
         work_status = WorkStatus.objects.get(user=user, date=today)
@@ -157,6 +163,10 @@ def home(request):
                "work_status":work_status,
                }
     profile = Profile.objects.get(user=request.user)
+
+    if str(profile.role) == "Client":
+        return redirect(f'/client-dashboard/{current_month}-{current_year}')
+
 
 
     context['profile'] = profile
@@ -2436,6 +2446,220 @@ def prepayment_report(request, prepayment_id):
 
 
 
+@permission_required('dialer_reports')
+@login_required
+def dialer_report(request, camp_id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    campaign = Campaign.objects.get(id=camp_id)
+
+    context['campaign'] = campaign
+    context['camp_id'] = campaign.id
+
+    today_date = tz.now().date()
+
+    context['today_date'] = today_date  
+    context['month'] = tz.now().month
+    context['year'] = tz.now().year
+    api_key = campaign.dialer_api_key
+    dialer_type = campaign.dialer_type
+    dialer_type_display = campaign.get_dialer_type_display()
+
+    date= (tz.localtime(tz.now())).date()
+
+
+    start_date = request.GET.get('start', str(today_date))  # Default to today if not provided
+    end_date = request.GET.get('end', str(today_date))  # Default to today if not provided
+
+    context['start_date'] = start_date
+    context['end_date'] = end_date
+
+    if dialer_type == "batchdialer":
+
+
+        payload = {
+            "daterange": {
+                "from": start_date+"T06:00:00-05:00",  # Start time 11 AM Eastern Time
+                "to": end_date+"T23:59:00-05:00"    # End time 11:59 PM Eastern Time
+            }
+        }
+
+        headers = {
+            'X-ApiKey': api_key, 
+            'Content-Type': "application/json",
+            'Accept': "application/json"
+        }
+
+        url = "https://app.batchdialer.com/api/report/public/agents"
+
+        totals = {
+            'answered': 0,
+            'callsduration': 0,
+            'totaltime': 0,
+            'presences': {
+                'After Call': 0,
+                'Auto Pause': 0,
+                'Available': 0,
+                'Break': 0,
+                'In Meeting': 0,
+                'In training': 0,
+                'Lunch': 0,
+                'On Call': 0,
+                'Out of desk': 0,
+                'PrepWork': 0,
+                'Wrap Up Time': 0
+            },
+            'appointments': 0,
+            'leads': 0,
+            'answering_machine': 0,
+            'abandoned': 0,
+            'callstotal': 0
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            api_unsorted = response.json()
+            api_response = sorted(api_unsorted, key=lambda x: x['presences']['Available'], reverse=True)
+            for agent in api_response:
+                totals['answered'] += agent.get('answered', 0)
+                totals['callsduration'] += agent.get('callsduration', 0)
+                totals['totaltime'] += agent.get('totaltime', 0)
+                totals['appointments'] += agent.get('appointments', 0)
+                totals['leads'] += agent.get('leads', 0)
+                totals['answering_machine'] += agent.get('answering_machine', 0)
+                totals['abandoned'] += agent.get('abandoned', 0)
+                totals['callstotal'] += agent.get('callstotal', 0)
+
+                for key, value in agent.get('presences', {}).items():
+                    totals['presences'][key] += value
+            context['totals'] = totals
+            context['response'] = api_response
+        else:
+            api_response = "ERROR"
+
+        return render(request,'dialer_reports/dialer_report_batch.html', context)
+    
+    elif "calltools" in  dialer_type:
+
+
+        url = f'https://{dialer_type_display}/api/agentperformance/?startDate={start_date}&endDate={end_date}'
+
+        token = campaign.dialer_api_key
+        
+        # Set the headers with the API key included
+        headers = {
+            'accept': 'application/json',
+            'Authorization': f'Token {token}',  # 6534a0b1d0f324d09f15fd8a18a3a8dbcd15d734 with the actual key
+        }
+
+
+
+        # Make the GET request
+        response = requests.get(url, headers=headers)
+
+
+        # Check if the request was successful
+        api_response = []
+        totals = {
+                'calls_duration': 0,
+                'available': 0,
+                'on_call': 0,
+                'post_call': 0,
+                'meeting': 0,
+                'not_available': 0,
+                'break': 0,
+                'lunch': 0,
+            }
+        if response.status_code == 200:
+            # Parse and print the JSON response
+            data = response.json()
+
+
+
+            for record in data['records']:
+                agent_info = {
+                    'full_name': record['Full Name'],
+                    'calls_duration': safe_get(record, 'Call Duration'),
+                    'available':safe_get(record, 'Agent Status:Available'),
+                    'on_call':safe_get(record, 'Agent Status:On A Call'),
+                    'post_call':safe_get(record, 'Agent Status:Post Call'),
+                    'meeting':safe_get(record, 'Agent Status:Meeting'),
+                    'not_available':safe_get(record, 'Agent Status:Not Available'),
+                    'break':safe_get(record, 'Agent Status:Break'),
+                    'lunch':safe_get(record, 'Agent Status:Lunch'),
+
+
+
+
+                }
+                api_response.append(agent_info)
+
+                totals['calls_duration'] += agent_info['calls_duration']
+                totals['available'] += agent_info['available']
+                totals['on_call'] += agent_info['on_call']
+                totals['post_call'] += agent_info['post_call']
+                totals['meeting'] += agent_info['meeting']
+                totals['not_available'] += agent_info['not_available']
+                totals['break'] += agent_info['break']
+                totals['lunch'] += agent_info['lunch']
+
+
+
+                """
+                dispo_info = {}
+
+                full_name = ""  # Initialize full_name variable
+
+                # Iterate through each key-value pair in the record
+                for key, value in record.items():
+
+                    if key == "Full Name":
+                        # Save the full name
+                        full_name = value
+                        dispo_info["full_name"] = full_name
+
+                    if key.startswith("Call Dispo:") and "/Hr" not in key:
+                        # Save the Call Dispo variable with its key
+                        new_key = key.replace("Call Dispo:", "").strip()  # Remove prefix and strip spaces
+                        dispo_info[new_key] = value
+
+                        # Calculate totals
+                        
+
+                # Append full_name to the dispo_info dictionary
+                    
+
+                # Append the populated dispo_info to the response list
+                api_response2.append(dispo_info)
+
+                """
+
+        else:
+            api_response = "ERROR"
+
+        context['response'] = api_response
+        context['totals'] = totals
+
+
+
+
+
+        return render(request,'dialer_reports/dialer_report_ct.html', context)
+
+
+
+
+
+def safe_get(record, key):
+    try:
+        return record[key]
+    except KeyError:
+        return 0
+
+
+
 def format_duration(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -2468,6 +2692,7 @@ def update_status(request):
     profile = Profile.objects.get(user=user)
 
     if new_status in dict(WorkStatus.STATUS_CHOICES).keys():
+        duration = None
         try:
             work_status, created = WorkStatus.objects.get_or_create(
                 user=user,
@@ -2477,8 +2702,12 @@ def update_status(request):
                     'last_status_change': tz.now()
                 }
             )
+            previous_status = work_status.current_status
+            duration = work_status.get_current_duration()
             if not created:
+
                 work_status.update_status(new_status)
+
 
             """
             if new_status == 'offline':
@@ -2541,10 +2770,14 @@ def update_status(request):
             # Construct the content of the embed with quote formatting
             request_ip = request.META.get('REMOTE_ADDR')
             
-            content = f'**Agent:** {profile.full_name}\n\n**Action:** Changed Working Status to **{new_status.upper()}**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}'
+            """if started_shift == "offline":
+                content = f'**Agent:** {profile.full_name}\n\n**Action:** Started Shift **{new_status.upper()}**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}'
+
+            else:"""
+            content = f'**Agent:** {profile.full_name}\n\n**Action:** Changed Working Status  **{previous_status.upper()}** > **{new_status.upper()}**\n\n**Duration:** {str(duration).upper()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}'
 
             try:
-                send_discord_message_activity(content)
+                send_discord_message_activity(content,new_status)
             except:
                 pass
 

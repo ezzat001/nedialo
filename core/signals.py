@@ -8,7 +8,7 @@ from .models import Profile, WorkStatus  # Import your Profile and WorkStatus mo
 import pytz
 from datetime import datetime
 from discord_app.bot import queue_message as discord_private
-from discord_app.views import discord_crm_timeout
+from discord_app.views import discord_crm_timeout, send_discord_message_activity
 
 from .models import DialerCredentials,SeatAssignmentLog
 
@@ -60,6 +60,8 @@ def handle_user_timeout(sender, user, request, **kwargs):
     if last_status != "offline":
         try:
             work_status = WorkStatus.objects.get(user=user, date=today)
+            previous_status = work_status.current_status
+            duration = work_status.get_current_duration()
             work_status.update_status("offline")
         except WorkStatus.DoesNotExist:
             # Handle the case where WorkStatus doesn't exist, create a new one, or log an error
@@ -93,6 +95,28 @@ def handle_user_timeout(sender, user, request, **kwargs):
             discord_crm_timeout(profile.full_name,request)
         except Exception as e:
             print(e)
+
+        
+        utc_now = datetime.utcnow()
+
+            # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+
+        content = f'**Agent:** {profile.full_name}\n\n**Action:** Timed Out **{previous_status.upper()}** > **OFFLINE**\n\n**Duration:** {str(duration).upper()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}'
+
+        try:
+            send_discord_message_activity(content,"offline")
+        except:
+            pass
         logout(request)
 
     

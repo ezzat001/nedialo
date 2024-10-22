@@ -18,6 +18,10 @@ import json
 from core.decorators import *
 from datetime import datetime,timedelta
 import calendar
+from core.models import DIALERS
+from collections import defaultdict
+from django.utils.safestring import mark_safe
+from django.template.defaultfilters import date as _date
 
 
 @login_required
@@ -69,7 +73,7 @@ def application_report(request, app_id):
             
         
 
-        return redirect('/applications')
+        return redirect('/admin')
     return render(request,'admin/application_report.html', context)
 
 
@@ -175,6 +179,7 @@ def campaign_modify(request,camp_id):
     context['campaigndispos'] = campaigndispos
     context['campaigndisposlength'] = campaigndispos.count_non_none_slot_names() if campaigndispos else 0
 
+    context['dialer_types'] = DIALERS
 
     if request.method == "POST":
 
@@ -287,7 +292,35 @@ def campaign_modify(request,camp_id):
                 defaults=defaults
             )
             return redirect(request.get_full_path())
+        
+        if "campaign_dialer_api" in request.POST:
+            campaign = Campaign.objects.get(active=True, id=camp_id)
+            data = request.POST
+            dialer_type = data.get('dialer_api_type')
+            api_key = data.get('dialer_api_key')
 
+            campaign.dialer_type = dialer_type
+            campaign.dialer_api_key = api_key
+
+
+
+            campaign.save()
+
+            return redirect(request.get_full_path())
+        
+
+        if "campaign_lookerstudio" in request.POST:
+            campaign = Campaign.objects.get(active=True, id=camp_id)
+            data = request.POST
+            lookerstudio = data.get('lookerstudio_link')
+
+            campaign.lookerstudio = lookerstudio
+
+
+
+            campaign.save()
+
+            return redirect(request.get_full_path())
 
             
 
@@ -868,8 +901,21 @@ def client_create(request):
 
         services = Service.objects.filter(id__in=selected_services_ids)
         role = Role.objects.get(role_name="Client")
-        agent_user = User.objects.create(username=username,password=password)
+        agent_user = User.objects.create(username=username)
+        agent_user.set_password(password)
+        agent_user.save()
         
+
+        agent_profile = Profile.objects.create(
+            full_name=full_name,
+            user=agent_user,
+            password=password,
+           
+            phone_number=phone,
+            hourly_rate=0,
+
+            role=role,
+        )
 
         agent = ClientProfile.objects.create(
             full_name=full_name,
@@ -906,6 +952,7 @@ def client_modify(request,username):
     context['discovery_options'] = discovery_options
     context['services'] = Service.objects.filter(active=True, status="active")
     context['affiliates'] = AffiliateProfile.objects.filter(client_status='active')
+    context['statuses'] = dict(CAMP_ACTIVITY)
 
 
     if request.method == "POST":
@@ -920,6 +967,7 @@ def client_modify(request,username):
             selected_services_ids = data.getlist('services')
             state = data.get('residence')
             affiliate_id = data.get('affiliate')
+            status = data.get('client_status')
 
             if affiliate_id == "0":
                 affiliate_profile = None
@@ -939,6 +987,7 @@ def client_modify(request,username):
             agent_profile.state = state
             agent_profile.discovery_method = discovery_method
             agent_profile.affiliate = affiliate_profile
+            agent_profile.client_status = status
             if not selected_services_ids:
                 agent_profile.services.clear()  
             else:
@@ -978,6 +1027,255 @@ class DeleteClientView(View):
         else:
             return JsonResponse({'error': 'Invalid password.'}, status=401)
 
+
+
+
+
+@permission_required('client_dashboard')
+@login_required
+def client_dashboard(request, month, year):
+
+
+    context = {}
+
+    now = tz.now()
+    current_year = year
+    current_month = month
+    current_month_name = _date(now, "F")
+    month_date = datetime(year, month, 1)  # Create a datetime object for the given month
+    month_name = month_date.strftime('%b')  # Get the abbreviated month name (e.g., 'Sep')
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+
+
+    client_profile = ClientProfile.objects.get(user=request.user)
+
+
+    campaign = Campaign.objects.get(client=client_profile)
+    
+
+    context['profile'] = Profile.objects.get(user=request.user)
+
+    context['qualified'] = Lead.objects.filter(
+        campaign=campaign,
+        pushed__year=current_year,
+         status="qualified",
+        active=True
+        ).count()
+
+    context['disqualified'] = Lead.objects.filter(
+        campaign=campaign,
+        pushed__year=current_year,
+         status__in=["disqualified","callback"],
+        active=True
+        ).count()
+
+    
+    
+    context['duplicated'] = Lead.objects.filter(
+        campaign=campaign,
+        pushed__year=current_year,
+         status="duplicated",
+        active=True
+        ).count()
+
+    
+    
+
+    context['total'] =  Lead.objects.filter(
+        campaign=campaign,
+        pushed__year=current_year,
+         active=True
+        ).count()
+    
+
+    
+
+    char_data_qualified = []
+    for month in range(1, 13):
+        total_count = Lead.objects.filter(
+            campaign=campaign,
+            pushed__month=month,
+            pushed__year=current_year,
+            status="qualified",
+            active=True
+        ).count()
+        char_data_qualified.append(total_count)
+    context['char_data_qualified'] = char_data_qualified
+
+
+    char_data_disqualified = []
+    for month in range(1, 13):
+        total_count = Lead.objects.filter(
+            campaign=campaign,
+            pushed__month=month,
+            pushed__year=current_year,
+            status="disqualified",
+            active=True
+        ).count()
+        char_data_disqualified.append(total_count)
+    context['char_data_disqualified'] = char_data_disqualified
+
+
+
+
+        # Determine the first and last days of the current month
+    first_day = datetime(current_year, current_month, 1)
+    if current_month == 12:
+        last_day = datetime(current_year + 1, 1, 1) - timedelta(days=1)
+    else:
+        last_day = datetime(current_year, current_month + 1, 1) - timedelta(days=1)
+
+    # Get ISO week numbers for the first and last days of the month
+    first_week = first_day.isocalendar()[1]
+    last_week = last_day.isocalendar()[1]
+
+    # Initialize a dictionary to store total leads per week
+    weekly_leads_count = defaultdict(int)
+
+    # Get leads for the current month and year
+    leads = Lead.objects.filter(
+        campaign=campaign,
+        pushed__year=current_year,
+        pushed__month=current_month,
+        active=True
+    )
+
+    # Order and limit the number of leads in the context for display
+
+    # Count total leads for each week
+    for lead in leads:
+        week_number = lead.pushed.isocalendar()[1]  # Get ISO week number
+        weekly_leads_count[week_number] += 1
+
+    # Ensure that all weeks from first to last are represented
+    weeks_in_month = range(first_week, last_week + 1)
+
+    # Prepare list with total leads for each week
+    weekly_total_leads_list = [weekly_leads_count.get(week, 0) for week in weeks_in_month]
+
+    # Convert week numbers to "Week 1", "Week 2", etc.
+    week_labels = [f"Week {i + 1}" for i in range(len(weeks_in_month))]
+
+    # Update context with week labels and total leads per week
+    context['week_numbers'] = week_labels
+    context['weekly_total_leads'] = weekly_total_leads_list
+
+
+    qualified = Lead.objects.filter(
+        campaign=campaign,
+        pushed__month=current_month,
+        pushed__year=current_year,
+        status="qualified",
+        active=True
+        )
+    
+    qualified_dict = {
+        str(lead.lead_id): {
+            'longitude': lead.longitude,
+            'latitude': lead.latitude,
+            'seller_name': lead.seller_name
+        }
+        for lead in qualified
+        if lead.longitude != 0 and lead.latitude != 0
+    }
+    context['locations'] = mark_safe(json.dumps(qualified_dict))
+
+    state_lead_count = defaultdict(int)
+
+    # Iterate through qualified leads and count by state
+    for lead in qualified:
+        state = lead.state
+        state_lead_count[state] += 1
+
+    # Convert defaultdict to a regular dict
+    state_lead_count = dict(state_lead_count)
+
+    # Sort states by lead count in descending order
+    sorted_states = sorted(state_lead_count.items(), key=lambda x: x[1], reverse=True)
+
+    # Initialize the dictionary for the top three and the remainder
+    top_three_states = {}
+    other_states_count = 0
+
+    for i, (state, count) in enumerate(sorted_states):
+        if i < 3:
+            top_three_states[state] = count
+        else:
+            other_states_count += count
+
+    # Add the "other states" to the dictionary
+    if other_states_count > 0:
+        top_three_states['Other'] = other_states_count
+
+    # Update the context
+    context['state_lead_count'] = top_three_states
+
+    # Print the top three states and other states count
+    
+
+
+    context['all_leads'] = Lead.objects.filter(active=True,campaign=campaign,      
+                                                pushed__year=current_year,
+                                                pushed__month=current_month).order_by('-pushed')
+    
+
+    return render(request,'admin/clients/client_dashboard.html',context)
+
+
+
+
+@permission_required('client_dashboard')
+@login_required
+def client_lead_report(request, lead_id):
+
+    context = {}
+
+    context['profile'] = Profile.objects.get(user=request.user)
+
+    client_profile = ClientProfile.objects.get(user=request.user)
+    campaign = Campaign.objects.get(client=client_profile)
+
+    lead = Lead.objects.get(lead_id=lead_id,active=True)
+
+    if lead.campaign != campaign:
+        return HttpResponseForbidden("You do not have permission to access this resource.")
+
+
+    context['lead'] = lead
+
+    context['agent_profile'] = lead.agent_profile
+    context['property_types'] = PROPERTY_CHOICES
+    context['timelines'] = TIMELINE_CHOICES
+    context['lead_status'] = LEAD_CHOICES
+
+
+    
+    
+    
+    
+
+   
+        
+    return render(request, 'admin/clients/client_lead_report.html', context)
+
+
+
+@permission_required('client_lookerstudio')
+@login_required
+def client_lookerstudio(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    client_profile = ClientProfile.objects.get(user=request.user)
+    campaign = Campaign.objects.get(client=client_profile)
+
+    context['lookerstudio'] = campaign.lookerstudio
+
+    return render(request, 'admin/clients/client_lookerstudio.html', context)
 
 
 
@@ -1163,7 +1461,8 @@ def affiliate_create(request):
             password=password,
            
             phone_number=phone,
-             
+            hourly_rate=0,
+
             role=role,
         )
 

@@ -159,7 +159,7 @@ def send_discord_message_prepayment(content,request):
 
 
 
-def send_discord_message_activity(content):
+def send_discord_message_activity(content, status):
     try:
         settings = ServerSetting.objects.first()
     except:
@@ -170,6 +170,24 @@ def send_discord_message_activity(content):
 
 
     color = 65280
+
+    green_color = 65280
+
+    red_color = 16711680  
+
+    orange_color = 16747520   
+
+    if status == "break":
+        color = orange_color
+
+    elif status == "offline":
+        color = red_color
+        
+    else:
+        color = green_color
+
+
+
     payload = {
         'embeds': [
             {
@@ -193,7 +211,7 @@ def discord_crm_login(agent_name, logged,request):
         color = 65280  # Green color in Discord embed (decimal)
     else:
         action_text = "LOGGED OUT"
-        color = 16747520  # Red color in Discord embed (decimal)
+        color = 16747520  # Orange color in Discord embed (decimal)
     
     try:
         settings = ServerSetting.objects.first()

@@ -63,6 +63,11 @@ urlpatterns = [
     path('client-modify/<str:username>',client_modify),
     path('client-delete/<str:username>/', DeleteClientView.as_view()),
 
+    path('client-dashboard/<int:month>-<int:year>',client_dashboard),
+    path('client-lead-report/<int:lead_id>', client_lead_report),
+    path('client-lookerstudio', client_lookerstudio),
+
+
     path('admin-affiliates', affiliates_table),
     path('affiliate-data/<str:username>-<int:month>-<int:year>', affiliate_data),
     path('affiliate-create', affiliate_create),
@@ -157,6 +162,10 @@ urlpatterns = [
 
     path('action-report/<int:action_id>',action_report),
 
+    path('dialer-report/<int:camp_id>',dialer_report),
+
+
+
 
     path('seats', seats),
     path('seat-breakdown/<int:seat_id>-<int:month>-<int:year>', seat_breakdown),
@@ -220,6 +229,11 @@ urlpatterns = [
     path('sales-calendar-<int:month>-<int:year>', sales_calendar),
 
 
+    path('company-tasks-<int:year>',company_tasks),
+    path('new-task',task_creation),
+    path('task-info/<int:task_id>',task_info),
+
+ 
     path('sales-lead-submit/', SalesLeadSubmitView.as_view(), name='sales_lead_submit'),
 
     path('sales-lead-update/', update_sales_lead, name='sales_lead_update'),

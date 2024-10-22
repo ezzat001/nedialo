@@ -2633,3 +2633,152 @@ def camp_leads_yearly(request, camp_id, year):
 
 
     return render(request, 'campaign_leads/yearly_reports.html', context)
+
+
+
+
+
+
+@permission_required('operations')
+@login_required
+def company_tasks(request, year):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['year'] = year
+
+    tasks = Task.objects.filter(active=True, created__year=year)
+
+    # Create a dictionary to hold lists of sales leads for each status choice
+    tasks_grouped = {choice[0]: [] for choice in TASK_DEPARTMENTS}  # Initialize with empty lists
+
+    # Iterate over each sales lead and group by status
+    for task in tasks:
+        tasks_grouped[task.assigned_department].append(task)
+
+    # Prepare the context with grouped sales leads
+    context['tasks'] = tasks_grouped
+
+    # Include the names of the statuses in your context as well
+    context['task_departments'] = dict(TASK_DEPARTMENTS)
+
+
+
+   
+
+    return render(request, 'operations/company_tasks.html', context)
+
+
+
+
+@permission_required('company_tasks')
+@login_required
+def task_creation(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    now = tz.now()
+    current_year = now.year
+
+   
+
+
+    # Include the names of the statuses in your context as well
+    context['task_departments'] = dict(TASK_DEPARTMENTS)
+
+    if request.method == "POST":
+        data = request.POST
+
+        title = data.get('title')
+        description = data.get('description')
+        due_date = data.get('due_date')
+        priority = int(data.get('priority'))
+        department = data.get('department')
+        task_notes = data.get('task_notes')
+
+        
+
+        task = Task.objects.create(agent_user=request.user,
+                                   agent_profile=profile,
+                                    title=title,
+                                   description=description,
+                                   due = due_date,
+                                   priority=priority,
+                                   assigned_department=department,
+                                   notes=task_notes)
+        
+
+
+        
+        return redirect(f'/company-tasks-{current_year}')
+
+
+
+
+   
+
+    return render(request, 'operations/task_create.html', context)
+
+
+
+
+@permission_required('company_tasks')
+@login_required
+def task_info(request, task_id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    now = tz.now()
+    current_year = now.year
+
+
+    task = Task.objects.get(id=task_id)
+
+    context['task'] = task
+
+   
+
+
+    # Include the names of the statuses in your context as well
+    context['task_departments'] = dict(TASK_DEPARTMENTS)
+    context['task_statuses'] = dict(TASK_RESULT_CHOICES)
+
+    if request.method == "POST":
+        data = request.POST
+
+        title = data.get('title')
+        description = data.get('description')
+        due_date = data.get('due_date')
+        priority = int(data.get('priority'))
+        department = data.get('department')
+        task_notes = data.get('task_notes')
+        task_status = data.get('task_status')
+
+        
+        task = Task.objects.get(id=task_id)
+
+        
+        task.title=title
+        task.description=description
+        task.due = due_date
+        task.priority=priority
+        task.assigned_department=department
+        task.notes=task_notes
+        task.status = task_status
+
+        task.save()
+    
+
+        
+        
+        return redirect(f'/company-tasks-{current_year}')
+
+
+
+
+   
+
+    return render(request, 'operations/task_info.html', context)

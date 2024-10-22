@@ -37,12 +37,7 @@
               </a>
             </li>
 
-            <li class="nav-item pt-2">
-                <a class="nav-link text-dark d-flex" data-scroll="" href="#payment_method">
-                  <i class="material-icons text-lg me-2">paid</i>
-                  <span class="text-sm">Payment Settings</span>
-                </a>
-            </li>
+           
 
             
           </ul>
@@ -169,17 +164,38 @@
               </div>
               <br>
               <div class="row">
+                <div class="col-12 col-sm-6 mt-3 mt-sm-0">
 
-                <label class="form-label">Affiliate *</label>
-                <div class="input-group input-group-dynamic">
-                  <select class="form-control" name="affiliate" id="affiliate" placeholder="search" required>
-                      <option value="0">None</option> <!-- Blank option for initial selection -->
-                      {% for aff in affiliates %}
-                        <option value="{{aff.id}}" {% if agent_profile.affiliate.id == aff.id%} selected {% endif %}>{{aff.full_name}}</option>
-                      {% endfor %}
-                        
-                  </select>
+                  <label class="form-label">Affiliate *</label>
+                  <div class="input-group input-group-dynamic">
+                    <select class="form-control" name="affiliate" id="affiliate" placeholder="search" required>
+                        <option value="0">None</option> <!-- Blank option for initial selection -->
+                        {% for aff in affiliates %}
+                          <option value="{{aff.id}}" {% if agent_profile.affiliate.id == aff.id%} selected {% endif %}>{{aff.full_name}}</option>
+                        {% endfor %}
+                          
+                    </select>
+                  </div>   
                 </div>   
+
+
+                <div class="col-12 col-sm-6 mt-3 mt-sm-0">
+                  <label class="form-label">Client Status *</label>
+                  <div class="input-group input-group-dynamic">
+                      <select class="form-control" name="client_status" id="client_status" placeholder="search">
+                          <option value="">Select Status</option> <!-- Blank option for initial selection -->
+                          {% for key,value in statuses.items %}
+                              {% if key == agent_profile.client_status %}
+                                  <option value="{{key}}" selected>{{value}}</option>
+                              {% else %}
+                                  <option value="{{key}}">{{value}}</option>
+                              {% endif %}
+
+                          {% endfor%}
+
+                      </select>
+                  </div>
+                </div>
               </div>
               <br>
               <div class="row">
@@ -285,6 +301,24 @@
               renderChoiceLimit: 10, // This will limit the number of choices displayed at once
             });
           }
+
+
+          if (document.getElementById('client_status')) {
+            var client_status = document.getElementById('client_status');
+            const example = new Choices(client_status, {
+                searchEnabled: false,
+                searchChoices: false,
+                searchFields: ['label', 'value'], // Fields to search within
+                searchPlaceholderValue: 'Search...', // Placeholder for the search input
+                shouldSort: false, // Disable sorting of choices
+                itemSelectText: '', // Text shown in the dropdown when an item is selected
+                fuseOptions: {
+                    includeScore: false, // Include score in search results
+                    threshold: 0.3, // Match threshold for search results
+                    keys: ['label', 'value'] // Fields to search within
+                }
+            });
+        }
 
 
     });

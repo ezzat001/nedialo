@@ -477,6 +477,8 @@ crossorigin=""></script>
         </li>
         <hr class="horizontal light mt-0">
 
+        {% if not perms.client_dashboard %}
+
         {% if perms.caller_dashboard %}
         <li class="nav-item">
           <a class="nav-link {% if request.path == '/' %}active{% endif %}"  href="/" target="_parent">
@@ -486,6 +488,26 @@ crossorigin=""></script>
         </li>
         {% endif %}
 
+        {% endif %}
+
+        {% if perms.client_dashboard %}
+        <li class="nav-item">
+          <a class="nav-link {% if  '/client-dashboard' in request.path %}active{% endif %}"  href="/client-dashboard/{{current_month}}-{{current_year}}" target="_parent">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">widgets</i>
+            <span class="nav-link-text ms-2 ps-1">Dashboard</span>
+          </a>
+        </li>
+        {% endif %}
+
+
+        {% if perms.client_lookerstudio %}
+        <li class="nav-item">
+          <a class="nav-link {% if  '/client-lookerstudio' in request.path %}active{% endif %}"  href="/client-lookerstudio" target="_parent">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">query_stats</i>
+            <span class="nav-link-text ms-2 ps-1">Looker Studio</span>
+          </a>
+        </li>
+        {% endif %}
 
         {% if perms.affiliate_dashboard %}
         <li class="nav-item">
@@ -887,7 +909,35 @@ crossorigin=""></script>
           </div>
         </li>
 
-        {% endif %}      
+        {% endif %}     
+        
+        
+        {% if perms.dialer_reports %}
+
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#dialerreports" class="nav-link text-white {% if '/dialer-report/' in request.path  %}active{% endif %}" aria-controls="dialerreports" role="button" aria-expanded="{% if '/dialer-report/' in request.path  %}true{% else %}false{% endif %}">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">phone</i>
+            <span class="nav-link-text ms-2 ps-1">Dialer Reports</span>
+          </a>
+          <div class="collapse {% if '/dialer-report/' in request.path  %}show{% endif %}" id="dialerreports">
+            <ul class="nav ">
+              
+        
+              {% for caller_camp in callers_campaigns %}
+              {% if caller_camp.dialer_api_key %}
+
+              <li class="nav-item ">
+                <a class="nav-link text-grey " href="/dialer-report/{{caller_camp.id}}" target="_parent">
+                  <span class="sidenav-normal ms-2 ps-1">{{caller_camp}}<b class="caret"></b></span>
+                </a>
+              </li>
+              {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+        </li>
+
+        {% endif %}    
         
         
         {% if perms.sales_dashboard or perms.sales_lookerstudio or perms.sales_performance %}
@@ -1228,24 +1278,56 @@ crossorigin=""></script>
 
 
 
-        <!--
+        
+        {% if perms.company_tasks  %}
+
+
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#datacategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}"> storage </i>
-            <span class="nav-link-text ms-2 ps-1">Operations </span>
+
+          <a data-bs-toggle="collapse" href="#operations" class="nav-link text-white 
+            {% if '/company-tasks' in request.path  %}active{% endif %}" 
+            aria-controls="salesoutleads" role="button" aria-expanded="{% if '/company-tasks' in request.path  %}true{% else %}false{% endif %}">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">storage</i>
+            <span class="nav-link-text ms-2 ps-1">Operations</span>
           </a>
-          <div class="collapse " id="datacategory">
-            <ul class="nav ">
+
+          
+          <div class="collapse {% if '/company-tasks' in request.path %}show{% endif %}" id="operations">
+            <ul class="nav">
+
+              {% if perms.company_tasks %}
+
+              
+              <li class="nav-item {% if '/company-tasks' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/company-tasks' in request.path %}active{% endif %}" href="/company-tasks-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">insert_chart</span>
+                  <span class="sidenav-normal ms-2 ps-1">Company Tasks</span>
+                </a>
+              </li>
+              
+              {% endif %}
+
+
+              <!--
+              <li class="nav-item">
+                <a class="nav-link text-grey " href="javascript:;" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> timeline </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Task Statistics </span>
+                </a>
+              </li>
+              -->
+
+              <!--
               <li class="nav-item ">
                 <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> publish  </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Data Export/Import <b class="caret"></b></span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Operation <b class="caret"></b></span>
                 </a>
               </li>
               <li class="nav-item ">
                 <a class="nav-link text-grey " href="javascript:;" target="_parent">
                   <span class="sidenav-mini-icon material-icons"> insert_chart   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Enhanced Reporting <b class="caret"></b></span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Company Tasks <b class="caret"></b></span>
                 </a>
               </li>
               <li class="nav-item">
@@ -1268,13 +1350,16 @@ crossorigin=""></script>
                   <span class="sidenav-normal  ms-2  ps-1"> Attrition Rate </span>
                 </a>
               </li>
+              -->
 
               
               
             </ul>
           </div>
         </li>
-        -->
+
+        {% endif %}
+        
         {% if perms.admin_home %}
         <li class="nav-item">
           <a class="nav-link"  href="/admin" target="_parent" >
