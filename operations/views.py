@@ -16,6 +16,7 @@ import calendar
 import json
 from django.db import transaction, DatabaseError
 from core.decorators import *
+from discord_app.views import *
 
 
 
@@ -2708,6 +2709,40 @@ def task_creation(request):
                                    priority=priority,
                                    assigned_department=department,
                                    notes=task_notes)
+
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+        try:
+
+           
+            task_id = task.id
+
+            department = task.get_assigned_department_display()
+
+            task_title = task.title
+
+            task_due = task.due
+
+            action_type= "create"
+
+            content = f'**Agent:** {profile.full_name}\n\n**Action:** Task Creation \n\n**Department:** {str(department).upper()}\n\n**Title:** {task_title}\n\n**Due Date:** {task_due}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+            send_discord_message_task(content,task_id,action_type)
+            
+        except:
+            pass
         
 
 
@@ -2760,6 +2795,8 @@ def task_info(request, task_id):
         
         task = Task.objects.get(id=task_id)
 
+        old_task_dep = task.get_assigned_department_display()
+
         
         task.title=title
         task.description=description
@@ -2770,6 +2807,52 @@ def task_info(request, task_id):
         task.status = task_status
 
         task.save()
+
+        new_task_dep = task.get_assigned_department_display()
+
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+
+           
+        task_id = task.id
+
+        department = task.get_assigned_department_display()
+
+        task_title = task.title
+
+        task_due = task.due
+
+        action_type= "reassign"
+
+            
+
+        if new_task_dep != old_task_dep:
+
+            try:
+
+
+                content = f'**Agent:** {profile.full_name}\n\n**Action:** Task Reassignment \n\n**Departments:** \n{str(old_task_dep).upper()} > {str(new_task_dep).upper()}\n\n**Title:** {task_title}\n\n**Due Date:** {task_due}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+                send_discord_message_task(content,task_id,action_type)
+
+            except:
+                pass
+
+        
+
+
     
 
         

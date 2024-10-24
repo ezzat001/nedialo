@@ -107,12 +107,25 @@
                     </div>
 
                     <div class="row mt-4">
+                             <div class="input-group input-group-static">
+                                <label>Previous Experience *</label>
+                                <textarea class="form-control" rows="3" name="previous_experience" id="previous_experience">{{app.experience}}</textarea>
+                            </div>
+                     </div>
+
+
+                    <div class="row mt-4">
+
                         <div class="col-sm-6">
                             <label for="audioPlayback">Introduction and Experience Recording *</label><br>
                             <audio id="audioPlayback" controls>
                                 <source src="{{ app.audio_file.url }}" type="audio/webm">
                                 Your browser does not support the audio element.
+                                
                             </audio>
+                            <button class="btn btn-sm btn-info mt-2" onclick="copyAudioLink(event)">Copy Link</button>
+                            <a href="{{ app.audio_file.url }}" download="Recording.webm" class="btn btn-sm btn-info mt-2">Download </a>
+
                         </div>
                     </div>
 
@@ -147,7 +160,31 @@
 
 <!-- Plyr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.7/dist/plyr.css" />
-
+<script>
+    function copyAudioLink(event) {
+        // Prevent any default behavior like navigation or form submission
+        event.preventDefault();
+        
+        // Get the 'src' attribute of the audio source element
+        var audioSrc = document.querySelector("#audioPlayback source").src;
+        
+        // Create a temporary text area to copy the link
+        var tempInput = document.createElement("textarea");
+        tempInput.value = audioSrc;
+        document.body.appendChild(tempInput);
+        
+        // Select the text and copy it
+        tempInput.select();
+        tempInput.setSelectionRange(0, 99999); // For mobile devices
+        document.execCommand("copy");
+        
+        // Remove the temporary text area
+        document.body.removeChild(tempInput);
+        
+        // Optionally alert the user that the link has been copied
+        alert("Audio link copied: " + audioSrc);
+    }
+</script>
 <style>
     /* General Plyr Player Styling */
     .plyr {

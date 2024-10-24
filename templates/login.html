@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="apple-touch-icon" sizes="76x76" href="static/img/apple-icon.png">
-  <link rel="icon" type="image/png" href="static/img/nedialo/favicon2.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="{{settings.apple_touch_icon.url}}">
+  <link rel="icon" type="image/png" href="{{settings.favicon.url}}">
   <title>
     {{settings.company_name}}
   </title>
@@ -110,8 +110,10 @@
                     <button type="submit" class="btn bg-gradient-info w-100 my-4 mb-2">Sign in</button>
                   </div>
                   <p class="mt-4 text-sm text-center">
+                    <!--
                     Don't have an account?
                     <a href="../../../pages/authentication/signup/illustration.html" class="text-info text-gradient font-weight-bold">Sign up</a>
+                    -->
                   </p>
                 </form>
               </div>

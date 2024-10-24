@@ -5,7 +5,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+    <link rel="apple-touch-icon" sizes="76x76" href="{{settings.apple_touch_icon.url}}">
+    <link rel="icon" type="image/png" href="{{settings.favicon.url}}">
     <title>
         {{settings.company_name}}
     </title>
@@ -14,36 +15,36 @@
     <style>
       /* dark_mode_scrollbar.css */
 
-/* For WebKit browsers (Chrome, Safari) */
-::-webkit-scrollbar {
-  width: 8px; /* Thin scrollbar */
-}
+        /* For WebKit browsers (Chrome, Safari) */
+        ::-webkit-scrollbar {
+          width: 8px; /* Thin scrollbar */
+        }
 
-::-webkit-scrollbar-track {
-  background: transparent; /* Transparent background */
-}
+        ::-webkit-scrollbar-track {
+          background: transparent; /* Transparent background */
+        }
 
-::-webkit-scrollbar-thumb {
-  background-color: #333; /* Darker grey main color */
-  border-radius: 10px;
-  border: 2px solid transparent; /* Transparent border */
-}
+        ::-webkit-scrollbar-thumb {
+          background-color: #333; /* Darker grey main color */
+          border-radius: 10px;
+          border: 2px solid transparent; /* Transparent border */
+        }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #555; /* Lighter grey on hover */
-}
+        ::-webkit-scrollbar-thumb:hover {
+          background: #555; /* Lighter grey on hover */
+        }
 
-/* For Firefox */
-scrollbar-width: thin;
-scrollbar-color: #333 transparent; /* Darker grey main color and transparent background */
+        /* For Firefox */
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent; /* Darker grey main color and transparent background */
 
-/* For Internet Explorer and Edge */
-body {
-  -ms-overflow-style: scrollbar;
-}
+        /* For Internet Explorer and Edge */
+        body {
+          -ms-overflow-style: scrollbar;
+        }
 
 
-</style>
+    </style>
 
     <!-- Font Awesome Icons -->
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -430,20 +431,20 @@ body {
                 </div>
                 </div>
                 <div class="col-lg-6">
-                <ul class="nav nav-footer justify-content-center justify-content-lg-end">
+                  <ul class="nav nav-footer justify-content-center justify-content-lg-end">
                     <li class="nav-item">
                     <a href="{{settings.company_website}}" class="nav-link text-grey" target="_blank">Nedialo</a>
                     </li>
                     <li class="nav-item">
-                    <a href="" class="nav-link text-grey" target="_blank">About Us</a>
+                    <a href="/apply" class="nav-link text-grey" target="_blank">Careers</a>
                     </li>
                     <li class="nav-item">
-                    <a href="{{setings.privacy}}" class="nav-link pe-0 text-grey" target="_blank">Privacy</a>
+                    <a href="{{settings.privacy}}" class="nav-link pe-0 text-grey" target="_blank">Privacy</a>
                     </li>
                     <li class="nav-item">
                     <a href="{{settings.terms}}" class="nav-link text-grey" target="_blank">Terms</a>
                     </li>
-                </ul>
+                  </ul>
                 </div>
             </div>
             </div>

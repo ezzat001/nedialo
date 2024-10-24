@@ -290,6 +290,7 @@ class ServerSetting(models.Model):
     logo_main = models.ImageField(upload_to="server_settings",null=True,blank=True)
     logo_login = models.ImageField(upload_to="server_settings",null=True,blank=True)
     favicon = models.ImageField(upload_to="server_settings",null=True,blank=True)
+    apple_touch_icon = models.ImageField(upload_to="server_settings",null=True,blank=True)
 
     logo_dashboard_width = models.CharField(max_length=10,null=True,blank=True)
     logo_dashboard_height = models.CharField(max_length=10,null=True,blank=True)
@@ -323,6 +324,7 @@ class ServerSetting(models.Model):
     requests_webhook = models.TextField(blank=True, null=True)
     applications_webhook = models.TextField(blank=True, null=True)
     prepayments_webhook = models.TextField(blank=True, null=True)
+    tasks_webhook = models.TextField(blank=True, null=True)
 
     hide_campaign_leadform = models.BooleanField(default=False)
     hide_client_leadform = models.BooleanField(default=False)
@@ -803,8 +805,8 @@ class Profile(models.Model): #Profile Standard Information
     login_time = models.TimeField(blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', blank=True, null=True)
-    hourly_rate = models.FloatField(null=True, blank=True)
-    monthly_salary = models.FloatField(null=True, blank=True)
+    hourly_rate = models.FloatField(default=0,null=True, blank=True)
+    monthly_salary = models.FloatField(default=0,null=True, blank=True)
     salary_type = models.CharField(max_length=20 , choices=SALARY_TYPE, blank=True, null=True)
     phone_number = models.CharField(max_length=50,null=True,blank=True)
     residence = models.CharField(max_length=50, choices=COUNTRIES_CHOICES, null=True, blank=True)
