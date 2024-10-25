@@ -2129,10 +2129,7 @@ def leave_report(request, leave_id):
         
         leave = Leave.objects.get(id=leave_id)
 
-        leave.agent_user=request.user
-        leave.agent_profile=agent_profile
-        leave.agent_name=agent_profile.full_name
-        leave.team=agent_profile.team
+        
         leave.leave_type=leave_type
         leave.requested_date=requested_date
         leave.reason=reason

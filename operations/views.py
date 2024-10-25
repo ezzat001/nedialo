@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone as tz
+
+from django.utils.timezone import make_aware
+
 from django.db.models import Count
 from django.views.decorators.http import require_POST
 from datetime import datetime,timedelta
@@ -1891,11 +1894,11 @@ def camp_hours_daily(request, camp_id, month, year):
 
     context['target_hours_daily'] = int(target_hours_daily)
 
-    start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+    start_date = make_aware(datetime(year, month, 1))  # First day of the month
     if month == 12:
-        end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+        end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
     else:
-        end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+        end_date = make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
 
     # Initialize lists to hold days and durations
     days_list = []
@@ -1982,11 +1985,11 @@ def camp_hours_monthly(request, camp_id, month, year):
 
     context['target_hours_monthly'] = int(target_hours_monthly)
 
-    start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+    start_date = make_aware(datetime(year, month, 1))  # First day of the month
     if month == 12:
-        end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+        end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
     else:
-        end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+        end_date = make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
 
     # Get the accumulated duration for the specified month
     accumulated_duration_seconds = campaign.get_accumulated_durations(start_date, end_date)
@@ -2111,8 +2114,8 @@ def camp_hours_yearly(request, camp_id, year):
     context['year'] = year
 
     # Create a datetime object for January 1st of the given year
-    year_start_date = timezone.make_aware(datetime(year, 1, 1))  # First day of the year
-    year_end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of the year
+    year_start_date = make_aware(datetime(year, 1, 1))  # First day of the year
+    year_end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of the year
 
     # Get the campaign for the given ID
     campaign = Campaign.objects.get(id=camp_id)
@@ -2172,11 +2175,11 @@ def camp_hours_yearly(request, camp_id, year):
 
     # Calculate monthly hours and missed hours
     for month in range(1, 13):  # Loop through each month
-        current_start_date = timezone.make_aware(datetime(year, month, 1))
+        current_start_date = make_aware(datetime(year, month, 1))
         if month == 12:
-            current_end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)
+            current_end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)
         else:
-            current_end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)
+            current_end_date = make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)
 
         # Get the accumulated duration for the current month
         monthly_duration_seconds = campaign.get_accumulated_durations(current_start_date, current_end_date)
@@ -2241,11 +2244,11 @@ def all_campaigns_performance(request, month, year):
     context['full_month_name'] = calendar.month_name[month]
     
     # Create date range for the month
-    start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+    start_date = tz.make_aware(datetime(year, month, 1))  # First day of the month
     if month == 12:
-        end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+        end_date = tz.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
     else:
-        end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+        end_date = tz.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
 
     # Calculate the total number of working days in the month
     total_working_days = calculate_working_days_in_month(start_date, end_date)
@@ -2342,11 +2345,11 @@ def camp_leads_daily(request, camp_id, month, year):
     context['full_month_name'] = calendar.month_name[month]
 
     # Create date range for the month
-    start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+    start_date = make_aware(datetime(year, month, 1))  # First day of the month
     if month == 12:
-        end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+        end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
     else:
-        end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+        end_date = make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
 
     # Initialize lists for each lead status
     daily_qualified = []
@@ -2452,11 +2455,11 @@ def camp_leads_monthly(request, camp_id, month, year):
 
 
     # Create date range for the month
-    start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+    start_date = make_aware(datetime(year, month, 1))  # First day of the month
     if month == 12:
-        end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+        end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
     else:
-        end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+        end_date = make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
 
     # Calculate the total number of working days in the month
     total_working_days = calculate_working_days_in_month(start_date, end_date)
@@ -2584,11 +2587,11 @@ def camp_leads_yearly(request, camp_id, year):
         month_labels.append(calendar.month_name[month])
 
         # Define the start and end dates for the current month
-        start_date = timezone.make_aware(datetime(year, month, 1))  # First day of the month
+        start_date = make_aware(datetime(year, month, 1))  # First day of the month
         if month == 12:
-            end_date = timezone.make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
+            end_date = make_aware(datetime(year + 1, 1, 1)) - timedelta(seconds=1)  # Last second of December
         else:
-            end_date = timezone.make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
+            end_date = make_aware(datetime(year, month + 1, 1)) - timedelta(seconds=1)  # Last second of the month
 
         # Query the leads for the current month
         monthly_leads = Lead.objects.filter(
