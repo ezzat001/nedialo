@@ -1560,7 +1560,7 @@ def lateness_company(request, month, year):
 
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
-    now = timezone.now()
+    now = tz.now()
     current_year = now.year
     current_month = now.month
     month_date = datetime(year, month, 1)
@@ -1643,7 +1643,7 @@ def lateness_team(request, team_id,month, year):
 
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
-    now = timezone.now()
+    now = tz.now()
     current_year = now.year
     current_month = now.month
     month_date = datetime(year, month, 1)
@@ -1726,7 +1726,7 @@ def lateness_agent(request, agent_id,month, year):
 
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
-    now = timezone.now()
+    now = tz.now()
     current_year = now.year
     current_month = now.month
     month_date = datetime(year, month, 1)

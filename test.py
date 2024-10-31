@@ -1,29 +1,27 @@
-import requests
-import json
+import smtplib
+from email.message import EmailMessage
 
-# Define the API URL
+def send_email(subject, body, to_email):
+    sender_email = "ahmedezzat@nedialo.com"
+    sender_password = "password"  # App-specific password
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+            smtp.starttls()  # Upgrade connection to TLS
+            smtp.login(sender_email, sender_password)
+            smtp.send_message(msg)
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Error sending email: {e}")
 
 
-start_date = '2023-10-16'  # Replace with your desired start date
-end_date = '2023-10-16'
 
-url = f'https://app.calltools.io/api/agentperformance/?start_date={start_date}&end_date={end_date}'
 
-# Set the headers with the API key included
-headers = {
-    'accept': 'application/json',
-    'Authorization': 'Token 2b0ab0c0114701629c8ad8b787780f2fa2fe9081',  # Replace YOUR_API_KEY with the actual key
-}
-
-# Make the GET request
-response = requests.get(url, headers=headers)
-
-# Check if the request was successful
-if response.status_code == 200:
-    # Parse and print the JSON response
-    data = response.json()
-
-    # Print the indented JSON response
-    print(json.dumps(data, indent=4))
-else:
-    print(f"Error: {response.status_code}, {response.text}")
+# Usage
+send_email("Test Subject", "This is the body of the email", "ahmedezzat@nedialo.com")

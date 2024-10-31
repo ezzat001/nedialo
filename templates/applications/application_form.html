@@ -152,7 +152,6 @@
 
                 mediaRecorder.ondataavailable = function(event) {
                     chunks.push(event.data);
-                    console.log('Data available:', event.data); // Log event data
                 }
 
                 mediaRecorder.onstop = function() {
@@ -189,10 +188,7 @@
         const formData = new FormData(this); // 'this' refers to the form element
         formData.append('audio_data', audioBlob, 'audio.webm'); // Append the audio blob
 
-        console.log('Form data before submission:');
-        formData.forEach((value, key) => {
-            console.log(key, value);
-        });
+        
 
         fetch('{% url "application_record" %}', {
             method: 'POST',
@@ -203,11 +199,12 @@
         })
         .then(response => {
             if (response.ok) {
-                alert('Application submitted successfully!');
+                
                 this.reset(); // Reset the form
                 document.getElementById('audioPlayback').style.display = 'none'; // Hide audio playback
                 document.getElementById('audioData').value = ''; // Clear audio data
                 audioBlob = null; // Clear audio blob
+                window.location.href = "/application-success";
             } else {
                 alert('Error submitting application. Please try again.');
                 response.text().then(text => {

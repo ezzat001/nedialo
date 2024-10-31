@@ -165,11 +165,43 @@
 
         {% if perms.admin_home %}
 
-        <li class="nav-item ">
-          <a class="nav-link {% if request.path == '/admin' or '/application-form' in request.path %}active{% endif %}"  href="/admin">
-            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">email</i>
-            <span class="nav-link-text ms-2 ps-1">Applications</span>
+ 
+
+
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#adminapplications" class="nav-link text-white {% if request.path == '/admin' or '/application-form' in request.path or '/application-stages' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if request.path == '/admin' or '/application-form' in request.path or '/application-stages' in request.path %}true{% else %}false{% endif %}">
+              <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">email</i>
+              <span class="nav-link-text ms-2 ps-1">Applications</span>
           </a>
+          <div class="collapse {% if request.path == '/admin' or '/application-form' in request.path or '/application-stages' in request.path %}show{% endif %}" id="adminapplications">
+              <ul class="nav">
+
+                {% if perms.admin_home %}
+                
+                  <li class="nav-item {% if '/application-stages' in request.path   %}active{% endif %}">
+                      <a class="nav-link text-grey {% if '/application-stages' in request.path  %}active{% endif %}" href="/application-stages-{{current_year}}" target="_parent">
+                          <span class="sidenav-mini-icon material-icons">dashboard</span>
+                          <span class="sidenav-normal ms-2 ps-1">Application Stages <b class="caret"></b></span>
+                      </a>
+                  </li>
+
+                {% endif %}
+
+                {% if perms.admin_home %}
+
+                  <li class="nav-item {% if request.path == '/admin' or '/application-form' in request.path  %}active{% endif %}">
+                      <a class="nav-link text-grey {% if request.path == '/admin' or '/application-form' in request.path  %}active{% endif %}" href="/admin" target="_parent">
+                          <span class="sidenav-mini-icon material-icons">work</span>
+                          <span class="sidenav-normal ms-2 ps-1">Application Reports <b class="caret"></b></span>
+                      </a>
+                  </li>
+
+                {% endif %}
+
+                
+
+              </ul>
+          </div>
         </li>
 
         {% endif %}

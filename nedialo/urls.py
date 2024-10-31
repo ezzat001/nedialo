@@ -18,6 +18,8 @@ urlpatterns = [
 
     #path('applications', applications_table),
     path('application-form/<int:app_id>', application_report),
+    path('application-success', application_success),
+    path('application-stages-<int:year>', application_stages),
     path('crm-admin/', admin.site.urls),
     path('', home),
     path('affiliate-dashboard/<int:month>-<int:year>',affiliate_dashboard),

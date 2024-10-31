@@ -674,7 +674,7 @@ def lead_report(request, lead_id):
             lead.seller_phone = data.get('phone_number')
             lead.seller_email = data.get('email')
             lead.property_type = data.get('property_type')
-            lead.property_address = data.get('address')
+            #lead.property_address = data.get('address')
             lead.asking_price = data.get('asking_price')
             lead.market_value = data.get('market_value')
             lead.reason = data.get('reason')
@@ -1454,8 +1454,8 @@ def lead_handling(request, lead_id):
 
     context['lead'] = lead
 
-    context['agent_profile'] = lead.agent_profile
-    context['property_types'] = PROPERTY_CHOICES
+    context['agent_profile'] = lead.agent_profile 
+    context['property_types'] = PROPERTY_CHOICES 
     context['timelines'] = TIMELINE_CHOICES
     context['lead_status'] = LEAD_CHOICES
 
@@ -1516,7 +1516,7 @@ def lead_handling(request, lead_id):
         lead.seller_phone = data.get('phone_number')
         lead.seller_email = data.get('email')
         lead.property_type = data.get('property_type')
-        lead.property_address = data.get('address')
+        #lead.property_address = data.get('address')
         lead.asking_price = data.get('asking_price')
         lead.market_value = data.get('market_value')
         lead.reason = data.get('reason')
@@ -1695,8 +1695,12 @@ def feedback_report(request, id):
         data = request.POST
         feedback_id = data.get('feedback_id')
         feedback_status = data.get('feedback_status')
+        trainer_text = data.get('trainer_text')
+
+        
         feedback = Feedback.objects.get(id=id)
         feedback.status = feedback_status
+        feedback.trainer_text = trainer_text
         feedback.save()
         return redirect('/feedbacks')
 
@@ -1849,17 +1853,23 @@ def handle_audio_upload(request):
             request_ip = request.META.get('REMOTE_ADDR')
 
             content = f'\n**APPLICATION**\n\n\n**Applicant:** {app.full_name}\n\n**Position:** {app.get_position_display()}\n\n**Can Start on:** {app.start_date}\n\n**Shift:** {app.get_shift_display()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
+            
             try:
                 send_discord_message_application(content,app.id)
             except:
                 pass
             
-            return redirect('/')
+            return redirect('/application-success')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'No audio file found.'}, status=400)
 
+
+
+def application_success(request):
+
+    return render(request, 'statuses/application_200.html')
 
 @login_required
 def upload_profile(request):

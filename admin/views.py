@@ -48,13 +48,49 @@ def applications_table(request):
     return render(request,'admin/applications.html',context)
 
 
+
+
+@permission_required('admin_home')
+@login_required
+def application_stages(request, year):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['year'] = year
+
+    apps = Application.objects.filter(active=True, submission_date__year=year).order_by('-submission_date')
+
+    # Create a dictionary to hold lists of sales leads for each status choice
+    apps_grouped = {choice[0]: [] for choice in APPLICATION_PANEL_CHOICES}  # Initialize with empty lists
+
+    # Iterate over each sales lead and group by status
+    for app in apps:
+        apps_grouped[app.status].append(app)
+
+    # Prepare the context with grouped sales leads
+    context['applications'] = apps_grouped
+
+    # Include the names of the statuses in your context as well
+    context['app_choices'] = dict(APPLICATION_PANEL_CHOICES)
+
+
+
+   
+
+    return render(request, 'applications/application_stages.html', context)
+
+
+
+
+
 @permission_required('admin_applications')
 @login_required
 def application_report(request, app_id):
     context = {}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
-    context['app_status'] = APPLICATION_STATUS_CHOICES
+    context['app_status'] = APPLICATION_PANEL_CHOICES
     context['app'] = Application.objects.get(id=app_id)
 
     if request.method == "POST":

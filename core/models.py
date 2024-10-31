@@ -69,7 +69,21 @@ APPLICATION_STATUS_CHOICES = (
     ('accepted','Accepted'),
     ('rejected', 'Rejected'),
     ('pending', 'Pending'),
+    ('panel_1', "Panel 1"),
+    ('panel_2', "Panel 2"),
+    ('panel_3', 'Panel 3')
 )
+
+APPLICATION_PANEL_CHOICES = (
+    
+    ('pending', 'Pending'),
+    ('panel_1', "Panel 1"),
+    ('panel_2', "Panel 2"),
+    ('panel_3', 'Panel 3'),
+    ('rejected', 'Rejected'),
+    ('accepted','Accepted'),
+)
+
 
 
 LEAD_CHOICES = (
@@ -1187,7 +1201,7 @@ class Feedback(models.Model):
     feedback_text = models.TextField(null=True, blank=True)
     feedback_type = models.CharField(max_length=50, choices=FEEDBACK_TYPE_CHOICES, null=True, blank=True)
     status = models.CharField(max_length=50,default="pending", choices=FEEDBACK_STATUS_CHOICES,null=True, blank=True)
-
+    trainer_text = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
 
     def __str__(self):

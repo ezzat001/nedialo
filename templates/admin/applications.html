@@ -118,6 +118,8 @@
                   <span class="badge filter bg-gradient-warning" data-color="warning" >Pending</span>
                   {% elif app.status == "rejected" %}
                   <span class="badge filter bg-gradient-danger" data-color="warning" >Rejected</span>
+                  {% else %}
+                  <span class="badge filter bg-gradient-info" data-color="warning" >{{app.get_status_display}}</span>
                   {% endif %}
                   
 

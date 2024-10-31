@@ -70,6 +70,9 @@
                                             {% if lead.campaign == camp %}
                                                 <option value="{{camp.id}}" selected>{{camp.name}}</option>
 
+                                            {% else %}
+                                                <option value="{{camp.id}}">{{camp.name}}</option>
+
                                             {% endif %}
 
 
@@ -145,7 +148,7 @@
                         <div class="row mt-4">
                             <div class="input-group input-group-static is-valid">
                                 <label>Address *</label>
-                                <input type="text" class="form-control" name="address" id="property_address" value="{{lead.property_address}}"required>
+                                <input type="text" class="form-control" name="address" id="property_address" value="{{lead.property_address}}" disabled>
                             </div>
 
                         </div>
