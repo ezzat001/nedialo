@@ -93,6 +93,9 @@ urlpatterns = [
     path('datasource-create',dataSource_create),
     path('datasource-delete/<int:source_id>/', DeleteDataSourceView.as_view()),
 
+    path('admin-serversettings', server_settings),
+
+
 
 
 

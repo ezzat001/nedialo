@@ -299,7 +299,7 @@ FEEDBACK_TYPE_CHOICES = (
 class ServerSetting(models.Model):
     
     company_name = models.CharField(max_length=50, null=True,blank=True)
-    company_website = models.URLField(null=True,blank=True)
+    company_website = models.CharField(max_length=50, null=True,blank=True)
     crm_domain = models.CharField(max_length=50, null=True,blank=True)
     logo_main = models.ImageField(upload_to="server_settings",null=True,blank=True)
     logo_login = models.ImageField(upload_to="server_settings",null=True,blank=True)
@@ -312,13 +312,13 @@ class ServerSetting(models.Model):
 
 
 
-    facebook = models.URLField(null=True,blank=True)
-    instagram = models.URLField(null=True,blank=True)
-    linkedin = models.URLField(null=True,blank=True)
-    about_us = models.URLField(null=True,blank=True)
-    privacy = models.URLField(null=True, blank=True)
+    facebook = models.URLField(null=True,blank=True, default="/")
+    instagram = models.URLField(null=True,blank=True, default="/")
+    linkedin = models.URLField(null=True,blank=True, default="/")
+    about_us = models.URLField(null=True,blank=True, default="/")
+    privacy = models.URLField(null=True, blank=True, default="/")
 
-    terms = models.URLField(null=True, blank=True)
+    terms = models.URLField(null=True, blank=True, default="/")
 
     
 
@@ -340,8 +340,7 @@ class ServerSetting(models.Model):
     prepayments_webhook = models.TextField(blank=True, null=True)
     tasks_webhook = models.TextField(blank=True, null=True)
 
-    hide_campaign_leadform = models.BooleanField(default=False)
-    hide_client_leadform = models.BooleanField(default=False)
+
     maintenance = models.BooleanField(default=False)
 
 class Role(models.Model):

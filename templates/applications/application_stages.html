@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base-admin.html' %}
 
 {% load custom_filters %}
 
@@ -280,10 +280,10 @@
                             
                             <p class="text mt-2">{{app.full_name}}</p>
                             <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted small">Due: {{ app.submission_date|date:'Y-m-d'  }}</span>
+                            <span class="text-muted small">Submitted: {{ app.submission_date|date:'Y-m-d'  }}</span>
 
-                            {% if task.shift == 'part_time' %}<span class="badge badge-sm bg-gradient-secondary">Part-Time</span>
-                            {%elif task.shift == 'full_time' %}<span class="badge badge-sm bg-gradient-secondary">Full-Time</span>
+                            {% if app.shift == 'part_time' %}<span class="badge badge-sm bg-gradient-secondary">Part-Time</span>
+                            {%elif app.shift == 'full_time' %}<span class="badge badge-sm bg-gradient-secondary">Full-Time</span>
                             {%endif%}
 
                             </div>

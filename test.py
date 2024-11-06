@@ -1,27 +1,28 @@
 import smtplib
-from email.message import EmailMessage
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-def send_email(subject, body, to_email):
-    sender_email = "ahmedezzat@nedialo.com"
-    sender_password = "password"  # App-specific password
+email = "ahmedezzat@nedialo.com"  # Replace with the sender's email
+password = ""  # App password if using 2SV
+recipient_email = "recipient@example.com"  # Replace with the recipient's email
 
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg.set_content(body)
+smtp_server = "smtp-relay.gmail.com"
+smtp_port = 587  # TLS port
 
-    try:
-        with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
-            smtp.starttls()  # Upgrade connection to TLS
-            smtp.login(sender_email, sender_password)
-            smtp.send_message(msg)
-        print("Email sent successfully!")
-    except Exception as e:
-        print(f"Error sending email: {e}")
+msg = MIMEMultipart()
+msg['From'] = email
+msg['To'] = recipient_email
+msg['Subject'] = "Test Email from External User"
 
+msg.attach(MIMEText("This email is sent from an external user!", "plain"))
 
-
-
-# Usage
-send_email("Test Subject", "This is the body of the email", "ahmedezzat@nedialo.com")
+try:
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()  # Start TLS encryption
+    server.login(email, password)  # Log in
+    server.sendmail(email, recipient_email, msg.as_string())
+    print("Email sent successfully!")
+except Exception as e:
+    print(f"Error sending email: {e}")
+finally:
+    server.quit()

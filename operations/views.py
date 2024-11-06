@@ -939,7 +939,7 @@ def salary_company(request, month,year):
         formatted_added_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
         
 
-        total_seconds = int(removed_seconds)
+        total_seconds = int(removed_seconds) 
         hours = total_seconds // 3600  # Get the total hours
         minutes = (total_seconds % 3600) // 60  # Get the remaining minutes
         seconds = total_seconds % 60  # Get the remaining seconds
@@ -948,7 +948,6 @@ def salary_company(request, month,year):
         formatted_removed_seconds = f"{hours:02}:{minutes:02}:{seconds:02}"
 
         # Adjust total payable time with manual hours
-        total_payable_time_seconds += added_seconds - removed_seconds - deduction_seconds
 
 
         total_seconds = int(deduction_seconds)

@@ -70,7 +70,7 @@
                 <th>Leads</th>
                 <th>Total Calls</th>
                 <th>Total Time</th>
-                <th>Calls Duration</th>
+                <th>Total Payable Time</th>
                 <th>Available</th>
                 <th>After Call</th>
                 <th>On Call</th>
@@ -99,7 +99,7 @@
                     <td><b> {{totals.leads }}</b></td>
                     <td><b> {{totals.callstotal }}</b></td>
                     <td><b> {{totals.totaltime|seconds_to_hhmmss  }}</b></td>
-                    <td><b> {{totals.callsduration|seconds_to_hhmmss  }}</b></td>
+                    <td><b> {{totals.presences|get_total_payable  }}</b></td>
 
                     <td><b>{{ totals.presences|get_item_and_format:"Available" }}</b></td>
 
@@ -128,7 +128,7 @@
                 <td> {{agent.leads }}</td>
                 <td> {{agent.callstotal }}</td>
                 <td> {{agent.totaltime|seconds_to_hhmmss  }}</td>
-                <td> {{agent.callsduration|seconds_to_hhmmss  }}</td>
+                <td> {{totals.presences|get_total_payable  }}</td>
 
                 <td>{{ agent.presences|get_item_and_format:"Available" }}</td>
 

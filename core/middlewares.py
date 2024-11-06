@@ -12,6 +12,8 @@ class MediaAccessMiddleware(MiddlewareMixin):
     
 
 
+admin_users = ['admin','ezzat','ahmedezzat']
+
 class MaintenanceMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -20,7 +22,7 @@ class MaintenanceMiddleware:
         # Exclude the maintenance page and crm-admin from the check to avoid a redirect loop
         if not request.path.startswith('/maintenance') and not request.path.startswith('/crm-admin'):
             maintenance_mode = ServerSetting.objects.first().maintenance
-            if maintenance_mode:
+            if maintenance_mode and str(request.user) not in admin_users:
                 return redirect('/maintenance')
 
         return self.get_response(request)

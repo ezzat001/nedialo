@@ -292,11 +292,11 @@
         {% if perms.admin_roles or  perms.admin_provided_services or perms.admin_dialers or perms.admin_sources or perms.admin_server_settings %}
         
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#serversettings" class="nav-link text-white {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path %}true{% else %}false{% endif %}">
+          <a data-bs-toggle="collapse" href="#serversettings" class="nav-link text-white {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">settings </i>
             <span class="nav-link-text ms-2 ps-1">General Settings</span>
           </a>
-          <div class="collapse {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path %}show{% endif %}" id="serversettings">
+          <div class="collapse {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path %}show{% endif %}" id="serversettings">
             <ul class="nav ">
               <!--
               <li class="nav-item ">
@@ -332,21 +332,24 @@
               <li class="nav-item {% if '/admin-datasources' in request.path %}active{% endif %}">
                 <a class="nav-link text-grey {% if '/admin-datasources' in request.path %}active{% endif %}" href="/admin-datasources" target="_parent">
                   <span class="sidenav-mini-icon material-icons medal"> find_in_page </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Lead Generation Sources </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Third-Party Platforms </span>
                 </a>
               </li>
 
               {% endif %}
               <hr>
 
-              <!--
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="reschedule-request" target="_parent">
+              
+              {% if perms.admin_server_settings %}
+              <li class="nav-item {% if '/admin-serversettings' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/admin-serversettings' in request.path %}active{% endif %}" href="/admin-serversettings" target="_parent">
                   <span class="sidenav-mini-icon material-icons medal"> tune </span>
-                  <span class="sidenav-normal  ms-2  ps-1">Server Settings </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Server Settings </span>
                 </a>
               </li>
-              -->
+
+              {% endif %}
+              
 
               
             </ul>
@@ -465,7 +468,7 @@
                 <div class="col-lg-6">
                   <ul class="nav nav-footer justify-content-center justify-content-lg-end">
                     <li class="nav-item">
-                    <a href="{{settings.company_website}}" class="nav-link text-grey" target="_blank">Nedialo</a>
+                      <a href="https://{{settings.company_website}}" class="nav-link text-grey" target="_blank">{{settings.company_name}}</a>
                     </li>
                     <li class="nav-item">
                     <a href="/apply" class="nav-link text-grey" target="_blank">Careers</a>

@@ -1801,3 +1801,157 @@ class DeleteDataSourceView(View):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@permission_required('admin_server_settings')
+@login_required
+def server_settings(request):
+
+    context = {}
+
+
+    context['profile'] = Profile.objects.get(user=request.user)
+
+    server_settings = ServerSetting.objects.first()
+
+    context['settings'] = server_settings
+
+
+
+    context['dialer_types'] = DIALERS
+
+    if request.method == "POST":
+
+        if 'general_info' in request.POST :
+            data = request.POST
+
+            server_settings = ServerSetting.objects.first()
+
+            company_name = data.get('company_name')
+            company_domain = data.get('company_domain')
+            crm_domain = data.get('crm_domain')
+            logo_height = data.get('logo_height')
+            logo_width = data.get('logo_width')
+            terms = data.get('terms')
+            privacy = data.get('privacy')
+
+            server_settings.company_name = company_name
+            server_settings.company_website = company_domain
+            server_settings.crm_domain = crm_domain
+            server_settings.logo_dashboard_height = logo_height
+            server_settings.logo_dashboard_width = logo_width
+            server_settings.terms = terms
+            server_settings.privacy = privacy
+
+            if request.FILES.get('main_logo'):
+                server_settings.logo_main =  request.FILES.get('main_logo')
+                print('main')
+                
+            if request.FILES.get('login_logo'):
+                server_settings.logo_login =  request.FILES.get('login_logo')
+                print('login')
+
+            if request.FILES.get('favicon'):
+                server_settings.favicon =  request.FILES.get('favicon')
+                print('favicon')
+
+            if request.FILES.get('apple_touch'):
+                server_settings.apple_touch_icon =  request.FILES.get('apple_touch')
+                print('apple')
+
+            server_settings.save()
+
+            
+
+            
+             
+            return redirect(request.get_full_path())
+        
+        if "discord_settings" in request.POST:
+            
+            data = request.POST
+
+            sales = data.get('sales_lookerstudio')
+            login = data.get('discord_login')
+            activity = data.get('discord_activity')
+            leads = data.get('discord_leads')
+            requests = data.get('discord_requests')
+            applications = data.get('discord_applications')
+            prepayments = data.get('discord_prepayments')
+            tasks = data.get('discord_tasks')
+
+            server_settings = ServerSetting.objects.first()
+
+            server_settings.sales_lookerstudio = sales
+            server_settings.logins_webhook = login
+            server_settings.activity_webhook = activity
+            server_settings.leads_webhook = leads
+            server_settings.requests_webhook = requests
+            server_settings.applications_webhook = applications
+            server_settings.prepayments_webhook = prepayments
+            server_settings.tasks_webhook = tasks
+
+            server_settings.save()
+
+        if "general_settings" in request.POST:
+
+            data = request.POST
+
+            break_payable = data.get('break')
+            target_points = data.get('target_points')
+
+            if break_payable == "yes":
+
+                break_paid = True
+
+            else:
+
+                break_paid = False
+            
+            server_settings = ServerSetting.objects.first()
+
+            server_settings.break_paid = break_paid
+            server_settings.monthly_leadpoints_target = int(target_points)
+
+            server_settings.save()
+
+
+
+             
+
+            return redirect(request.get_full_path())
+ 
+            data = request.POST
+            lookerstudio = data.get('lookerstudio_link')
+
+            campaign.lookerstudio = lookerstudio
+
+
+
+            campaign.save()
+
+            return redirect(request.get_full_path())
+
+            
+
+    return render(request,'admin/settings/settings.html',context)
+
+
+
