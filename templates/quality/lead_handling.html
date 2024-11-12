@@ -249,27 +249,53 @@
                         {% endif %}
  
                         <!-- Using the active slots from the context -->
-                            {% for slot in lead_flow_slots %}
-                            <div class="row mt-4">
-                                <div class="slot-container col-12 col-sm-10">
-                                    <label class="form-label">{{slot.name}} *</label>
-                                    <div class="input-group input-group-dynamic">
-                                        <select class="form-control" name="slot{{ forloop.counter }}_name" id="slot{{ forloop.counter }}" required>
-                                            <option value=''>Select</option>
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
-                                        </select>
+                            {% if lead_flow %}
+                                    {% for name, data in lead_flow.items %}
+                                    <div class="row mt-4">
+                                        <div class="slot-container col-12 col-sm-10">
+                                            <label class="form-label">{{ name }} *</label>
+                                            <div class="input-group input-group-dynamic">
+                                                <select class="form-control" name="slot{{ forloop.counter }}_name" id="slot{{ forloop.counter }}" required>
+                                                    {% if data.is_positive%}<option value="1" selected >Yes</option>
+                                                    <option value="0"  >No</option>{% endif %}
+                                                    {% if not data.is_positive%}<option value="1" >
+                                                        <option value="0" selected >No</option>{% endif %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="slot-container col-12 col-sm-2">
+                                            <label class="form-label">Percentage</label>
+                                            <div class="input-group input-group-dynamic">
+                                                <input type="number" class="form-control" min="0" max="100" step="0.01" name="slot{{ forloop.counter }}_percentage" value="{{ data.percentage }}" readonly>
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {% for slot in lead_flow_slots %}
+                                <div class="row mt-4">
+                                    <div class="slot-container col-12 col-sm-10">
+                                        <label class="form-label">{{slot.name}} *</label>
+                                        <div class="input-group input-group-dynamic">
+                                            <select class="form-control" name="slot{{ forloop.counter }}_name" id="slot{{ forloop.counter }}" required>
+                                                <option value=''>Select</option>
+                                                <option value="1">Yes</option>
+                                                <option value="0">No</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="slot-container col-12 col-sm-2">
+                                        <label class="form-label">Percentage</label>
+                                        <div class="input-group input-group-dynamic">
+                                            <input type="number" class="form-control" min="0" max="100" step="0.01" name="slot{{ forloop.counter }}_percentage" value="{{ slot.percentage }}" readonly>
+                                            <span class="input-group-text">%</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="slot-container col-12 col-sm-2">
-                                    <label class="form-label">Percentage</label>
-                                    <div class="input-group input-group-dynamic">
-                                        <input type="number" class="form-control" min="0" max="100" step="0.01" name="slot{{ forloop.counter }}_percentage" value="{{ slot.percentage }}" readonly>
-                                        <span class="input-group-text">%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
+                                {% endfor %}
+                            {% endif%}
                         <div class="row mt-4">
                             <div class="col-sm-12">
                                 <div class="input-group input-group-static">

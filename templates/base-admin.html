@@ -289,23 +289,17 @@
         </li>
         {% endif %}
 
-        {% if perms.admin_roles or  perms.admin_provided_services or perms.admin_dialers or perms.admin_sources or perms.admin_server_settings %}
+        {% if perms.admin_roles or  perms.admin_provided_services or perms.admin_dialers or perms.admin_sources or perms.admin_server_settings or '/admin-roles' in request.path %}
         
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#serversettings" class="nav-link text-white {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path %}true{% else %}false{% endif %}">
+          <a data-bs-toggle="collapse" href="#serversettings" class="nav-link text-white {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path or '/admin-roles' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path or '/admin-roles' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">settings </i>
             <span class="nav-link-text ms-2 ps-1">General Settings</span>
           </a>
-          <div class="collapse {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path %}show{% endif %}" id="serversettings">
+          <div class="collapse {% if '/admin-services' in request.path or '/admin-datasources' in request.path or '/admin-dialers' in request.path or '/admin-serversettings' in request.path or '/admin-roles' in request.path %}show{% endif %}" id="serversettings">
             <ul class="nav ">
-              <!--
-              <li class="nav-item ">
-                <a class="nav-link text-grey " href="/admin-roles" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> supervisor_account   </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Roles <b class="caret"></b></span>
-                </a>
-              </li>
-              -->
+
+             
               {% if perms.admin_provided_services %}
 
               <li class="nav-item {% if '/admin-services' in request.path %}active{% endif %}">
@@ -337,8 +331,21 @@
               </li>
 
               {% endif %}
+
+
+              {% if perms.admin_roles %}
+              <li class="nav-item {% if '/admin-roles' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/admin-roles' in request.path %}active{% endif %}" href="/admin-roles" target="_parent">
+                  <span class="sidenav-mini-icon material-icons medal"> supervisor_account </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> Server Roles </span>
+                </a>
+              </li>
+
+              {% endif %}
+
               <hr>
 
+              
               
               {% if perms.admin_server_settings %}
               <li class="nav-item {% if '/admin-serversettings' in request.path %}active{% endif %}">

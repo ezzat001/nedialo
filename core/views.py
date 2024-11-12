@@ -7,7 +7,7 @@ from .models import Application
 from django.conf import settings as django_settings
 from django.http import JsonResponse,HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.views.decorators.http import require_http_methods
-
+import uuid
 from django.core.exceptions import ValidationError
 from django.db.models import Avg, Count, Q, Sum
 from collections import defaultdict
@@ -1465,6 +1465,17 @@ def lead_handling(request, lead_id):
     except:
         context['lead_flow_slots'] = None
 
+
+
+    lead_flow = lead.lead_flow_json
+
+    parsed_lead_flow = {}
+    for key, value in lead_flow.items():
+        parsed_lead_flow[key] = {
+            'percentage': abs(value),
+            'is_positive': True if value >= 0 else False  # True for positive, False for negative
+        }
+    context['lead_flow'] = parsed_lead_flow
     
 
 
@@ -1817,49 +1828,65 @@ def application_form(request):
     except:
         pass
 
+    context['discovery_options'] = APPLICATION_DISCOVERY
+
     return render(request, 'applications/application_form.html', context)
 
 @csrf_exempt
 def handle_audio_upload(request):
     if request.method == 'POST' and request.FILES.get('audio_data'):
         audio_file = request.FILES['audio_data']
+
+        submitted_uuid = request.POST.get('app_uuid')  # Get the UUID passed from the form
+
+        if not submitted_uuid:
+            # If no UUID is passed, generate one (this should not happen in normal cases)
+            submitted_uuid = str(uuid.uuid4())
+
+
         try:
             # Example code to save file to media root
-            new_application = Application(audio_file=audio_file)
-            new_application.full_name = request.POST.get('full_name')
-            new_application.position = request.POST.get('position')
-            new_application.phone = request.POST.get('phone_number')
-            new_application.email = request.POST.get('email')
-            new_application.education = request.POST.get('education')
-            new_application.start_date = request.POST.get('start_date')
-            new_application.shift = request.POST.get('shift')
-            new_application.experience = request.POST.get('previous_experience')
-            new_application.save()
+            if Application.objects.filter(app_uuid=submitted_uuid).exists():
+                print('duplicated')
+                return render(request,'statuses/application_dup_400.html',{})
+            else:
+                new_application = Application(audio_file=audio_file)
+                new_application.app_uuid = submitted_uuid  # Store the UUID
+                new_application.full_name = request.POST.get('full_name')
+                new_application.position = request.POST.get('position')
+                new_application.phone = request.POST.get('phone_number')
+                new_application.email = request.POST.get('email')
+                new_application.education = request.POST.get('education')
+                new_application.start_date = request.POST.get('start_date')
+                new_application.shift = request.POST.get('shift')
+                new_application.experience = request.POST.get('previous_experience')
+                new_application.app_discovery = request.POST.get('discovery')
+                new_application.save()
 
-            app = new_application
+                app = new_application
 
-            utc_now = datetime.utcnow()
+                utc_now = datetime.utcnow()
 
-            # Get the timezone object for 'America/New_York'
-            est_timezone = pytz.timezone('America/New_York')
+                # Get the timezone object for 'America/New_York'
+                est_timezone = pytz.timezone('America/New_York')
 
-            # Convert UTC time to Eastern timezone
-            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+                # Convert UTC time to Eastern timezone
+                est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
 
-            # Format the time as HH:MM:SS string
-            est = est_time.strftime('%I:%M:%S %p')
+                # Format the time as HH:MM:SS string
+                est = est_time.strftime('%I:%M:%S %p')
 
-            # Construct the content of the embed with quote formatting
-            request_ip = request.META.get('REMOTE_ADDR')
+                # Construct the content of the embed with quote formatting
+                request_ip = request.META.get('REMOTE_ADDR')
 
-            content = f'\n**APPLICATION**\n\n\n**Applicant:** {app.full_name}\n\n**Position:** {app.get_position_display()}\n\n**Can Start on:** {app.start_date}\n\n**Shift:** {app.get_shift_display()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
-            
-            try:
-                send_discord_message_application(content,app.id)
-            except:
-                pass
-            
-            return redirect('/application-success')
+                content = f'\n**APPLICATION**\n\n\n**Applicant:** {app.full_name}\n\n**Position:** {app.get_position_display()}\n\n**Can Start on:** {app.start_date}\n\n**Shift:** {app.get_shift_display()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
+                
+                try:
+                    send_discord_message_application(content,app.id)
+                except:
+                    pass
+                
+                return redirect('/application-success')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     else:
@@ -2151,8 +2178,9 @@ def leave_report(request, leave_id):
                 team = agent_profile.team,
                 reporter = request.user,
                 reporter_profile = agent_profile,
-                agent = request.user,
-                agent_profile = agent_profile,
+                agent = leave.agent_user,
+                agent_profile=leave.agent_profile,
+
                 absence_date = requested_date,
                 absence_type = leave_type,
                 notes = reason,

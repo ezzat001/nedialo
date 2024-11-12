@@ -41,6 +41,7 @@ def applications_table(request):
     context = {}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
+    context['skills'] = dict(APPLICATION_SKILLS_CHOICES)
     context['applications'] = Application.objects.filter(active=True).order_by('-submission_date')
                                                   
 
@@ -91,6 +92,9 @@ def application_report(request, app_id):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
     context['app_status'] = APPLICATION_PANEL_CHOICES
+    context['discovery_options'] = APPLICATION_DISCOVERY
+    context['skills'] = APPLICATION_SKILLS_CHOICES
+    context['lang_exp'] = APPLICATION_LANG_CHOICES
     context['app'] = Application.objects.get(id=app_id)
 
     if request.method == "POST":
@@ -104,6 +108,9 @@ def application_report(request, app_id):
         
         app.status=status
         app.handled_by=request.user
+        app.language_exp = data.get('language_exp')
+        app.skills = request.POST.getlist('skills')
+
         app.save()
         
             
@@ -546,6 +553,44 @@ def dialer_cred_create(request,campaign_id):
 
 
 
+@permission_required('admin_campaigns')
+@login_required
+def dialer_cred_modify(request,cred_id):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    cred = DialerCredentials.objects.get(id=cred_id)
+    context['campaign'] = cred.campaign
+    context['account_types'] = DIALER_ACCOUNT_TYPE
+
+    context['cred'] = cred
+
+
+
+    if request.method == "POST":
+        data = request.POST
+        username = data.get('username')
+        password = data.get('password')
+        account_type = data.get('account_type')
+
+        cred = DialerCredentials.objects.get(id=cred_id)
+
+        cred.username = username
+        cred.password = password
+        cred.account_type = account_type
+        cred.save()
+        
+        
+
+        return redirect('/dialercredentials/'+str(cred.campaign.id))
+
+            
+    
+    return render(request,'admin/credentials/dialer_cred_modify.html',context)
+
+
 
 
 
@@ -598,7 +643,11 @@ def source_creds_table(request,campaign_id):
 
 
 
-@permission_required('admin_contactlists')
+
+
+
+
+@permission_required('admin_campaigns')
 @login_required
 def source_cred_create(request,campaign_id):
 
@@ -636,6 +685,46 @@ def source_cred_create(request,campaign_id):
     
     return render(request,'admin/credentials/source_cred_create.html',context)
 
+
+@permission_required('admin_campaigns')
+@login_required
+def source_cred_modify(request,cred_id):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    cred = DataSourceCredentials.objects.get(id=cred_id)
+    context['campaign'] = cred.campaign
+    context['cred'] = cred
+    context['sources'] = DataSource.objects.filter(active=True)
+    context['account_types'] = SOURCE_ACCOUNT_TYPE
+
+
+
+    if request.method == "POST":
+        data = request.POST
+        source_id = data.get('source')
+        username = data.get('username')
+        password = data.get('password')
+        account_type = data.get('account_type')
+
+        
+        source_type = DataSource.objects.get(id=source_id)
+        source = DataSourceCredentials.objects.get(id=cred_id)
+
+        source.username=username
+        source.password=password
+        source.account_type=account_type
+        source.datasource=source_type
+        source.save()
+            
+
+        return redirect('/sourcecredentials/'+str(cred.campaign.id))
+
+            
+    
+    return render(request,'admin/credentials/source_cred_modify.html',context)
 
 
 
@@ -1810,9 +1899,75 @@ class DeleteDataSourceView(View):
 
 
 
+@permission_required('admin_roles')
+@login_required
+def roles_table(request):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['roles'] = Role.objects.filter(active=True)
+                                                  
+
+
+    return render(request,'admin/roles/roles.html',context)
 
 
 
+def role_modify(request, role_id):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    role = Role.objects.get(id=role_id)
+    role_fields = role.get_field_labels()
+
+    role_permissions = {
+        role_fields[field_name]: getattr(role, field_name, False) 
+        for field_name in role_fields.keys()
+        if field_name not in ['id', 'role_name','active']
+        }
+
+
+    context['role'] =  role
+    context['role_fields'] = role_fields
+    context['role_permissions'] = role_permissions
+
+    try:
+        role_fields.pop('id')
+        role_fields.pop('role_name')
+    except:
+        pass
+
+
+
+    if request.method == "POST":
+        # Loop through the form data
+        role = Role.objects.get(id=role_id)
+        for key, value in role_fields.items():
+            # Fetch the new value from POST data
+
+
+            selected_value = request.POST.get(key)
+
+            
+            # Update the role permission based on the selected value (e.g., 'yes' or 'no')
+            if selected_value == "yes":
+                role.__dict__[key] = True 
+            else:
+                role.__dict__[key] = False 
+        
+        # Save the updated role
+        role.save()
+
+        return redirect(request.get_full_path())
+
+
+
+
+    
+    return render(request, 'admin/roles/role_modify.html', context)
 
 
 
@@ -1952,6 +2107,9 @@ def server_settings(request):
             
 
     return render(request,'admin/settings/settings.html',context)
+
+
+
 
 
 

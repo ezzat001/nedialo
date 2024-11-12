@@ -3,6 +3,8 @@ from django import template
 from core.models import DialerCredentials,DataSourceCredentials,Profile, ClientProfile, AffiliateInvoice
 register = template.Library()
 
+from core.models import APPLICATION_SKILLS_CHOICES
+
 
 
 @register.filter
@@ -22,7 +24,19 @@ def format_float(value):
 def count_services(queryset):
     return queryset.count()
 
+@register.filter
+def count_skills(skills):
+    # Check if `skills` is a list; if not, return 0
+    if isinstance(skills, list):
+        return len(skills)
+    return 0
 
+@register.filter
+def get_skill_value(skill):
+    skills = dict(APPLICATION_SKILLS_CHOICES)
+    value = skills[skill]
+    return value
+    
 
 @register.filter
 def get_affiliate_clients_count(affiliate):
@@ -208,6 +222,35 @@ def user_fullname(user):
     return profile
 
 
+
+
+
+
+@register.filter
+def get_role_members_count(role):
+
+    count =  len(Profile.objects.filter(role=role))
+    account = " Users"
+    if count == 1:
+        account = " User"
+ 
+
+    return str(count) + account
+
+
+
+
+
+
+
+
+
+@register.filter(name='key_for_value')
+def key_for_value(value, my_dict):
+    """
+    Returns the key corresponding to the given value in a dictionary.
+    """
+    return next((k for k, v in my_dict.items() if v == value), None)
 
 
 

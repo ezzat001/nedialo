@@ -8,6 +8,8 @@ from datetime import timedelta
 import os,uuid
 from django.db.models import Sum, F, ExpressionWrapper, DurationField
 
+import uuid
+
 
 STATUS_CHOICES = (
     ('active','Active'),
@@ -48,6 +50,29 @@ APPLICATION_POS_CHOICES = (
     ("data_manager","Data Manager"),
     ('sales', "Sales")
 
+)
+
+APPLICATION_LANG_CHOICES = (
+    ('basic', "Basic"),
+    ('conversational', 'Conversational'),
+    ('fluent', 'Fluent'),
+    ('native', 'Native'),
+
+)
+APPLICATION_SKILLS_CHOICES = (
+    ('bi_lingual',"Bilingual"),
+    ('cold_caller', 'Cold Caller'),
+    ('lead_manager', 'Lead Manager'),
+    ('dispositions_manager', 'Dispositions Manager'),
+    ('acqusitions_manager', 'Acquisitions Manager'),
+    ('data_manager', 'Data Manager'),
+    ('b2c_sales','B2C Sales'),
+    ('b2b_sales','B2B Sales'),
+    ('csr', 'Customer Service Rep'),
+    ('quality', 'QA Specialist'),
+    ('team_leader','Team Leader'),
+    ('account_manager','Account Manager'),
+    ('opm','Operations Manager'),
 )
 
 APPLICATION_EDU_CHOICES = (
@@ -187,6 +212,17 @@ DISCOVERY_TYPE = (
     ("referral", "Referral from a Friend"),
     ("email_newsletter", "Email Newsletter"),
     ("outreach_call", "Outreach Representative Calls")
+)
+
+APPLICATION_DISCOVERY = (
+    ("facebook",'Facebook'),
+    ("instagram",'Instagram'),
+    ('linkedin', 'Linkedin'),
+    ('referral','Referral'),
+    ('company_website','Company Website'),
+    ('job_portal','Job Portal'),
+    ('direct_messages','Direct Messages'),
+    ('other','Other'),
 )
 
 SERVICE_TYPES = (
@@ -425,18 +461,81 @@ class Role(models.Model):
     admin_server_settings = models.BooleanField(default=False)
 
 
-
-
-
-
-
     active=models.BooleanField(default=True)
+
+
+
+    ROLE_FIELD_NAMES = {
+        "work_status": "Work Status",
+        "client_dashboard": "Client Dashboard",
+        "client_lookerstudio": "Client Looker Studio",
+        "client_campaign_performance": "Client Campaign Performance",
+        "affiliate_dashboard": "Affiliate Dashboard",
+        "caller_dashboard": "Caller Dashboard",
+        "lead_submission": "Lead Submission",
+        "my_leads": "My Leads",
+        "lead_scoring": "Lead Scoring",
+        "leaderboard": "Leaderboard",
+        "leave_request": "Leave Request",
+        "prepayment_request": "Prepayment Request",
+        "action_request": "Action Request",
+        "leave_handling": "Leave Handling",
+        "prepayment_handling": "Prepayment Handling",
+        "action_handling": "Action Handling",
+        "delete_handling_request": "Delete Handling Request",
+        "qa_pending": "QA Pending",
+        "qa_lead_handling": "QA Lead Handling",
+        "qa_lead_reports": "QA Lead Reports",
+        "qa_auditing": "QA Auditing",
+        "qa_auditing_handling": "QA Auditing Handling",
+        "qa_agents_table": "QA Agents Table",
+        "seats": "Seats",
+        "camp_hours": "Campaign Hours",
+        "camp_leads": "Campaign Leads",
+        "dialer_reports": "Dialer Reports",
+        "sales_dashboard": "Sales Dashboard",
+        "sales_lookerstudio": "Sales Looker Studio",
+        "sales_performance": "Sales Performance",
+        "agents_table": "Agents Table",
+        "working_hours": "Working Hours",
+        "attendance_monitor": "Attendance Monitor",
+        "lateness_monitor": "Lateness Monitor",
+        "salaries_table": "Salaries Table",
+        "adjusting_hours": "Adjusting Hours",
+        "company_tasks": "Company Tasks",
+        "operations": "Operations",
+        "admin_home": "Admin Home",
+        "admin_applications": "Admin Applications",
+        "admin_accounts": "Admin Accounts",
+        "admin_clients": "Admin Clients",
+        "admin_affiliates": "Admin Affiliates",
+        "admin_campaigns": "Admin Campaigns",
+        "admin_contactlists": "Admin Contact Lists",
+        "admin_roles": "Admin Roles",
+        "admin_provided_services": "Admin Provided Services",
+        "admin_dialers": "Admin Dialers",
+        "admin_sources": "Admin Third-Parties",
+        "admin_server_settings": "Admin Server Settings",
+        }
+
 
     def __str__(self):
         return str(self.role_name)
+    
+    def get_field_labels(self):
+        # Use self.__class__.ROLE_FIELD_NAMES to reference class-level attribute
+        return {
+            field.name: self.__class__.ROLE_FIELD_NAMES.get(field.name, field.name)
+            for field in self._meta.fields
+        }
+    
+
 
 
 class Application(models.Model):
+
+    app_uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
+
     submission_date = models.DateTimeField(default=timezone.now)
     referrer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     position = models.CharField(max_length=50, choices=APPLICATION_POS_CHOICES, null=True, blank=True)
@@ -446,7 +545,13 @@ class Application(models.Model):
     education = models.CharField(max_length=50, choices=APPLICATION_EDU_CHOICES,null=True, blank=True)
     experience = models.TextField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
+    app_discovery = models.CharField(max_length=50, choices=APPLICATION_DISCOVERY,null=True, blank=True)
     shift = models.CharField(max_length=50, choices=APPLICATION_SHIFT_CHOICES,null=True, blank=True)
+    language_exp = models.CharField(max_length=50, choices=APPLICATION_LANG_CHOICES,null=True, blank=True)
+
+    skills = models.JSONField(default=list, blank=True, null=True)  # JSON field for skills
+
+    
     audio_file = models.FileField(upload_to='applications_audio', blank=True, null=True)
     status = models.CharField(max_length=50, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True,default="pending")
     handled_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="handled_by_app",null=True,blank=True)

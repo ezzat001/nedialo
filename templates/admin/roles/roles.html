@@ -1,5 +1,3 @@
- 
-
 {% extends 'base-admin.html' %}
 {% load custom_filters %}
 {% block head %}
@@ -33,11 +31,11 @@
 <div class="container-fluid py-4">
   <div class="d-sm-flex justify-content-between">
     <div>
- 
+
     </div>
     <div class="d-flex">
       <div class="dropdown d-inline">
- 
+
         <ul class="dropdown-menu dropdown-menu-lg-start px-2 py-3" aria-labelledby="navbarDropdownMenuLink2" data-popper-placement="left-start">
           <li><a class="dropdown-item border-radius-md text-success" href="javascript:;">Status: Active</a></li>
           <li><a class="dropdown-item border-radius-md text-danger" href="javascript:;">Status: Inactive</a></li>
@@ -58,9 +56,9 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">Applications Table</h5>
+          <h5 class="mb-0">Roles Table</h5>
           <p class="text-sm mb-0">
-            View all Applications.
+            View all Roles.
           </p>
         </div>
         <div class="table-responsive">
@@ -68,101 +66,49 @@
             <thead class="thead-light">
               <tr>
                 <th>ID</th>
-                <th>Submission Date</th>
-                <th>Applicant</th>
-                <th>Position</th>
-                <th>Shift</th>
-                <th>Skills</th>
-                <th>English</th>
+                <th>Role</th>
+                <th>Users</th>
+                <th>Action</th>
 
-                
-                <th>Status</th>
-                <th>Form</th>
 
               </tr>
             </thead>
             <tbody>
-              {% for app in applications %}
+              {% for role in roles %}
               <tr>
                 <td>
                   <div class="d-flex align-items-center">
 
-                    <p class="text-xs font-weight-normal ms-2 mb-0">#{{app.id}}</p>
+                    <p class="text-xs font-weight-normal ms-2 mb-0">#{{role.id}}</p>
                   </div>
                 </td>
                 <td class="font-weight-normal">
-                  <span class="my-2 text-xs">{{app.submission_date|date:"Y-m-d\\TH:i"}}</span>
-                </td>
-                <td class="text-xs font-weight-normal">
-                  {{app.full_name}}
+                  <span class="my-2 text-xs">{{role.role_name}}</span>
                 </td>
 
                 <td class="text-xs font-weight-normal">
-                  {{app.get_position_display}}
-                </td>
-                <td class="text-xs font-weight-normal">
-                  {{app.get_shift_display}}
-                </td>
-
-                <td class="text-xs font-weight-normal">
-                  <span type="button" class="badge filter bg-gradient-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    {{app.skills|count_skills}} Skills 
+                  <span  class="badge filter bg-gradient-secondary "  >
+                    {{role|get_role_members_count}}  
                   </span>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    {% if not app.skills|count_skills %}
-                    <li><a class="dropdown-item border-radius-md" href="javascript:;">No Skills</a></li>
-                    {% else %}
-                      {% for skill in app.skills %}
-                      <li><a class="dropdown-item border-radius-md" href="javascript:;">{{skill|get_skill_value}}</a></li>
-                      {% endfor %}
-                    {% endif %}
-                  </ul>
+                  
                 </div>                
               </td>
 
+              
 
 
-                <td class="text-xs font-weight-normal">
-                  {% if app.language_exp == "basic" %}
-                  <span class="badge filter bg-gradient-warning" data-color="warning" >{{app.get_language_exp_display}}</span>
-                  {% elif app.language_exp == "conversational" %}
-                  <span class="badge filter bg-gradient-info" data-color="info" >{{app.get_language_exp_display}}</span>
-                  {% elif app.language_exp == "fluent" %}
-                  <span class="badge filter bg-gradient-success" data-color="success" >{{app.get_language_exp_display}}</span>
-                  {% elif app.language_exp == "native" %}
-                  <span class="badge filter bg-gradient-danger" data-color="danger" >{{app.get_language_exp_display}}</span>
-
-                  {% else %}
-                      <span class="badge filter bg-gradient-info" data-color="warning" >{{app.get_language_exp_display}}</span>
-                  {% endif %}
-                </td>
- 
- 
-                
                 
 
 
 
-                <td class="text-xs font-weight-normal">
-                  {% if app.status == "accepted" %}
-                  <span class="badge filter bg-gradient-success" data-color="success" >Accepted</span>
-                  {% elif app.status == "pending" %}
-                  <span class="badge filter bg-gradient-warning" data-color="warning" >Pending</span>
-                  {% elif app.status == "rejected" %}
-                  <span class="badge filter bg-gradient-danger" data-color="warning" >Rejected</span>
-                  {% else %}
-                  <span class="badge filter bg-gradient-info" data-color="warning" >{{app.get_status_display}}</span>
-                  {% endif %}
-                  
-
-
-                </td>
-
+               
                 <td class="text-sm">
-                  <div class="d-flex align-items-center">
-                    <a href="application-form/{{app.id}}"
-                    data-tippy-content="Preview Application" data-tippy-placement="top">
-                      <i class="material-icons text-secondary position-relative text-lg">visibility</i>
+                  <div class="d-flex align-items-left">
+
+                    <a href="role-modify/{{role.id}}" class="mx-3" 
+                    data-tippy-content="Modify Role" data-tippy-placement="top">
+
+                      <i class="material-icons text-secondary position-relative text-lg">drive_file_rename_outline</i>
                     </a>
                     
                   </div>
@@ -202,7 +148,7 @@
   
         var data = {
           type: type,
-          filename: "applications-reports",
+          filename: "roles-list",
         };
   
         if (type === "csv") {
@@ -341,8 +287,29 @@
 
 
 
+<script>
+  var win = navigator.platform.indexOf('Win') > -1;
+  if (win && document.querySelector('#sidenav-scrollbar')) {
+    var options = {
+      damping: '0.5'
+    }
+    Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+  }
+</script>
+
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    tippy('[data-tippy-content]', {
+      placement: 'top', // Default placement
+      fallbackPlacements: ['top', 'right', 'bottom', 'left'], // Fallbacks if top doesn't fit
+      boundary: 'window', // Consider the window as the boundary for fitting
+      animation: 'scale', // Optional: Define animation style
+      theme: 'light', // Optional: Define theme
+    });
+  });
+</script>
+
 
 {% endblock %}
-
-
-

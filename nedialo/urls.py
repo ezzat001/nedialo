@@ -33,6 +33,11 @@ urlpatterns = [
     path('upload-profile/', upload_profile, name='upload_profile'),
     path('upload-id/<int:userid>/', upload_id, name='upload_id'),
 
+
+    path('admin-roles', roles_table),
+    path('role-modify/<int:role_id>', role_modify),
+
+
     path('admin-campaigns', campaigns_table),
     path('campaign-create', campaign_create),
     path('campaign-modify/<int:camp_id>', campaign_modify),
@@ -47,11 +52,14 @@ urlpatterns = [
 
     path('dialercredentials/<int:campaign_id>', dialer_creds_table),
     path('dialercredentials-create/<int:campaign_id>', dialer_cred_create),
+    path('dialercredentials-modify/<int:cred_id>', dialer_cred_modify),
+
     path('dialercredentials-delete/<int:cred_id>/', DeleteDialerCredView.as_view()),
 
 
     path('sourcecredentials/<int:campaign_id>', source_creds_table),
     path('sourcecredentials-create/<int:campaign_id>', source_cred_create),
+    path('sourcecredentials-modify/<int:cred_id>', source_cred_modify),
     path('sourcecredentials-delete/<int:cred_id>/', DeleteSourceCredView.as_view()),
 
     path('admin-agents', agents_table),

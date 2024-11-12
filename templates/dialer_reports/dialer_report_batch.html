@@ -128,7 +128,7 @@
                 <td> {{agent.leads }}</td>
                 <td> {{agent.callstotal }}</td>
                 <td> {{agent.totaltime|seconds_to_hhmmss  }}</td>
-                <td> {{totals.presences|get_total_payable  }}</td>
+                <td> {{agent.presences|get_total_payable  }}</td>
 
                 <td>{{ agent.presences|get_item_and_format:"Available" }}</td>
 
