@@ -4,7 +4,7 @@ from nedialo.constants import US_STATES_CHOICES,COUNTRIES_CHOICES
 from django.template.defaultfilters import slugify  # new
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 import os,uuid
 from django.db.models import Sum, F, ExpressionWrapper, DurationField
 
@@ -17,7 +17,7 @@ STATUS_CHOICES = (
     ('annual','Annual'),
     ('casual','Casual'),
     ('sick','Sick'),
-    ('inactive','Inactive'),
+    ('hold','Hold'),
     ('dropped','Dropped'),
     ('blacklisted','Blacklisted'),
 )
@@ -721,6 +721,8 @@ class AffiliateInvoice(models.Model):
 
 
 class Campaign(models.Model): # Client Campaigns
+
+
     time = models.TimeField(null=True, blank=True)
     date = models.DateField(null=True, blank=True)
     name = models.CharField(max_length=50, null=True, blank=True)
@@ -1346,6 +1348,11 @@ class WorkStatus(models.Model):
     offline_time = models.DurationField(default=timezone.timedelta())
     login_time = models.DateTimeField(null=True, blank=True)
     logout_time = models.DateTimeField(null=True, blank=True)
+    
+    lateness = models.DurationField(null=True, blank=True)
+    lateness_status = models.CharField(max_length=10, choices=[('late', 'Late'), ('early', 'Early'), ('on_time', 'On Time')], null=True, blank=True)
+    
+
 
     def __str__(self):
         return f"{self.user} - {self.date} - {self.current_status}"
@@ -1361,6 +1368,37 @@ class WorkStatus(models.Model):
             # Check if login_time should be set
             if new_status in ['ready', 'meeting', 'break'] and self.should_set_login_time():
                 self.login_time = now
+                actual_login_time = self.get_login_time_in_timezone()
+                default_login_time = Profile.objects.get(user=self.user).login_time  # Assuming `profile` is related to `User`
+
+                # Convert actual login time and default login time to datetime objects for comparison
+                actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
+                default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+
+                # Combine with today's date
+                actual_datetime = datetime.combine(datetime.today(), actual_login_time)
+                default_datetime = datetime.combine(datetime.today(), default_login_time)
+
+                # Calculate the time difference between the actual login time and the default login time
+                time_difference = actual_datetime - default_datetime
+
+                # Get the difference as total seconds, then convert to hours, minutes, and seconds
+                total_seconds = abs(time_difference.total_seconds())
+                hours, remainder = divmod(total_seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+
+                # Optionally, store the lateness in the model
+                self.lateness = timezone.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+                
+                if actual_datetime > default_datetime:
+                    self.lateness_status = 'late'
+                elif actual_datetime < default_datetime:
+                    self.lateness_status = 'early'
+                else:
+                    self.lateness_status = 'on_time'
+
+
+
 
             # Set logout time when changing to 'offline'
             if new_status == 'offline':

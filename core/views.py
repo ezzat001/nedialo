@@ -68,6 +68,10 @@ def maintenance(request):
 
 
 
+active_statuses = ["active","upl","annual","casual","sick"]
+inactive_statuses = ["hold","dropped","blacklisted"]
+
+
 def loginview(request):
     context = {}
     now = tz.now()
@@ -94,11 +98,12 @@ def loginview(request):
             userprofile = Profile.objects.get(user=usera)
             active = userprofile.active
             
-            active_statuses = ["active","upl","annual","casual","sick"]
-            inactive_statuses = ["inactive","dropped","blacklisted"]
+
             if not active or userprofile.status in inactive_statuses:
-                errormessage = "Your Account has been suspended Please Contact Nedialo Admin."
-                return render(request, "errors/error-403.html", context={"error_message":errormessage,})            
+                context['error'] = "Your Account has been suspended."
+                return render(request, "login.html", context)
+
+
             if active and userprofile.status in active_statuses:
 
                 
@@ -2791,6 +2796,9 @@ def update_status(request):
             login_time = str((work_status.get_login_time_in_timezone()).strftime('%I:%M %p'))
             # Format times
 
+
+            
+
             utc_now = datetime.utcnow()
 
             # Get the timezone object for 'America/New_York'
@@ -2839,6 +2847,7 @@ def update_status(request):
             }
             return JsonResponse(response_data)
         except Exception as e:
+            print(e)
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid status.'})
 

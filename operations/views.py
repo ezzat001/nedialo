@@ -1591,32 +1591,32 @@ def lateness_company(request, month, year):
                 login_time__isnull=False
             ).first()
 
-            if work_status and work_status.login_time:
-                actual_login_time = work_status.get_login_time_in_timezone()
-                default_login_time = agent.login_time
+            if work_status and work_status.lateness:
+            
+                lateness = work_status.lateness
+                lateness_status = work_status.lateness_status
 
-                actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
-                default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+                
+                minutes_difference = lateness.total_seconds() / 60
 
-                time_difference = datetime.combine(day.date(), actual_login_time) - datetime.combine(day.date(), default_login_time)
-                minutes_difference = time_difference.total_seconds() / 60
-
-                if minutes_difference > 0:
+                if lateness_status == "late":
+                    
                     if minutes_difference <= 5:
                         status_class = 'bg-gradient-warning'
                         late_less_than_5 += 1
                     else:
                         status_class = 'bg-gradient-danger'
                         late_5_or_more += 1
-                    status = f"{int(minutes_difference)} minutes"
-                elif minutes_difference < 0:
+                    status = f"{int(minutes_difference)} minutes late"
+                elif lateness_status == "early":
                     status_class = 'bg-gradient-success'
                     early_or_on_time += 1
-                    status = f"{abs(int(minutes_difference))} minutes"
+                    status = f"{abs(int(minutes_difference))} minutes early"
                 else:
                     status_class = 'bg-gradient-success'
                     early_or_on_time += 1
                     status = "On time"
+                
                 
                 absences.append({
                     'agent_profile': f"{agent.user.username} - {status}",
@@ -1675,28 +1675,27 @@ def lateness_team(request, team_id,month, year):
                 login_time__isnull=False
             ).first()
 
-            if work_status and work_status.login_time:
-                actual_login_time = work_status.get_login_time_in_timezone()
-                default_login_time = agent.login_time
+            if work_status and work_status.lateness:
+            
+                lateness = work_status.lateness
+                lateness_status = work_status.lateness_status
 
-                actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
-                default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+                
+                minutes_difference = lateness.total_seconds() / 60
 
-                time_difference = datetime.combine(day.date(), actual_login_time) - datetime.combine(day.date(), default_login_time)
-                minutes_difference = time_difference.total_seconds() / 60
-
-                if minutes_difference > 0:
+                if lateness_status == "late":
+                    
                     if minutes_difference <= 5:
                         status_class = 'bg-gradient-warning'
                         late_less_than_5 += 1
                     else:
                         status_class = 'bg-gradient-danger'
                         late_5_or_more += 1
-                    status = f"{int(minutes_difference)} minutes"
-                elif minutes_difference < 0:
+                    status = f"{int(minutes_difference)} minutes late"
+                elif lateness_status == "early":
                     status_class = 'bg-gradient-success'
                     early_or_on_time += 1
-                    status = f"{abs(int(minutes_difference))} minutes"
+                    status = f"{abs(int(minutes_difference))} minutes early"
                 else:
                     status_class = 'bg-gradient-success'
                     early_or_on_time += 1
@@ -1759,18 +1758,15 @@ def lateness_agent(request, agent_id,month, year):
             login_time__isnull=False
         ).first()
 
-        if work_status and work_status.login_time:
-            actual_login_time = work_status.get_login_time_in_timezone()
-            default_login_time = agent_profile.login_time
+        if work_status and work_status.lateness:
+            
+            lateness = work_status.lateness
+            lateness_status = work_status.lateness_status
 
-            actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
-            default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+            
+            minutes_difference = lateness.total_seconds() / 60
 
-            # Calculate time difference
-            time_difference = datetime.combine(day.date(), actual_login_time) - datetime.combine(day.date(), default_login_time)
-            minutes_difference = time_difference.total_seconds() / 60
-
-            if minutes_difference > 0:
+            if lateness_status == "late":
                 total_late_minutes += minutes_difference  # Add to total late minutes
                 
                 if minutes_difference <= 5:
@@ -1780,7 +1776,7 @@ def lateness_agent(request, agent_id,month, year):
                     status_class = 'bg-gradient-danger'
                     late_5_or_more += 1
                 status = f"{int(minutes_difference)} minutes late"
-            elif minutes_difference < 0:
+            elif lateness_status == "early":
                 status_class = 'bg-gradient-success'
                 early_or_on_time += 1
                 status = f"{abs(int(minutes_difference))} minutes early"

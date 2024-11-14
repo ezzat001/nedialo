@@ -110,7 +110,6 @@ def application_report(request, app_id):
         app.handled_by=request.user
         app.language_exp = data.get('language_exp')
         app.skills = request.POST.getlist('skills')
-
         app.save()
         
             
@@ -844,6 +843,7 @@ def agent_create(request):
 
 
 
+inactive_statuses = ['hold','dropped','blacklisted']
 
 @permission_required('admin_accounts')
 @login_required
@@ -858,6 +858,7 @@ def agent_modify(request,username):
     context['roles'] = Role.objects.filter(active=True)
     context['teams'] = Team.objects.filter(active=True)
     context['countries'] = countries
+    context['account_statuses'] = STATUS_CHOICES
     unavailable_roles = ['Client', 'Affiliate']
     if context['agent_profile'].role.role_name in unavailable_roles:
         return redirect('/admin')
@@ -899,6 +900,9 @@ def agent_modify(request,username):
             team = data.get('team')
             role = data.get('role')
             residence = data.get('residence')
+            status = data.get('account_status')
+
+
             
             team_obj = Team.objects.get(id=int(team))
             role_obj = Role.objects.get(id=int(role))
@@ -914,6 +918,11 @@ def agent_modify(request,username):
             agent_profile.team = team_obj
             agent_profile.role = role_obj
             agent_profile.residence = residence
+
+            agent_profile.status = status
+
+            if status in inactive_statuses:
+                agent_profile.active = False
 
             agent_profile.save()
 

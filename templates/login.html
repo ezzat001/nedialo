@@ -83,9 +83,9 @@
                 </div>
               </div>
               <div class="card-body">
-                {% if error%}
+                {% if error %}
                 <div class="alert alert-danger text-white" role="alert">
-                Wrong Username or Password!
+                {{error}}
                 </div>
                 {% endif %}
                 <form role="form" class="text-start" method="POST" id="login-form">  {% csrf_token %} 
