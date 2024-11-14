@@ -1839,9 +1839,13 @@ def application_form(request):
 
 @csrf_exempt
 def handle_audio_upload(request):
-    if request.method == 'POST' and request.FILES.get('audio_data'):
-        audio_file = request.FILES['audio_data']
+    if request.method == 'POST': #and request.FILES.get('audio_data'):
 
+        try:
+            audio_file = request.FILES['audio_data']
+        except:
+            audio_file = None
+        
         submitted_uuid = request.POST.get('app_uuid')  # Get the UUID passed from the form
 
         if not submitted_uuid:
@@ -1866,6 +1870,7 @@ def handle_audio_upload(request):
                 new_application.shift = request.POST.get('shift')
                 new_application.experience = request.POST.get('previous_experience')
                 new_application.app_discovery = request.POST.get('discovery')
+                new_application.recording_link = request.POST.get('recording_external')
                 new_application.save()
 
                 app = new_application

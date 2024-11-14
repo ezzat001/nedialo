@@ -130,6 +130,12 @@
 
                         <div class="col-sm-6">
                             <label for="audioPlayback">Introduction and Experience Recording *</label><br>
+                            <div class="input-group input-group-static">
+
+                                <input type="text" class="form-control" name="recording_external" id="recording_external" value="{% if app.recording_link %} {{app.recording_link}} {% endif %}" placeholder="External Recording Link (EMPTY)">
+                            </div>
+                            <br><br>
+                            {% if app.audio_file %}
                             <audio id="audioPlayback" controls>
                                 <source src="{{ app.audio_file.url }}" type="audio/webm">
                                 Your browser does not support the audio element.
@@ -138,6 +144,7 @@
                             <button class="btn btn-sm btn-info mt-2" onclick="copyAudioLink(event)">Copy Link</button>
                             <a href="{{ app.audio_file.url }}" download="Recording.webm" class="btn btn-sm btn-info mt-2">Download </a>
 
+                            {% endif %}
                         </div>
                     </div>
 

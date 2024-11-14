@@ -551,7 +551,7 @@ class Application(models.Model):
 
     skills = models.JSONField(default=list, blank=True, null=True)  # JSON field for skills
 
-    
+    recording_link = models.CharField(max_length=50, null=True, blank=True)
     audio_file = models.FileField(upload_to='applications_audio', blank=True, null=True)
     status = models.CharField(max_length=50, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True,default="pending")
     handled_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="handled_by_app",null=True,blank=True)

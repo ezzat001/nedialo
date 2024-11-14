@@ -121,9 +121,22 @@
                                 <textarea class="form-control" rows="3" name="previous_experience" id="previous_experience"></textarea>
                             </div>
                         </div>
+                    </div>
+                    <br>
+
+                    <div class="row mt-4">
+                            <div class="input-group input-group-static">
+                                <label>Introduction & Experience Voice Recording Link eg: Vocaroo.com *</label>
+                                <input type="text" class="form-control" name="recording_external" id="recording_external">
+                            </div>
+                        
+                    </div>
+                    <br>
+                    <div class="row mt-4">
+
                         <div class="col-sm-6">
                             <br>
-                            <label for="audioRecording">Introduction and Experience Recording *</label><br>
+                            <label for="audioRecording">No Previous Recordings? Record it here! Introduction and Experience Recording *</label><br>
 
                             <div class="input-group input-group-static">
                                 <button id="startRecording" type="button" class="btn btn-info btn-sm">Start Recording</button>
@@ -133,6 +146,8 @@
                             </div>
                         </div>
                     </div>
+
+                    
 
                     <div class="row mt-4">
                         <div class="col-sm-12">
@@ -196,15 +211,17 @@
     document.getElementById('application-form').addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent default form submission
 
-        if (!audioBlob) {
-            alert('Please record your voice before submitting.');
-            return;
+        const formData = new FormData(this); // 'this' refers to the form element
+
+        // Only append the audio data if there is a valid audioBlob
+        if (audioBlob instanceof Blob) {
+            formData.append('audio_data', audioBlob, 'audio.webm'); // Append audio blob if it's a valid Blob
         }
 
-        const formData = new FormData(this); // 'this' refers to the form element
-        formData.append('audio_data', audioBlob, 'audio.webm'); // Append the audio blob
-
-        
+        // If no audio recorded and no pre-recorded link exists, still submit the form
+        if (!audioBlob && !document.getElementById('audioData').value) {
+            console.log('No audio recorded or link provided, submitting form anyway.');
+        }
 
         fetch('{% url "application_record" %}', {
             method: 'POST',
@@ -215,7 +232,6 @@
         })
         .then(response => {
             if (response.ok) {
-                
                 this.reset(); // Reset the form
                 document.getElementById('audioPlayback').style.display = 'none'; // Hide audio playback
                 document.getElementById('audioData').value = ''; // Clear audio data
@@ -234,6 +250,7 @@
         });
     });
 </script>
+
 
 
 
