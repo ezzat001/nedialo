@@ -37,7 +37,7 @@
                     <div class="icon icon-shape icon-lg bg-gradient-info shadow text-center border-radius-xl mt-n3 ms-4">
                         <i class="material-icons opacity-10" aria-hidden="true">house</i>
                     </div>
-                    <h5 class="mt-3 mb-2 ms-3">Lead Submission Form</h5>
+                    <h5 class="mt-3 mb-2 ms-3">Roofing  Lead Form</h5>
                 </div>
                 <div class="card-header">
                     <h6>Lead Info</h6>
@@ -134,63 +134,66 @@
 
                             <div class="col-sm-6">
                                 <div class="input-group input-group-static">
-                                    <label>Asking Price *</label>
-                                    <input type="text" class="form-control" name="asking_price" id="asking_price"  required>
+                                    <label>Do you have insurance? *</label>
+                                    <select class="form-control" name="insurance" id="insurance" required>
+                                        <option value="">Select...</option> <!-- Blank option for initial selection -->
+                                          <option value="yes">Yes</option>
+                                          <option value="no">No</option>
+                                          
+    
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="input-group input-group-static">
-                                    <label>Market Value *</label>
-                                    <input type="text" class="form-control" name="market_value" id="market_value" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col-sm-6">
-                                <div class="input-group input-group-static">
-                                    <label>Reason *</label>
-                                    <input type="text" class="form-control" name="reason" id="reason" required>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="input-group input-group-static">
-                                    <label>Timeline *</label>
-                                    <select class="form-control" name="timeline" id="timeline" required>
-                                    <option value="">Select Timeline</option> <!-- Blank option for initial selection -->
-                                      <option value="two_weeks">2 Weeks</option>
-                                      <option value="one_month">1 Month</option>
-                                      <option value="two_months">2 Months</option>
-                                      <option value="three_months">3 Months</option>
-                                      <option value="four_months">4 Months</option>
-                                      <option value="five_months">5 Months</option>
-                                      <option value="six_months">6 Months</option>
-                                      <option value="more_than_six_month">More Than 6 Months</option>
-
+                                    <label>Are you currently working with any other roofing contractors? *</label>
+                                    <select class="form-control" name="contractor" id="contractor" required>
+                                        <option value="">Select...</option> <!-- Blank option for initial selection -->
+                                          <option value="yes">Yes</option>
+                                          <option value="no">No</option>
+                                          
                                     </select>
                                 </div>
                             </div>
                         </div>
+                        <div class="row mt-4">
+                            <div class="col-sm-6">
+                                <div class="input-group input-group-static">
+                                    <label>Are you prepared to cover or finance your insurance deductible if needed? *</label>
+                                    <select class="form-control" name="deductible" id="deductible" required>
+                                    <option value="">Select...</option> <!-- Blank option for initial selection -->
+                                      <option value="yes">Yes</option>
+                                      <option value="no">No</option>
+                                      
+
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <div class="input-group input-group-static">
+                                    <label>Age of the roof (Years) *</label>
+                                    <input type="number" class="form-control" name="roof_age" id="roof_age" min="1" required>
+                                </div>
+                            </div>
+                            
+                        </div>
 
                         <div class="row mt-4">
 
                             <div class="col-sm-6">
                                 <div class="input-group input-group-static">
-                                    <label>Property URL *</label>
-                                    <input type="text" class="form-control" name="zillow_url" id="zillow_url" required>
+                                    <label>Appointment Time *</label>
+                                    <input type="text" class="form-control" name="appointment_time" id="appointment_time" required>
                                 </div>
                             </div>
-                            <div class="col-sm-6">
-                                <div class="input-group input-group-static">
-                                    <label>Callback time *</label>
-                                    <input type="text" class="form-control" name="callback_time" id="call_back_time" required>
-                                </div>
-                            </div>
+                            
                         </div>
                         <div class="row mt-4">
                             <div class="col-sm-12">
                                 <div class="input-group input-group-static">
-                                    <label>General Info *</label>
-                                    <textarea class="form-control" rows="5" name="general_info" id="general_info" required></textarea>
+                                    <label>Known Issues *</label>
+                                    <textarea class="form-control" rows="5" name="known_issues" id="known_issues" required></textarea>
                                 </div>
                             </div>
                         </div>
@@ -198,7 +201,7 @@
                             <div class="col-sm-12">
                                 <div class="input-group input-group-static">
                                     <label>Extra Info</label>
-                                    <textarea class="form-control" rows="2" name="extra_info" id="extra_info"></textarea>
+                                    <textarea class="form-control" rows="3" name="extra_info" id="extra_info"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -355,9 +358,43 @@
             });
         }
 
-        if (document.getElementById('timeline')) {
-            var timeline = document.getElementById('timeline');
-            const example = new Choices(timeline, {
+        if (document.getElementById('deductible')) {
+            var deductible = document.getElementById('deductible');
+            const example = new Choices(deductible, {
+                searchEnabled: false,
+                searchChoices: false,
+                searchFields: ['label', 'value'], // Fields to search within
+                shouldSort: false, // Disable sorting of choices
+                itemSelectText: '', // Text shown in the dropdown when an item is selected
+                fuseOptions: {
+                    includeScore: true, // Include score in search results
+                    threshold: 0.3, // Match threshold for search results
+                    keys: ['label', 'value'] // Fields to search within
+                }
+            });
+        }
+
+
+        if (document.getElementById('contractor')) {
+            var contractor = document.getElementById('contractor');
+            const example = new Choices(contractor, {
+                searchEnabled: false,
+                searchChoices: false,
+                searchFields: ['label', 'value'], // Fields to search within
+                shouldSort: false, // Disable sorting of choices
+                itemSelectText: '', // Text shown in the dropdown when an item is selected
+                fuseOptions: {
+                    includeScore: true, // Include score in search results
+                    threshold: 0.3, // Match threshold for search results
+                    keys: ['label', 'value'] // Fields to search within
+                }
+            });
+        }
+
+
+        if (document.getElementById('insurance')) {
+            var insurance = document.getElementById('insurance');
+            const example = new Choices(insurance, {
                 searchEnabled: false,
                 searchChoices: false,
                 searchFields: ['label', 'value'], // Fields to search within

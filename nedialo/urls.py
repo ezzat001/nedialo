@@ -107,7 +107,8 @@ urlpatterns = [
 
 
 
-    path('lead-submission',lead_submission),
+    path('re-lead-submission',lead_submission_re),
+    path('roofing-lead-submission',lead_submission_roofing),
     path('apply', application_form),
     path('application-record/',handle_audio_upload, name='application_record'),
 

@@ -121,6 +121,15 @@ LEAD_CHOICES = (
 )
 
 
+LEAD_TYPE_CHOICES = (
+
+    ('realestate', 'Real Estate'),
+    ('roofing', 'Roofing'),
+)
+
+
+
+
 SALES_LEAD_CHOICES = (
     ("follow_up","Follow Up" ),
     ("scheduled_meeting","Scheduled Meeting"),
@@ -138,7 +147,7 @@ SALES_LEAD_CHOICES = (
 
 TASK_DEPARTMENTS = (
     ('executive_dep','Executive Management'),
-    #('ops_dep', 'Operations Management'),
+    ('ops_dep', 'Operations Management'),
     ('data_dep', 'Data Management'),
     ('workforce_dep','Workforce'),
     ('quality_dep','Quality'),
@@ -552,6 +561,7 @@ class Application(models.Model):
     skills = models.JSONField(default=list, blank=True, null=True)  # JSON field for skills
 
     recording_link = models.CharField(max_length=50, null=True, blank=True)
+    
     audio_file = models.FileField(upload_to='applications_audio', blank=True, null=True)
     status = models.CharField(max_length=50, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True,default="pending")
     handled_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="handled_by_app",null=True,blank=True)
@@ -1113,6 +1123,7 @@ class Lead(models.Model):
     agent_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True, related_name="lead_profile")
     
+    lead_type = models.CharField(max_length=50, choices=LEAD_TYPE_CHOICES, null=True, blank=True)
     campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, related_name="lead_campaign", null=True, blank=True)
     contact_list = models.ForeignKey(ContactList, on_delete=models.SET_NULL, related_name="lead_list", null=True, blank=True)
     property_type = models.CharField(max_length=50, choices=PROPERTY_CHOICES, default="house",null=True, blank=True)
@@ -1128,6 +1139,18 @@ class Lead(models.Model):
     property_url = models.TextField(null=True,blank=True)
     callback = models.CharField(max_length=50, null=True, blank=True)
     extra_notes = models.TextField( null=True, blank=True)
+
+
+    insurance = models.BooleanField(default=False)
+    contractor = models.BooleanField(default=False)
+    deductible = models.BooleanField(default=False)
+
+    roof_age = models.CharField(max_length=50, null=True, blank=True)
+    appointment_time = models.CharField(max_length=50, null=True, blank=True)
+    known_issues = models.TextField(null=True, blank=True)
+
+
+
     state = models.CharField(max_length=50, default=0, null=True, blank=True)
     county = models.CharField(max_length=50, default=0, null=True, blank=True)
     latitude = models.FloatField(default=0, null=True, blank=True)

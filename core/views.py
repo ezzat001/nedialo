@@ -398,7 +398,7 @@ def user_profile(request):
 
 @permission_required('lead_submission')
 @login_required
-def lead_submission(request):
+def lead_submission_re(request):
     context = {"api_token":django_settings.HERE_API}
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
@@ -436,6 +436,7 @@ def lead_submission(request):
             agent_user=request.user,
             agent_profile=agent_profile,
             campaign=campaign,
+            lead_type="realestate",
             contact_list=contact_list,
             property_type=property_type,
             seller_name = prospect_name,
@@ -487,7 +488,127 @@ def lead_submission(request):
         return redirect('/')
 
 
-    return render(request,'leads/lead_submission.html', context)
+    return render(request,'leads/lead_submission_re.html', context)
+
+
+
+
+
+@permission_required('lead_submission')
+@login_required
+def lead_submission_roofing(request):
+    context = {"api_token":django_settings.HERE_API}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['campaigns'] = Campaign.objects.filter(campaign_type="calling", status="active")
+    context['contactlists'] = ContactList.objects.filter(active=True)
+    if request.method == "POST":
+        lat,long = 0,0
+        data = request.POST
+        campid = data.get('campaign')
+        contactlistid = data.get('dialer_list')
+        prospect_name = data.get('owner_name')
+        phone_number = data.get('phone_number')
+        email = data.get('email')
+        property_type = data.get('property_type')
+        address = data.get('address')
+
+        insurance = data.get('insurance')
+        contractor = data.get('contractor')
+        deductible = data.get('deductible')
+        roof_age = data.get('roof_age')
+        appointment_time = data.get('appointment_time')
+        known_issues = data.get('known_issues')
+
+
+        if str(insurance) == "yes":
+            insurance = True
+        elif str(insurance) == "no":
+            insurance = False
+
+        if str(contractor) == "yes":
+            contractor = True
+        elif str(contractor) == "no":
+            contractor = False
+
+        if str(deductible) == "yes":
+            deductible = True
+        elif str(deductible) == "no":
+            deductible = False
+
+
+
+        extra_info = data.get('extra_info')
+        lat,long = data.get('latitude'),data.get('longitude')
+        state,county = data.get('state'), data.get('county')
+        
+    
+        agent_profile = Profile.objects.get(user=request.user)
+        campaign = Campaign.objects.get(id=campid)
+        if int(contactlistid) == 0:
+            contact_list = None
+        else:
+            contact_list = ContactList.objects.get(id=contactlistid)
+        lead = Lead.objects.create(
+            agent_user=request.user,
+            agent_profile=agent_profile,
+            lead_type="roofing",
+            campaign=campaign,
+            contact_list=contact_list,
+            property_type=property_type,
+            seller_name = prospect_name,
+            seller_phone= phone_number,
+            seller_email= email,
+            insurance=insurance,
+            contractor=contractor,
+            property_address=address,
+            deductible=deductible,
+            roof_age=roof_age,
+            appointment_time=appointment_time,
+            known_issues=known_issues,
+            extra_notes=extra_info,
+            latitude=lat,
+            longitude=long,
+            state=state,
+            county=county,
+        )
+
+
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+        try:
+
+           
+            lead_id = lead.lead_id
+
+            content = f'**Agent:** {profile.full_name}\n\n**Action:** Posted a New Lead on **{str(lead.campaign).upper()}**\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+            send_discord_message_lead(content,lead_id)
+            
+        except:
+            pass
+    
+
+        return redirect('/')
+
+
+    return render(request,'leads/lead_submission_roofing.html', context)
+
+
+
+
 
 @permission_required('my_leads')
 @login_required
@@ -625,6 +746,13 @@ def my_leads(request, month, year):
 @login_required
 def lead_report(request, lead_id):
 
+
+    today = (tz.localtime(tz.now())).date()
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+
+
     context = {}
 
     context['profile'] = Profile.objects.get(user=request.user)
@@ -655,7 +783,14 @@ def lead_report(request, lead_id):
         }
     context['lead_flow'] = parsed_lead_flow
     
-    
+    template = "leads/lead_report_re.html"
+
+    if lead.lead_type == "realestate":
+
+        template = "leads/lead_report_re.html"
+
+    elif lead.lead_type == "roofing":
+        template = "leads/lead_report_roofing.html"
     
 
     if request.method == "POST":
@@ -671,10 +806,35 @@ def lead_report(request, lead_id):
 
         if lead.status == "pending":
 
+
+            insurance = data.get('insurance')
+            contractor = data.get('contractor')
+            deductible = data.get('deductible')
+            
+            if str(insurance) == "yes":
+                insurance = True
+            elif str(insurance) == "no":
+                insurance = False
+            else:
+                insurance = False
+
+            if str(contractor) == "yes":
+                contractor = True
+            elif str(contractor) == "no":
+                contractor = False
+            else:
+                contractor = False
+
+            if str(deductible) == "yes":
+                deductible = True
+            elif str(deductible) == "no":
+                deductible = False
+            else:
+                deductible = False
+            
+
         
             dialer_list = data.get('dialer_list')
-            contact_list = ContactList.objects.get(id=dialer_list)
-            lead.contact_list = contact_list
             lead.seller_name = data.get('owner_name')
             lead.seller_phone = data.get('phone_number')
             lead.seller_email = data.get('email')
@@ -689,14 +849,24 @@ def lead_report(request, lead_id):
             lead.general_info = data.get('general_info')
             lead.extra_notes = data.get('extra_info')
 
+
+
+            lead.insurance = insurance
+            lead.contractor = contractor
+            lead.deductible = deductible
+            lead.roof_age = data.get('roof_age')
+            lead.appointment_time = data.get('appointment_time')
+            lead.known_issues = data.get('known_issues')
+
             lead.quality_notes = data.get('quality_notes')
             lead.save()
-
-        return redirect('/my-leads')
+        
+        redirect_link = '/my-leads/'+str(current_month)+'-'+str(current_year)
+        return redirect(redirect_link)
 
 
         
-    return render(request, 'leads/lead_report.html', context)
+    return render(request, template, context)
 
 
 
@@ -1483,6 +1653,12 @@ def lead_handling(request, lead_id):
     context['lead_flow'] = parsed_lead_flow
     
 
+    template = "quality/lead_handling_re.html"
+
+    if lead.lead_type == "realestate":
+        template = "quality/lead_handling_re.html"
+    elif lead.lead_type == "roofing":
+        template = "quality/lead_handling_roofing.html"
 
     if request.method == "POST":
         data = request.POST
@@ -1522,9 +1698,32 @@ def lead_handling(request, lead_id):
 
 
         lead = Lead.objects.get(lead_id=lead_id)
+
+
+        insurance = data.get('insurance')
+        contractor = data.get('contractor')
+        deductible = data.get('deductible')
         
+        if str(insurance) == "yes":
+            insurance = True
+        elif str(insurance) == "no":
+            insurance = False
+        else:
+            insurance = False
 
+        if str(contractor) == "yes":
+            contractor = True
+        elif str(contractor) == "no":
+            contractor = False
+        else:
+            contractor = False
 
+        if str(deductible) == "yes":
+            deductible = True
+        elif str(deductible) == "no":
+            deductible = False
+        else:
+            deductible = False
         
         dialer_list = data.get('dialer_list')
 
@@ -1542,6 +1741,14 @@ def lead_handling(request, lead_id):
         lead.general_info = data.get('general_info')
         lead.extra_notes = data.get('extra_info')
 
+        lead.insurance = insurance
+        lead.contractor = contractor
+        lead.deductible = deductible
+        lead.roof_age = data.get('roof_age')
+        lead.appointment_time = data.get('appointment_time')
+        lead.known_issues = data.get('known_issues')
+
+
         lead.quality_notes = data.get('quality_notes')
         lead.lead_flow = float(total_percentage)
         lead.status = data.get('lead_status')
@@ -1557,7 +1764,7 @@ def lead_handling(request, lead_id):
 
 
         
-    return render(request, 'quality/lead_handling.html', context)
+    return render(request, template, context)
 
 
 @permission_required('qa_auditing')

@@ -1443,16 +1443,26 @@ crossorigin=""></script>
     
             // Initialize the clock immediately
             updateNYClock();
-        </script>
+          </script>
         </div>
+
+        
         <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
           
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
               
                 <div class="input-group input-group-outline">
                   
-                    <a href="/lead-submission" type="button" class="btn btn-info btn-sm">Lead Form</a>
-
+                  <div class="dropdown">
+                    <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="leadFormsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                      Lead Forms
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="leadFormsDropdown">
+                      <li><a class="dropdown-item" href="/re-lead-submission" target="_parent">Real Estate</a></li>
+                      <li><a class="dropdown-item" href="/roofing-lead-submission" target="_parent">Roofing</a></li>
+                    </ul>
+                  </div>
                 </div>
             </div>
           <ul class="navbar-nav  justify-content-end">
