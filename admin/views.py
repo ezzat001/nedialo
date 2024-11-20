@@ -2060,6 +2060,7 @@ def server_settings(request):
             applications = data.get('discord_applications')
             prepayments = data.get('discord_prepayments')
             tasks = data.get('discord_tasks')
+            sales = data.get('discord_sales')
 
             server_settings = ServerSetting.objects.first()
 
@@ -2071,6 +2072,7 @@ def server_settings(request):
             server_settings.applications_webhook = applications
             server_settings.prepayments_webhook = prepayments
             server_settings.tasks_webhook = tasks
+            server_settings.sales_webhook = sales
 
             server_settings.save()
 

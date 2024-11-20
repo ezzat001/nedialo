@@ -71,10 +71,10 @@
     <div class="d-flex">
 
       <div class="dropdown d-inline">
-        <button class="btn btn-icon  ms-2  bg-gradient-info  mb-0 mt-3" onclick="showNewLeadForm('{{account}}')">
-          +Add
+        <a class="btn btn-icon  ms-2  bg-gradient-info  mb-0 mt-3" href="/new-sales-lead" target="_parent">
+          +New
           
-        </button>
+        </a>
       </div>
 
     </div>
@@ -190,11 +190,11 @@
           case 1:
               return '<span class="badge badge-sm bg-gradient-danger">Very Low</span>';
           case 2:
-              return '<span class="badge badge-sm bg-gradient-warning">Low</span>';
+              return '<span class="badge badge-sm bg-gradient-warning">Low Priority</span>';
           case 3:
-              return '<span class="badge badge-sm bg-gradient-warning">Moderate</span>';
+              return '<span class="badge badge-sm bg-gradient-warning">Moderate Priority</span>';
           case 4:
-              return '<span class="badge badge-sm bg-gradient-success">High</span>';
+              return '<span class="badge badge-sm bg-gradient-success">High Priority</span>';
           case 5:
               return '<span class="badge badge-sm bg-gradient-success">Very High</span>';
           default:
@@ -216,122 +216,21 @@
             element: "#myKanban",
             gutter: "10px",
             widthBoard: "350px",
+            dragItems: false,  // Disable dragging of items
             dragBoards: false,  // Disable dragging of boards
 
             click: el => {
                 let taskId = el.getAttribute("data-leadid");
-                let taskContact = el.getAttribute("data-contact");
-                let taskPhone = el.getAttribute("data-phone");
-                let taskEmail = el.getAttribute("data-email");
-                let taskInterestRate = el.getAttribute("data-interest_rate");
-                let taskFollowUpDate = el.getAttribute("data-followup_date");
-                let taskFollowUpTime = el.getAttribute("data-followup_time");
-                let taskNotes = el.getAttribute("data-notes");
-                let taskAgent = el.getAttribute("data-agent");
+                
+        
+                // Define the URL where you want to redirect
+                let redirectUrl = `/sales-lead-info/${taskId}`;
+                window.location.href = redirectUrl;
 
-                // Show SweetAlert
-                Swal.fire({
-                    title: 'Contact Details',
-                    html: `
-                    <input id="jkanban-task-id" class="d-none" value="${taskId}" />
-                    <div class="input-group input-group-static mb-4">
-                      <label>Contact / Organization</label>
-                      <input class="form-control" id="jkanban-contact-name" type="text" value="${taskContact}">
-                    </div>
-                    <div class="input-group input-group-static mb-4">
-                      <label>Phone</label>
-                      <input class="form-control" id="jkanban-contact-phone" type="text" value="${taskPhone}">
-                    </div>
-                    <div class="input-group input-group-static mb-4">
-                      <label>Email</label>
-                      <input class="form-control" id="jkanban-contact-email" type="text" value="${taskEmail}">
-                    </div>
-                    <div class="input-group input-group-static mb-4">
-                      <label>Interest Rate (1-5)</label>
-                      <input class="form-control" id="jkanban-contact-interest" type="text" value="${taskInterestRate}">
-                    </div>
-                    <div class="input-group input-group-static mb-4">
-                      <label>Follow Up Date</label>
-                      <input class="form-control" id="jkanban-contact-followupdate" type="date" value="${taskFollowUpDate}">
-                    </div>
-                    <div class="input-group input-group-static mb-4">
-                      <label>Follow Up Time</label>
-                      <input class="form-control" id="jkanban-contact-followuptime" type="time" value="${taskFollowUpTime}">
-                    </div>
-                    <div class="input-group input-group-static">
-                      <label>Notes</label>
-                      <textarea class="form-control" id="jkanban-contact-notes" rows="4">${taskNotes}</textarea>
-                    </div>
-                    <hr>
-                    <div class="input-group input-group-static mb-4">
-                      <label>Sales Agent</label>
-                      <input class="form-control" id="jkanban-contact-agent" type="text" value="${taskAgent}" disabled>
-                    </div>
-                    `,
-                    focusConfirm: false,
-                    preConfirm: () => {
-                        const updatedTaskId = document.getElementById('jkanban-task-id').value;
-                        const updatedTaskContact = document.getElementById('jkanban-contact-name').value;
-                        const updatedTaskPhone = document.getElementById('jkanban-contact-phone').value;
-                        const updatedTaskEmail = document.getElementById('jkanban-contact-email').value;
-                        const updatedTaskInterestRate = document.getElementById('jkanban-contact-interest').value;
-                        const updatedTaskFollowUpDate = document.getElementById('jkanban-contact-followupdate').value;
-                        const updatedTaskFollowUpTime = document.getElementById('jkanban-contact-followuptime').value;
-                        const updatedTaskNotes = document.getElementById('jkanban-contact-notes').value;
 
-                        // AJAX request to update the task
-                        return fetch('/sales-lead-update/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken'),
-                            },
-                            body: JSON.stringify({
-                                id: updatedTaskId,
-                                contact: updatedTaskContact,
-                                phone: updatedTaskPhone,
-                                email: updatedTaskEmail,
-                                interest_rate: updatedTaskInterestRate,
-                                followup_date: updatedTaskFollowUpDate,
-                                followup_time: updatedTaskFollowUpTime,
-                                notes: updatedTaskNotes,
-                            })
-                        }).then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        }).then(data => {
-                            // Update task in Kanban board
-                            KanbanTest.replaceElement(updatedTaskId, {
-                                id: updatedTaskId,
-                                title: `
-                                    ${getInterestBadge(updatedTaskInterestRate)} 
-                                    <p class="text mt-2">${updatedTaskContact}</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted small">${updatedTaskFollowUpDate}</span>
-                                        <span class="text-muted small">${updatedTaskFollowUpTime}</span>
-                                    </div>
-                                `,
-                                class: ["border-radius-md"],
-                                "leadid": updatedTaskId,
-                                "contact": updatedTaskContact,
-                                "phone": updatedTaskPhone,
-                                "email": updatedTaskEmail,
-                                "interest_rate": updatedTaskInterestRate,
-                                "followup_date": updatedTaskFollowUpDate,
-                                "followup_time": updatedTaskFollowUpTime,
-                                "notes": updatedTaskNotes,
-                            });
-                        }).catch(error => {
-                            console.error('There was a problem with the fetch operation:', error);
-                        });
-                    },
-                    showCancelButton: true,
-                    cancelButtonText: 'Close',
-                    confirmButtonText: 'Save changes'
-                });
+                
             },
+
             buttonClick: function(el, boardId) {
                 if (document.querySelector("[data-id='" + boardId + "'] .itemform") === null) {
                     var formItem = document.createElement("form");
@@ -361,10 +260,10 @@
                     };
                 }
             },
-            addItemButton: true,
+            addItemButton: false,
             boards: [
-                {% for status, leads in sales_leads.items %}
-                {
+              {% for status, leads in sales_leads.items %}
+              {
                     id: "{{status}}",
                     title: "{{ sales_lead_choices|get_item:status }} - {{leads|length}}",
                     "data-id": "{{ status }}",
@@ -417,57 +316,6 @@
     /////////////////////////////////////////////////////////////////////
 
 
-    const kanbanContainers = Array.from(document.querySelectorAll('.kanban-drag')); // Get all kanban-drag containers
-
-    // Initialize Dragula for kanban item drag-and-drop
-    const drake = dragula({
-        containers: kanbanContainers,  // Target the kanban-drag containers
-        copy: false,  // Items are moved, not copied
-        accepts: (el, target, source, sibling) => true,  // Allow dropping in any valid container
-        removeOnSpill: false  // Prevent removal of items if dragged outside containers
-    });
-    
-    // Event listener for when an item is dropped
-    drake.on('drop', (el, target, source, sibling) => {
-        console.log('Item dropped');
-    
-        // Append the dragged element to the new container manually
-        if (target) {
-            target.appendChild(el);  // Move the element to the new container
-        }
-    
-        const movedItemId = el.getAttribute('data-eid');
-        const newParentDiv = target.closest('.kanban-board');  // Get the new parent board
-        let newParentId = newParentDiv ? newParentDiv.getAttribute('data-id') : null;
-    
-        // Send AJAX request to update lead status
-        fetch('/sales-lead-update-status/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie2('csrftoken'),  // Get CSRF token for security
-            },
-            body: JSON.stringify({
-                id: movedItemId,
-                status: newParentId  // Update status based on new parent ID
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                // Notify other tabs of the update
-                const updatePayload = JSON.stringify({ id: movedItemId, status: newParentId });
-                localStorage.setItem('leadStatusUpdate', updatePayload);
-            } else {
-                // Handle failure case
-                console.error('Failed to update status:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error during fetch:', error);
-        });
-    });
-    
     // Function to get CSRF token for AJAX requests
     function getCookie2(name) {
         let cookieValue = null;
@@ -498,171 +346,7 @@
 
 
 
-<script>
-    // Function to retrieve CSRF token from cookies
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-          const cookies = document.cookie.split(';');
-          for (let i = 0; i < cookies.length; i++) {
-              const cookie = cookies[i].trim();
-              if (cookie.startsWith(name + '=')) {
-                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                  break;
-              }
-          }
-      }
-      return cookieValue;
-    }
 
-    function showNewLeadForm() {
-      const swalWithBootstrapButtons = Swal.mixin({
-        customClass: {
-          confirmButton: 'btn bg-gradient-info',
-          cancelButton: 'btn bg-gradient-dark'
-        },
-        buttonsStyling: false
-      });
-
-      swalWithBootstrapButtons.fire({
-        title: `New Contact`,
-        html: `
-          <div class="card border-0 shadow-sm input-group input-group-static">
-            <form id="leadForm" class="text-center p-3">
-              
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Contact / Organization</label>
-                    <input type="text" class="form-control" name="contact" id="contact" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Phone Number</label>
-                    <input type="text" class="form-control" name="phone" id="phone" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Email</label>
-                    <input type="email" class="form-control" name="email" id="email" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Interest Rate (1-5)</label>
-                    <input type="number" class="form-control" name="interest" id="interest" min="1" max="5" value="1" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Follow Up Date</label>
-                    <input type="date" class="form-control" name="date" id="date" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Follow Up Time</label>
-                    <input type="time" class="form-control" name="time" id="time" required>
-                  </div>
-                </div>
-              </div>
-              <div class="row mt-4">
-                <div class="col-sm-12">
-                  <div class="input-group input-group-static">
-                    <label>Notes</label>
-                    <textarea class="form-control" rows="2" name="notes" id="notes" required></textarea>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Submit',
-        confirmButtonColor: '#3F8C4D',
-        cancelButtonText: 'Cancel',
-        cancelButtonColor: '#dc3545',
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-          const formData = {
-            contact: document.getElementById('contact').value,
-            phone: document.getElementById('phone').value,
-            email: document.getElementById('email').value,
-            interest: document.getElementById('interest').value,
-            date: document.getElementById('date').value,
-            time: document.getElementById('time').value,
-            notes: document.getElementById('notes').value,
-
-          };
-
-          // Fetch CSRF token from cookie
-          const csrftoken = getCookie('csrftoken');
-
-          // Send POST request to create new lead
-          return fetch(`/sales-lead-submit/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrftoken // Include CSRF token in headers
-            },
-            body: JSON.stringify(formData) // Include all form data
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Network response was not ok - ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-          })
-          .catch(error => {
-            Swal.showValidationMessage(`Request failed: ${error}`);
-          });
-        },
-        allowOutsideClick: () => !Swal.isLoading(),
-      }).then((result) => {
-        if (result.isConfirmed) {
-          Swal.fire({
-            title: 'Lead Added to Follow Up!',
-            icon: 'success'
-          });
-          location.href = location.href;
-
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
-          Swal.fire({
-            title: 'Cancelled',
-            icon: 'error'
-          });
-        }
-
-      });
-
-      // Enable/disable submit button based on form input
-      const enableSubmitButton = () => {
-        const isFormValid = document.getElementById('leadForm').checkValidity();
-        swalWithBootstrapButtons.getConfirmButton().disabled = !isFormValid;
-      };
-
-      // Attach input event listeners to all fields
-      const inputs = document.querySelectorAll('#leadForm input, #leadForm textarea');
-      inputs.forEach(input => {
-        input.addEventListener('input', enableSubmitButton);
-      });
-
-      // Initial call to set the button state correctly
-      enableSubmitButton();
-    }
-</script>
 
 
 
@@ -674,7 +358,12 @@
 
 
 
-
+<style>
+  /* Set the cursor to default for Kanban items */
+  #myKanban .kanban-item {
+      cursor: pointer !important; /* Use the default mouse pointer */
+  }
+  </style>
 
 
 

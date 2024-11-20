@@ -2795,6 +2795,8 @@ def task_info(request, task_id):
 
         old_task_dep = task.get_assigned_department_display()
 
+        old_status = task.get_status_display()
+
         
         task.title=title
         task.description=description
@@ -2807,6 +2809,8 @@ def task_info(request, task_id):
         task.save()
 
         new_task_dep = task.get_assigned_department_display()
+
+        new_status = task.get_status_display()
 
         utc_now = datetime.utcnow()
 
@@ -2841,7 +2845,18 @@ def task_info(request, task_id):
             try:
 
 
-                content = f'**Agent:** {profile.full_name}\n\n**Action:** Task Reassignment \n\n**Departments:** \n{str(old_task_dep).upper()} > {str(new_task_dep).upper()}\n\n**Title:** {task_title}\n\n**Due Date:** {task_due}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+                content = f'**Agent:** {profile.full_name}\n\n**Action:** Task Reassignment \n\n**Departments:** \n{str(old_task_dep).upper()} > {str(new_task_dep).upper()}\n\n**Title:** {task_title}\n\n**Due Date:** {task_due}\n\n**Status:** {new_status}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+                send_discord_message_task(content,task_id,action_type)
+
+            except:
+                pass
+
+        elif old_status != new_status:
+            try:
+
+
+                content = f'**Agent:** {profile.full_name}\n\n**Action:** Task Status Update \n\n**Department: **  {str(new_task_dep).upper()}\n\n**Title:** {task_title}\n\n**Due Date:** {task_due}\n\n**Status:** {old_status} > {new_status}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
 
                 send_discord_message_task(content,task_id,action_type)
 

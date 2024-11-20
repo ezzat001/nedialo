@@ -17,6 +17,10 @@ import json
 from collections import defaultdict
 from core.decorators import *
 
+import pytz
+
+from discord_app.views import send_discord_message_sales_lead
+
 # Create your views here.
 
 
@@ -116,6 +120,205 @@ def sales_calendar(request, month, year):
 
 
     return render(request,'sales/calendar.html',context)
+
+
+
+
+@permission_required('sales_dashboard')
+@login_required
+def sales_lead_create(request):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    now = tz.now()
+    current_year = now.year
+
+   
+
+
+    # Include the names of the statuses in your context as well
+    context['sales_statuses'] = dict(SALES_LEAD_CHOICES)
+
+    if request.method == "POST":
+        data = request.POST
+
+        contact = data.get('contact')
+        contact_phone = data.get('phone')
+        contact_email = data.get('email')
+        interest = int(data.get('interest'))
+        followup_date = data.get('followup_date')
+        followup_time = data.get('followup_time')
+        notes = data.get('notes')
+        status = data.get('status')
+
+        
+
+        lead = SalesLead.objects.create(agent_user=request.user,
+                                   agent_profile=profile,
+                                    contact=contact,
+                                   contact_phone=contact_phone,
+                                   contact_email = contact_email,
+                                   interest_rating=interest,
+                                   followup_date=followup_date,
+                                   followup_time=followup_time,
+                                   status=status,
+                                   notes=notes,
+                                   
+                                   
+                                   )
+
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+        try:
+
+           
+            lead_id = lead.lead_id
+
+            status = lead.get_status_display()
+
+            contact = lead.contact
+
+            followup_date = lead.followup_date
+
+            followup_time = lead.followup_time
+
+            action_type= "create"
+
+            content = f'**Agent:** {profile.full_name}\n\n**Action:** Contact Creation \n\n**Status:** {str(status).upper()}\n\n**Contact:** {contact}\n\n**Follow up:** {followup_date} - {followup_time}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+            send_discord_message_sales_lead(content,lead_id,action_type)
+            
+        except:
+            pass
+        
+
+
+        
+        return redirect(f'/sales-dashboard-{current_year}')
+
+
+
+
+   
+
+    return render(request, 'sales/sales_lead_create.html', context)
+
+
+
+
+@permission_required('sales_dashboard')
+@login_required
+def sales_lead_info(request, lead_id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    now = tz.now()
+    current_year = now.year
+
+   
+    lead = SalesLead.objects.get(lead_id=lead_id)
+    context['lead'] = lead
+
+    # Include the names of the statuses in your context as well
+    sales_statuses = dict(SALES_LEAD_CHOICES)
+    context['sales_statuses'] = sales_statuses
+
+    if request.method == "POST":
+        data = request.POST
+
+        contact = data.get('contact')
+        contact_phone = data.get('phone')
+        contact_email = data.get('email')
+        interest = int(data.get('interest'))
+        followup_date = data.get('followup_date')
+        followup_time = data.get('followup_time')
+        notes = data.get('notes')
+        status = data.get('status')
+
+        lead = SalesLead.objects.get(lead_id=lead_id)
+
+        old_status = lead.status
+
+        
+        lead.contact=contact
+        lead.contact_phone=contact_phone
+        lead.contact_email = contact_email
+        lead.interest_rating=interest
+        lead.followup_date=followup_date
+        lead.followup_time=followup_time
+        lead.status=status
+        lead.notes=notes
+
+        lead.save()
+        
+                                   
+                                 
+        utc_now = datetime.utcnow()
+
+        # Get the timezone object for 'America/New_York'
+        est_timezone = pytz.timezone('America/New_York')
+
+        # Convert UTC time to Eastern timezone
+        est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+        # Format the time as HH:MM:SS string
+        est = est_time.strftime('%I:%M:%S %p')
+
+
+        # Construct the content of the embed with quote formatting
+        request_ip = request.META.get('REMOTE_ADDR')
+        if status != old_status:
+
+            try:
+                
+            
+                lead_id = lead.lead_id
+
+                status = lead.get_status_display()
+
+                contact = lead.contact
+
+                followup_date = lead.followup_date
+
+                followup_time = lead.followup_time
+
+                profile = lead.agent_profile
+
+                action_type= "updates"
+
+                content = f'**Agent:** {profile.full_name}\n\n**Action:** Contact Update \n\n**Status Change:** {sales_statuses[old_status].upper()} > {str(status).upper()}\n\n**Contact:** {contact}\n\n**Follow up:** {followup_date} - {followup_time}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+                send_discord_message_sales_lead(content,lead_id,action_type)
+
+                
+            except:
+                pass
+        
+
+
+        
+        return redirect(f'/sales-dashboard-{current_year}')
+
+
+
+
+   
+
+    return render(request, 'sales/sales_lead_info.html', context)
 
 
 

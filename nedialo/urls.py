@@ -241,6 +241,9 @@ urlpatterns = [
     path('sales-dashboard-<int:year>',sales_dashboard),
     path('sales-lookerstudio',sales_lookerstudio),
     path('sales-calendar-<int:month>-<int:year>', sales_calendar),
+    path('new-sales-lead',sales_lead_create),
+    path('sales-lead-info/<int:lead_id>',sales_lead_info),
+
 
 
     path('company-tasks-<int:year>',company_tasks),

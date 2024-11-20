@@ -73,6 +73,15 @@ APPLICATION_SKILLS_CHOICES = (
     ('team_leader','Team Leader'),
     ('account_manager','Account Manager'),
     ('opm','Operations Manager'),
+    ('none', 'None'),
+    ('real_estate','Real Estate'),
+    ('roofing','Roofing'),
+    ('solar','Solar'),
+    ('data_entry','Data Entry'),
+    ('hr','Human Resources'),
+    ('social_media','Social Media Moderator'),
+    ('assistant_manager','Assistant Manager'),
+    ('technical_support','Technical Support'),
 )
 
 APPLICATION_EDU_CHOICES = (
@@ -384,6 +393,7 @@ class ServerSetting(models.Model):
     applications_webhook = models.TextField(blank=True, null=True)
     prepayments_webhook = models.TextField(blank=True, null=True)
     tasks_webhook = models.TextField(blank=True, null=True)
+    sales_webhook = models.TextField(blank=True, null=True)
 
 
     maintenance = models.BooleanField(default=False)
@@ -1180,7 +1190,6 @@ class SalesLead(models.Model):
     agent_user = models.ForeignKey(User, on_delete=models.SET_NULL,related_name="sales_agent_user", null=True, blank=True)
     agent_profile = models.ForeignKey(Profile, on_delete=models.SET_NULL,related_name="sales_agent_profile", null=True, blank=True, )
     
-    campaign = models.ForeignKey(Campaign, on_delete=models.SET_NULL, related_name="sales_lead_campaign", null=True, blank=True)
     contact = models.CharField(max_length=50, null=True, blank=True)
     contact_phone = models.CharField(max_length=50, null=True, blank=True)
     contact_email = models.CharField(max_length=50, null=True, blank=True)
@@ -1189,7 +1198,6 @@ class SalesLead(models.Model):
     followup_date = models.DateField(null=True, blank=True)
     followup_time = models.TimeField(null=True, blank=True)
 
-    state = models.CharField(max_length=50, default=0, null=True, blank=True)
 
     status = models.CharField(max_length=50, choices=SALES_LEAD_CHOICES, default='follow_up', null=True, blank=True)
 

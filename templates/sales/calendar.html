@@ -226,7 +226,7 @@
 
         {% for lead in sales_leads %}
         {
-          title: '{{lead.contact}} - {{lead.followup_time|time:"H:i"}}',
+          title: '{{lead.contact}} {{lead.followup_time|time:"H:i"}}',
           start: '{{lead.followup_date|date:"Y-m-d"}}',
           end: '{{lead.followup_date|date:"Y-m-d"}}',
           {% if lead.status == "follow_up" %}

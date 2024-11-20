@@ -376,3 +376,60 @@ def send_discord_message_task(content,task_id, action_type):
         print('Message sent successfully')
     else:
         print(f'Failed to send message: {response.status_code}')
+
+
+
+
+
+
+def send_discord_message_sales_lead(content,lead_id, action_type):
+    try:
+        settings = ServerSetting.objects.first()
+    except:
+        settings = None
+    url = settings.sales_webhook
+    headers = {'Content-Type': 'application/json'}
+
+
+
+    request_link = f"https://{settings.crm_domain}/sales-lead-info/"+ str(lead_id)
+
+
+    color = 65280
+
+    
+
+    green_color = 65280
+
+    red_color = 16711680  
+
+    orange_color = 16747520   
+
+
+    if action_type == "create":
+        color = green_color
+    
+    elif action_type == "updates":
+        color = orange_color
+
+    elif action_type == "status":
+        color = red_color
+
+
+
+
+    payload = {
+        'embeds': [
+            {
+                'description': f' {content}',  # Using '>' for quote formatting
+                'color': color,  # Setting the color based on 'logged' status
+                'title':'Contact Link Click here to view',
+                'url': request_link,
+            }
+        ]
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        print('Message sent successfully')
+    else:
+        print(f'Failed to send message: {response.status_code}')
