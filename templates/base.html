@@ -550,36 +550,39 @@ crossorigin=""></script>
             </ul>
           </div>
         </li>
-        -->
+        --> 
 
-        <!--
+      {% if perms.campaign_documentation %}
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#campaingscategory" class="nav-link text-white " aria-controls="authExamples" role="button" aria-expanded="false">
+          <a data-bs-toggle="collapse" href="#campaingscategory" class="nav-link text-white {% if '/campaign-documentation/' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/campaign-documentation/' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">ads_click</i>
             <span class="nav-link-text ms-2 ps-1">Campaigns</span>
           </a>
-          <div class="collapse " id="campaingscategory">
+          <div class="collapse  {% if  '/campaign-documentation/' in request.path  %}show{% endif %}" id="campaingscategory">
             <ul class="nav ">
+              {% for camp in callers_campaigns%}
               <li class="nav-item ">
-                <a class="nav-link text-grey " href="/active-campaigns" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> check_circle </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Active Campaigns <b class="caret"></b></span>
+                <a class="nav-link text-grey " href="/campaign-documentation/{{camp.id}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> {{camp.name}} <b class="caret"></b></span>
                 </a>
               </li>
+              {% endfor %}
 
-              <li class="nav-item">
-                <a class="nav-link text-grey " href="/inactive-campaigns" target="_parent">
-                  <span class="sidenav-mini-icon material-icons"> block </span>
-                  <span class="sidenav-normal  ms-2  ps-1"> Inactive Campaigns </span>
-                </a>
-              </li>
+              
+              
               
                
               
             </ul>
           </div>
         </li>
-        -->
+      
+      {% endif %}
+
+
+      
+        
 
         
         {% if perms.my_leads or perms.lead_scoring or perms.leaderboard %}
@@ -740,6 +743,34 @@ crossorigin=""></script>
         {% endif %}
 
 
+        {% if perms.campaign_sop %}
+        <li class="nav-item">
+          <a data-bs-toggle="collapse" href="#campaingsopcategory" class="nav-link text-white {% if '/campaign-sop/' in request.path %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/campaign-sop/' in request.path %}true{% else %}false{% endif %}">
+            <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">search</i>
+            <span class="nav-link-text ms-2 ps-1">QA Pushing SOP</span>
+          </a>
+          <div class="collapse  {% if  '/campaign-sop/' in request.path  %}show{% endif %}" id="campaingsopcategory">
+            <ul class="nav ">
+              {% for camp in callers_campaigns%}
+              <li class="nav-item ">
+                <a class="nav-link text-grey " href="/campaign-sop/{{camp.id}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons"> </span>
+                  <span class="sidenav-normal  ms-2  ps-1"> {{camp.name}} <b class="caret"></b></span>
+                </a>
+              </li>
+              {% endfor %}
+
+              
+              
+              
+               
+              
+            </ul>
+          </div>
+        </li>
+      
+      {% endif %}
+
         {% if perms.qa_pending or perms.qa_lead_reports or perms.qa_auditing or perms.qa_agents_table %}
 
 
@@ -828,7 +859,7 @@ crossorigin=""></script>
 
               {% for caller_camp in callers_campaigns %}
               <li class="nav-item ">
-                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="{% if '/camphours-daily/'|add:caller_camp.id|add:'-'|add:current_month|add:'-'|add:current_year in request.path %}true{% else %}false{% endif %}" href="#camphours-{{caller_camp}}">
+                <a class="nav-link text-grey " data-bs-toggle="collapse" aria-expanded="{% if '/camphours-daily/'|add:caller_camp.id|add:'-'|add:current_month|add:'-'|add:current_year in request.path %}true{% else %}false{% endif %}" href="#camphours-{{caller_camp.id}}">
                   <span class="sidenav-mini-icon material-icons">  </span>
                   <span class="sidenav-normal  ms-2  ps-1"> {{caller_camp}} <b class="caret"></b></span>
                 </a>
@@ -1523,7 +1554,7 @@ crossorigin=""></script>
                     Copyright © <script>
                         document.write(new Date().getFullYear())
                     </script>,
-                    All rights reserved {{settings.company_name}}
+                    All Rights Reserved {{settings.company_name}}
                 </div>
                 </div>
                 <div class="col-lg-6">

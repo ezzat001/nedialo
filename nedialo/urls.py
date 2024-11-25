@@ -34,6 +34,9 @@ urlpatterns = [
     path('upload-id/<int:userid>/', upload_id, name='upload_id'),
 
 
+    path('campaign-documentation/<int:id>',camp_doc),
+    path('campaign-sop/<int:id>',camp_sop),
+
     path('admin-roles', roles_table),
     path('role-modify/<int:role_id>', role_modify),
 

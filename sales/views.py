@@ -296,7 +296,6 @@ def sales_lead_info(request, lead_id):
 
                 followup_time = lead.followup_time
 
-                profile = lead.agent_profile
 
                 action_type= "updates"
 

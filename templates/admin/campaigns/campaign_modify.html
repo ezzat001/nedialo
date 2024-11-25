@@ -7,6 +7,7 @@
   window.csrfToken = "{{ csrf_token }}";
 </script>
 
+
 <style>
     .input-group-static {
         margin-bottom: 1.5rem;
@@ -93,6 +94,13 @@
               <a class="nav-link text-dark d-flex" data-scroll="" href="#camp_looker">
                 <i class="material-icons text-lg me-2">query_stats</i>
                 <span class="text-sm">Campaign Looker Studio</span>
+              </a>
+            </li> 
+
+            <li class="nav-item pt-2">
+              <a class="nav-link text-dark d-flex" data-scroll="" href="#camp_doc">
+                <i class="material-icons text-lg me-2">search</i>
+                <span class="text-sm">Campaign Documentation</span>
               </a>
             </li> 
           </ul>
@@ -223,6 +231,8 @@
                   <div class="input-group input-group-dynamic">
                       <select class="form-control" name="dialer" id="dialer" required>
                           <option value="">Select Dialer</option> <!-- Blank option for initial selection -->
+                          <option value="none" {% if not camp.dialer %}selected{% endif %}>None Calling Campaign</option> 
+
                           {% for dialer in dialers %}
                             {% if camp.dialer == dialer %}
                               <option value="{{dialer.id}}" selected> {{dialer.name}}</option> 
@@ -450,10 +460,78 @@
           </div>
         </div>
 
+
+
+        <div class="card mt-4" id="camp_doc">
+          <div class="card-header">
+            <h5>Campaign Documentation</h5>
+          </div>
+
+          <div class="card-body pt-0">
+            <form id="payment-method-form" method="POST" >
+              {% csrf_token %}
+
+
+               
+ 
+              <input id="x" value="{{camp.documentation}}" type="hidden" name="editor">
+              <trix-editor input="x"></trix-editor>
+ 
+           
+               
+
+              <button type="submit"  name="campaign_doc" class="btn bg-gradient-info btn-sm float-end mt-6 mb-0">Update Campaign</button>
+
+            </form>
+          
+          </div>
+        </div>
+
+
+
+        <div class="card mt-4" id="camp_doc">
+          <div class="card-header">
+            <h5>QA Pushing SOP</h5>
+          </div>
+
+          <div class="card-body pt-0">
+            <form id="payment-method-form" method="POST" >
+              {% csrf_token %}
+
+
+               
+ 
+              <input id="y" value="{{camp.qa_sop}}" type="hidden" name="editor2">
+              <trix-editor input="y"></trix-editor>
+ 
+           
+               
+
+              <button type="submit"  name="campaign_sop" class="btn bg-gradient-info btn-sm float-end mt-6 mb-0">Update Campaign</button>
+
+            </form>
+          
+          </div>
+        </div>
+
+
       </div>
     </div>
 
   </div>
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.min.js"></script>
+  
+  <style>
+    trix-toolbar [data-trix-button-group="file-tools"] {
+      display: none;
+    }
+
+  
+  </style>
+
 
 
 
@@ -711,6 +789,9 @@ function deleteDispoSlot() {
     }
 }
 </script>
+
+
+
 
 
 

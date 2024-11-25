@@ -244,6 +244,11 @@ def campaign_modify(request,camp_id):
 
             camp = Campaign.objects.get(id=camp_id)
 
+            if campaign_dialer == "none":
+                camp_dialer = None
+            else:
+                camp_dialer = Dialer.objects.get(id=campaign_dialer)
+
             camp.name = camp_name
             camp.agents_count = agents_count
             camp.agents_rate = hourly_rate
@@ -251,7 +256,7 @@ def campaign_modify(request,camp_id):
             camp.weekly_leads = weekly_leads
             camp.lead_points = lead_points
             camp.campaign_type = campaign_type
-            camp.dialer = Dialer.objects.get(id=campaign_dialer)
+            camp.dialer = camp_dialer
             camp.status = camp_status 
             if not selected_sources_ids:
                 camp.datasources.clear()  
@@ -364,6 +369,36 @@ def campaign_modify(request,camp_id):
 
             return redirect(request.get_full_path())
 
+
+        if "campaign_doc" in request.POST:
+            campaign = Campaign.objects.get(active=True, id=camp_id)
+            data = request.POST
+            docs = data.get('editor')
+
+            campaign.documentation = docs
+
+
+
+            campaign.save()
+
+            return redirect(request.get_full_path())
+        
+
+        if "campaign_sop" in request.POST:
+            campaign = Campaign.objects.get(active=True, id=camp_id)
+            data = request.POST
+            docs = data.get('editor2')
+
+            campaign.qa_sop = docs
+
+
+
+            campaign.save()
+
+            return redirect(request.get_full_path())
+
+
+        
             
 
     return render(request,'admin/campaigns/campaign_modify.html',context)
@@ -1968,6 +2003,8 @@ def role_modify(request, role_id):
                 role.__dict__[key] = False 
         
         # Save the updated role
+
+        role.active=True
         role.save()
 
         return redirect(request.get_full_path())
@@ -2052,7 +2089,7 @@ def server_settings(request):
             
             data = request.POST
 
-            sales = data.get('sales_lookerstudio')
+            sales_looker = data.get('sales_lookerstudio')
             login = data.get('discord_login')
             activity = data.get('discord_activity')
             leads = data.get('discord_leads')
@@ -2064,7 +2101,7 @@ def server_settings(request):
 
             server_settings = ServerSetting.objects.first()
 
-            server_settings.sales_lookerstudio = sales
+            server_settings.sales_lookerstudio = sales_looker
             server_settings.logins_webhook = login
             server_settings.activity_webhook = activity
             server_settings.leads_webhook = leads
@@ -2104,16 +2141,7 @@ def server_settings(request):
 
             return redirect(request.get_full_path())
  
-            data = request.POST
-            lookerstudio = data.get('lookerstudio_link')
-
-            campaign.lookerstudio = lookerstudio
-
-
-
-            campaign.save()
-
-            return redirect(request.get_full_path())
+            
 
             
 

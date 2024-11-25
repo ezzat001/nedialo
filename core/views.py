@@ -388,6 +388,9 @@ def home(request):
     return render(request,'dashboard/agent.html',context)
 
 
+
+
+
 @login_required
 def user_profile(request):
     context = {}
@@ -395,6 +398,31 @@ def user_profile(request):
     context['profile'] = profile
 
     return render(request,'profile.html', context)
+
+
+@permission_required('campaign_documentation')
+@login_required
+def camp_doc(request, id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    campaign = Campaign.objects.get(id=id)
+    context['camp'] = campaign
+
+    return render(request,'admin/campaigns/campaign_doc.html', context)
+
+
+@permission_required('campaign_sop')
+@login_required
+def camp_sop(request, id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    campaign = Campaign.objects.get(id=id)
+    context['camp'] = campaign
+
+    return render(request,'admin/campaigns/campaign_sop.html', context)
+
 
 @permission_required('lead_submission')
 @login_required

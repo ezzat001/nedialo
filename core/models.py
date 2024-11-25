@@ -82,6 +82,8 @@ APPLICATION_SKILLS_CHOICES = (
     ('social_media','Social Media Moderator'),
     ('assistant_manager','Assistant Manager'),
     ('technical_support','Technical Support'),
+    ('appointment_setter','Appointment Setter'),
+    
 )
 
 APPLICATION_EDU_CHOICES = (
@@ -419,7 +421,10 @@ class Role(models.Model):
     my_leads = models.BooleanField(default=False)
     lead_scoring = models.BooleanField(default=False)
     leaderboard = models.BooleanField(default=False)
-    
+
+    campaign_documentation = models.BooleanField(default=False)
+    campaign_sop = models.BooleanField(default=False)
+
 
     leave_request = models.BooleanField(default=False)
     prepayment_request = models.BooleanField(default=False)
@@ -495,6 +500,8 @@ class Role(models.Model):
         "my_leads": "My Leads",
         "lead_scoring": "Lead Scoring",
         "leaderboard": "Leaderboard",
+        "campaign_documentation": "Campaigns Documentation",
+        'campaign_sop':"QA Pushing SOP",
         "leave_request": "Leave Request",
         "prepayment_request": "Prepayment Request",
         "action_request": "Action Request",
@@ -765,7 +772,8 @@ class Campaign(models.Model): # Client Campaigns
     
     dialer_api_key = models.TextField(null=True, blank=True)
 
-
+    documentation = models.TextField(null=True, blank=True)
+    qa_sop = models.TextField(null=True, blank=True)
 
     status = models.CharField(max_length=50,default="active", choices=CAMP_ACTIVITY, null=True, blank=True)
 
