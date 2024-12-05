@@ -1080,6 +1080,17 @@ crossorigin=""></script>
 
                 {% endif %}
 
+                {% if perms.agents_table %}
+
+              <li class="nav-item {% if '/agents-moderation' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/agents-moderation' in request.path %}active{% endif %}" href="/agents-moderation-{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">warning</span>
+                  <span class="sidenav-normal ms-2 ps-1">Agents Moderation</span>
+                </a>
+              </li>
+
+              {% endif %}
+
 
                 <div class="collapse " id="aglistdata">
                   <ul class="nav nav-sm flex-column">

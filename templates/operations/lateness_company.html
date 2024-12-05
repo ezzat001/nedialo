@@ -218,7 +218,20 @@
 
 
   <script src="../static/js/plugins/fullcalendar.min.js"></script>
-
+  <script src="https://unpkg.com/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <style>
+    .custom-tooltip {
+      display: none;
+      background-color: #333;
+      color: #fff;
+      padding: 5px;
+      border-radius: 3px;
+      font-size: 12px;
+      position: absolute;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+  </style>  
   <script>
     var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         contentHeight: 'auto',
@@ -229,7 +242,7 @@
             end: '' 
         },
         selectable: true,
-        editable: true,
+        editable: false, // Disable event dragging
         initialDate: '{{ today_date|date:"Y-m-d" }}',
         events: [
             {% for absence in absences %}
@@ -238,9 +251,37 @@
                 start: '{{ absence.absence_date|date:"Y-m-d" }}',
                 end: '{{ absence.absence_date|date:"Y-m-d" }}',
                 className: '{{ absence.absence_type }}',
+                extendedProps: {
+                    tooltip: 'Duration: {{ absence.status }}' // Tooltip now shows absence status
+                }
             },
             {% endfor %}
         ],
+        eventDidMount: function(info) {
+            // Set tooltip content from extendedProps or event title
+            var tooltipContent = info.event.extendedProps.tooltip || info.event.title;
+          
+            // Create a tooltip element
+            var tooltip = document.createElement('div');
+            tooltip.className = 'custom-tooltip';  // Add a class for styling
+            tooltip.innerHTML = tooltipContent;
+            document.body.appendChild(tooltip);
+          
+            // Initialize Popper.js for the tooltip
+            var popperInstance = Popper.createPopper(info.el, tooltip, {
+                placement: 'top' // Set the position of the tooltip
+            });
+          
+            // Show and hide the tooltip on hover
+            info.el.addEventListener('mouseenter', () => {
+                tooltip.style.display = 'block';
+                popperInstance.update(); // Update Popper.js position
+            });
+          
+            info.el.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+        },
         views: {
             month: {
                 titleFormat: {
@@ -267,6 +308,7 @@
 
     calendar.render();
 </script>
+
 
   <script>
 

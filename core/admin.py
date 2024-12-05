@@ -118,3 +118,10 @@ admin.site.register(SalesLead)
 admin.site.register(AffiliateInvoice)
 admin.site.register(AffiliateProfile)
 admin.site.register(Task)
+
+admin.site.register(ContractSample)
+
+admin.site.register(Contract)
+admin.site.register(Package)
+
+admin.site.register(ContractVisit)

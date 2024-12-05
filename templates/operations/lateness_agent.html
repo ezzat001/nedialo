@@ -241,7 +241,7 @@
             end: '' 
         },
         selectable: true,
-        editable: true,
+        editable: false,
         initialDate: '{{ today_date|date:"Y-m-d" }}',
         events: [
             {% for absence in absences %}
@@ -274,6 +274,11 @@
                     day: 'numeric'
                 }
             }
+        },
+        datesSet: function(info) {
+            // Dynamically change the title based on the current view's date range
+            const viewTitle = "{{agent_profile.full_name}}'s Lateness"; // Get the title based on the current view's date range
+            document.querySelector('.fc-toolbar-title').innerHTML = viewTitle;
         }
     });
 

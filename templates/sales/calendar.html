@@ -209,6 +209,23 @@
 
 
   <script src="../static/js/plugins/fullcalendar.min.js"></script>
+ 
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+
+
+<style>
+  .custom-tooltip {
+    display: none;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    position: absolute;
+    z-index: 1000;
+    white-space: nowrap;
+  }
+  </style>
 
   <script>
     var calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
@@ -220,35 +237,56 @@
         end: '' // will normally be on the right. if RTL, will be on the left
       },
       selectable: true,
-      editable: true,
+      editable: false,
       initialDate: '{{today_date|date:"Y-m-d"}}',
       events: [
-
         {% for lead in sales_leads %}
         {
-          title: '{{lead.contact}} {{lead.followup_time|time:"H:i"}}',
+          title: '{{lead.contact}} ',
           start: '{{lead.followup_date|date:"Y-m-d"}}',
           end: '{{lead.followup_date|date:"Y-m-d"}}',
           {% if lead.status == "follow_up" %}
-            className: 'bg-gradient-warning',
+          className: 'bg-gradient-warning',
           {% elif lead.status == "longterm_follow_up" %}
-            className: 'bg-gradient-secondary',
+          className: 'bg-gradient-secondary',
           {% elif lead.status == "send_contract"%}
-            className: 'bg-gradient-success',
+          className: 'bg-gradient-success',
           {% elif lead.status == "scheduled_meeting" %}
-            className: 'bg-gradient-info',
+          className: 'bg-gradient-info',
           {% elif lead.status == "follow_up_landing" %}
-            className: 'bg-gradient-primary',
+          className: 'bg-gradient-primary',
           {% endif %}
-          
-
+          extendedProps: {
+            tooltip: 'Time: {{lead.followup_time|time:"H:i"}}' // Add additional details here for the tooltip
+          }
         },
         {% endfor %}
-
-        
       ],
-        
-        views: {
+      eventDidMount: function(info) {
+        var tooltipContent = info.event.extendedProps.tooltip || info.event.title;
+      
+        // Create a tooltip
+        var tooltip = document.createElement('div');
+        tooltip.className = 'custom-tooltip';
+        tooltip.innerHTML = tooltipContent;
+        document.body.appendChild(tooltip);
+      
+        // Initialize Popper.js
+        var popperInstance = Popper.createPopper(info.el, tooltip, {
+          placement: 'top'
+        });
+      
+        // Show and hide the tooltip on hover
+        info.el.addEventListener('mouseenter', () => {
+          tooltip.style.display = 'block';
+          popperInstance.update();
+        });
+      
+        info.el.addEventListener('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+      },
+      views: {
         month: {
           titleFormat: {
             month: "long",
@@ -268,18 +306,13 @@
             year: "numeric",
             day: "numeric"
           }
-        },
-
-       
-      },
-      
-      
+        }
+      }
     });
-
+  
     calendar.render();
-
-   
   </script>
+  
 
   <script>
 

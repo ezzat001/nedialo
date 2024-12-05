@@ -50,7 +50,14 @@
                             {% for key, value in role_permissions.items %}
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label>{{ key }} </label>
+                                        <label>{{ key }} </label>      
+                                        {% if value  %}
+                                        <i class="material-icons text-success position-relative text-sm">check_circle</i>
+                                        {% else %}
+                                        <i class="material-icons text-danger position-relative text-sm">cancel</i>
+
+                                        {% endif %}                
+                                         
                                         <select name="{{ key|key_for_value:role_fields }}" id="perms_{{ key }}" class="form-control">
                                         <option value="yes" {% if value  %}selected{% endif %}>Yes</option>
                                         <option value="no" {% if not value  %}selected{% endif %}>No</option>

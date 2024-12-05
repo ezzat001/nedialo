@@ -1619,7 +1619,8 @@ def lateness_company(request, month, year):
                 
                 
                 absences.append({
-                    'agent_profile': f"{agent.user.username} - {status}",
+                    'agent_profile': f"{agent.full_name}",
+                    'status':status,
                     'absence_date': day.date(),
                     'absence_type': status_class,
                 })
@@ -1702,7 +1703,8 @@ def lateness_team(request, team_id,month, year):
                     status = "On time"
                 
                 absences.append({
-                    'agent_profile': f"{agent.user.username} - {status}",
+                    'agent_profile': f"{agent.full_name}",
+                    'status':status,
                     'absence_date': day.date(),
                     'absence_type': status_class,
                 })
@@ -1737,6 +1739,7 @@ def lateness_agent(request, agent_id,month, year):
     
     agent_profile = Profile.objects.get(id=agent_id, active=True)
 
+    context['agent_profile'] = agent_profile
     context['agent_id'] = agent_id
 
     # Create a list of all days in the month
@@ -1805,6 +1808,166 @@ def lateness_agent(request, agent_id,month, year):
 
     return render(request, 'operations/lateness_agent.html', context)
 
+
+
+
+
+@permission_required('agents_table')
+@login_required
+def agents_moderation(request, month, year):
+
+    context = {}
+    now = tz.now()
+    current_year = now.year
+    current_month = now.month
+    month_date = datetime(year, month, 1)  
+    month_name = month_date.strftime('%b') 
+    context['year'] = year
+    context['month'] = month
+    context['month_name'] = month_name
+    context['full_month_name'] = calendar.month_name[month]
+    context['month_name'] = month_name
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    callers_list = ['callers']
+    callers_teams = Team.objects.filter(team_type__in=callers_list)
+    
+    agents = Profile.objects.filter(team__in=callers_teams, active=True)
+    context['agents'] = agents
+
+        
+    # Define status field mapping
+    status_field_mapping = {
+        'ready': 'ready_time',
+        'meeting': 'meeting_time',
+        'break': 'break_time',
+        'offline': 'offline_time'
+    }
+
+    # Calculate total time for each status per agent
+    status_totals = {}
+    for agent in agents:
+        agent_totals = {}
+        for status in ['ready', 'meeting', 'break', 'offline']:
+            total_time = WorkStatus.objects.filter(
+                user=agent.user,
+                date__month=month,
+                date__year=year
+            ).aggregate(total_time=Sum(status_field_mapping[status]))
+
+            # Convert timedelta to formatted string
+            total_seconds = total_time['total_time'].total_seconds() if total_time['total_time'] else 0
+            hours = int(total_seconds // 3600)
+            minutes = int((total_seconds % 3600) // 60)
+            seconds = int(total_seconds % 60)
+            formatted_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            agent_totals[status] = formatted_time
+
+        # Calculate total worked time
+        total_worked_time_seconds = sum([
+            (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+                total_ready_time=Sum('ready_time'),
+                total_meeting_time=Sum('meeting_time'),
+                total_break_time=Sum('break_time')
+            )[field] or timedelta()).total_seconds()
+            for field in ['total_ready_time', 'total_meeting_time', 'total_break_time']
+        ])
+        agent_totals['total_worked'] = f"{int(total_worked_time_seconds // 3600):02}:{int((total_worked_time_seconds % 3600) // 60):02}:{int(total_worked_time_seconds % 60):02}"
+
+        # Calculate total payable time
+        try:
+            settings = ServerSetting.objects.first()
+            break_paid = settings.break_paid
+        except:
+            break_paid = False
+        total_ready_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_ready_time=Sum('ready_time')
+        )['total_ready_time'] or timedelta()).total_seconds()
+        total_meeting_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_meeting_time=Sum('meeting_time')
+        )['total_meeting_time'] or timedelta()).total_seconds()
+        total_break_time_seconds = (WorkStatus.objects.filter(user=agent.user, date__month=month, date__year=year).aggregate(
+            total_break_time=Sum('break_time')
+        )['total_break_time'] or timedelta()).total_seconds()
+
+        total_payable_time_seconds = total_ready_time_seconds + total_meeting_time_seconds + (total_break_time_seconds if break_paid else 0)
+        agent_totals['total_payable'] = f"{int(total_payable_time_seconds // 3600):02}:{int((total_payable_time_seconds % 3600) // 60):02}:{int(total_payable_time_seconds % 60):02}"
+
+        leads_count = len(Lead.objects.filter(agent_profile=agent, pushed__month=month, pushed__year=year))
+        qualified_count = len(Lead.objects.filter(agent_profile=agent,pushed__month=month,pushed__year=year, status='qualified'))
+        qa_dq_count = len(Lead.objects.filter(agent_profile=agent,pushed__month=month,pushed__year=year, status__in=['qualified','disqualified']))
+        agent_totals['hours_per_lead'] = (total_payable_time_seconds/3600) / leads_count if leads_count != 0 else 0
+        salary = agent.hourly_rate * (total_payable_time_seconds/3600)
+
+        agent_totals['leads_count'] = leads_count
+        agent_totals['usd_per_lead'] = salary / leads_count if leads_count != 0 else 0
+        agent_totals['qa_dq_ratio'] = (qualified_count/qa_dq_count)*100 if qa_dq_count != 0 else 0
+        agent_totals['usd_per_qa'] = salary / qualified_count if qualified_count != 0 else 0
+
+
+
+
+        days_in_month = calendar.monthrange(year, month)[1]
+        dates = [datetime(year, month, day) for day in range(1, days_in_month + 1)]
+
+
+        
+
+        total_late_minutes = 0  # Initialize total late minutes
+
+        for day in dates:
+            work_status = WorkStatus.objects.filter(
+                user=agent.user,
+                date=day.date(),
+                login_time__isnull=False
+            ).first()
+
+            if work_status and work_status.lateness:
+                
+                lateness = work_status.lateness
+                lateness_status = work_status.lateness_status
+
+                
+                minutes_difference = lateness.total_seconds() / 60
+
+                if lateness_status == "late":
+                    total_late_minutes += minutes_difference  # Add to total late minutes
+                    
+                    
+
+        total_late_seconds = round(total_late_minutes * 60)  # Convert minutes to seconds and round
+        hours, remainder = divmod(total_late_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        formatted_late_time = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+        agent_totals['total_lateness'] = formatted_late_time
+
+        
+        agent_totals['positive_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,type="positive"))
+
+        agent_totals['negative_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,type="negative"))
+
+        agent_totals['neutral_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,type="neutral"))
+
+        status_totals[agent] = agent_totals
+
+
+        
+
+    context['status_totals'] = status_totals
+
+  
+
+
+
+
+        
+
+
+
+    return render(request,'operations/agents_moderation.html',context)
 
 
 

@@ -1,9 +1,9 @@
 from django import template
 
-from core.models import DialerCredentials,DataSourceCredentials,Profile, ClientProfile, AffiliateInvoice
+from core.models import DialerCredentials,DataSourceCredentials,Profile, ClientProfile, AffiliateInvoice,Lead,WorkStatus,Feedback
 register = template.Library()
 
-from core.models import APPLICATION_SKILLS_CHOICES
+from core.models import APPLICATION_SKILLS_CHOICES,ContractVisit
 
 
 
@@ -251,6 +251,143 @@ def key_for_value(value, my_dict):
     Returns the key corresponding to the given value in a dictionary.
     """
     return next((k for k, v in my_dict.items() if v == value), None)
+
+
+
+
+
+
+
+ 
+
+@register.filter
+def total_cost(package):
+    try:
+        # Log the input values
+        
+        # Multiply each count by 160, then by rate, and sum the results
+        total = (
+            (float(package.count_va or 0) * 160 * float(package.rate_va or 0)) +
+            (float(package.count_lm or 0) * 160 * float(package.rate_lm or 0)) +
+            (float(package.count_acq or 0) * 160 * float(package.rate_acq or 0)) +
+            (float(package.count_dm or 0) * 160 * float(package.rate_dm or 0))
+        )
+        return round(total, 2)
+    except (ValueError, TypeError) as e:
+        return 0
+    
+
+
+@register.filter
+def total_contract_cost(contract):
+    try:
+        # Log the input values
+        
+        # Multiply each count by 160, then by rate, and sum the results
+        total = (
+            (float(contract.count_va or 0) * 160 * float(contract.rate_va or 0)) +
+            (float(contract.count_lm or 0) * 160 * float(contract.rate_lm or 0)) +
+            (float(contract.count_acq or 0) * 160 * float(contract.rate_acq or 0)) +
+            (float(contract.count_dm or 0) * 160 * float(contract.rate_dm or 0))
+        )
+        return round(total, 2)
+    except (ValueError, TypeError) as e:
+        return 0
+    
+
+
+@register.filter
+def contract_total_visits(contract):
+    try:
+
+        visits = len(ContractVisit.objects.filter(contract=contract))
+       
+        return visits
+    except:
+        return 0
+    
+
+
+@register.filter
+def contract_countries_visits(contract):
+    try:
+
+        locations = ContractVisit.objects.filter(contract=contract).values_list('location', flat=True).distinct()
+
+       
+        return locations
+    except:
+        return 0
+    
+
+
+@register.filter
+def contract_countries_visits_count(contract):
+    try:
+
+        locations = ContractVisit.objects.filter(contract=contract).values_list('location', flat=True).distinct()
+
+       
+        return len(locations)
+    except:
+        return 0
+
+@register.filter
+def contract_ips_visits(contract):
+    try:
+
+        ips = ContractVisit.objects.filter(contract=contract).values_list('ip_address', flat=True).distinct()
+
+       
+        return ips
+    except:
+        return 0
+    
+
+@register.filter
+def contract_ips_visits_count(contract):
+    try:
+
+        ips = ContractVisit.objects.filter(contract=contract).values_list('ip_address', flat=True).distinct()
+
+       
+        return len(ips)
+    except:
+        return 0
+    
+
+
+@register.filter
+def agent_num_leads(agent):
+    try:
+
+        leads = len(Lead.objects.filter(agent_profile=agent))
+
+       
+        return leads
+    except:
+        return 0
+    
+
+
+@register.filter
+def agent_num_leads_ratio(agent):
+    try:
+
+        leads = len(Lead.objects.filter(agent_profile=agent,status="qualified")) / len(Lead.objects.filter(agent_profile=agent,status__in=["qualified",'disqualified']))
+
+       
+        return (leads*100)
+    except:
+        return 0
+    
+
+
+ 
+    
+
+
+    
 
 
 

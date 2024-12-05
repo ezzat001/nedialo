@@ -226,85 +226,75 @@
       contentHeight: 'auto',
       initialView: "dayGridMonth",
       headerToolbar: {
-        start: 'title', // will normally be on the left. if RTL, will be on the right
-        center: '',
-        end: '' // will normally be on the right. if RTL, will be on the left
+          start: 'title',
+          center: '',
+          end: ''
       },
       selectable: true,
-      editable: true,
+      editable: false,
       initialDate: '{{today_date|date:"Y-m-d"}}',
       events: [
-
-      {% for absence in absences %}
-      {
-        start: '{{ absence.absence_date|date:"Y-m-d" }}',
-        end: '{{ absence.absence_date|date:"Y-m-d" }}',
-        {% if absence.absence_type == "upl" %}
-        title: 'UPL',
-
-        className: 'bg-gradient-warning',
-        {% elif absence.absence_type == "sick" %}
-        title: 'Sick',
-
-        className: 'bg-gradient-secondary',
-        {% elif absence.absence_type == "annual" %}
-        title: 'Annual',
-
-        className: 'bg-gradient-success',
-        {% elif absence.absence_type == "casual" %}
-        title: 'Casual',
-
-        className: 'bg-gradient-info',
-        {% elif absence.absence_type == "nsnc" %}
-        title: 'NSNC',
-
-        className: 'bg-gradient-danger',
-        {% endif %}
-      },
-      {% endfor %}
-    
-      {% for day in attendance %}
-      {
-        title: '{{ day.login_time|date:"h:i A" }}',
-        start: '{{ day.date|date:"Y-m-d" }}',
-        end: '{{ day.date|date:"Y-m-d" }}',
-        className: 'bg-gradient-primary',
-
-      },
-      {% endfor %}
-
-        
+          {% for absence in absences %}
+          {
+              start: '{{ absence.absence_date|date:"Y-m-d" }}',
+              end: '{{ absence.absence_date|date:"Y-m-d" }}',
+              {% if absence.absence_type == "upl" %}
+              title: 'UPL',
+              className: 'bg-gradient-warning',
+              {% elif absence.absence_type == "sick" %}
+              title: 'Sick',
+              className: 'bg-gradient-secondary',
+              {% elif absence.absence_type == "annual" %}
+              title: 'Annual',
+              className: 'bg-gradient-success',
+              {% elif absence.absence_type == "casual" %}
+              title: 'Casual',
+              className: 'bg-gradient-info',
+              {% elif absence.absence_type == "nsnc" %}
+              title: 'NSNC',
+              className: 'bg-gradient-danger',
+              {% endif %}
+          },
+          {% endfor %}
+          {% for day in attendance %}
+          {
+              title: '{{ day.login_time|date:"h:i A" }}',
+              start: '{{ day.date|date:"Y-m-d" }}',
+              end: '{{ day.date|date:"Y-m-d" }}',
+              className: 'bg-gradient-primary',
+          },
+          {% endfor %}
       ],
-        
-        views: {
-        month: {
-          titleFormat: {
-            month: "long",
-            year: "numeric"
+      views: {
+          month: {
+              titleFormat: {
+                  month: "long",
+                  year: "numeric"
+              }
+          },
+          agendaWeek: {
+              titleFormat: {
+                  month: "long",
+                  year: "numeric",
+                  day: "numeric"
+              }
+          },
+          agendaDay: {
+              titleFormat: {
+                  month: "short",
+                  year: "numeric",
+                  day: "numeric"
+              }
           }
-        },
-        agendaWeek: {
-          titleFormat: {
-            month: "long",
-            year: "numeric",
-            day: "numeric"
-          }
-        },
-        agendaDay: {
-          titleFormat: {
-            month: "short",
-            year: "numeric",
-            day: "numeric"
-          }
-        },
-
-       
       },
-      
-      
-    });
-
-    calendar.render();
+      datesSet: function(info) {
+          // Ensure that FullCalendar has finished rendering the date
+          document.querySelector('.fc-toolbar-title').innerHTML = "{{agent_profile.full_name}}'s Attendance";
+      }
+  });
+  
+  calendar.render();
+  
 
    
   </script>

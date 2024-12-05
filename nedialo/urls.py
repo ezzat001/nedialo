@@ -106,6 +106,25 @@ urlpatterns = [
 
     path('admin-serversettings', server_settings),
 
+    path('admin-packages', packages_table),
+    path('package-create', package_create),
+    path('package-modify/<int:id>', package_modify),
+    path('package-delete/<int:id>/', DeletePackageView.as_view()),
+
+
+    path('admin-contracts', contracts_table),
+    path('contract-create', contract_create),
+    path('contract-create-actual', contract_create_actual),
+    path('contract-delete/<int:id>/', DeleteContractView.as_view()),
+
+    path('contract-view/<str:id>', contract_view),
+
+
+    path('admin-contract-samples', contract_samples_table),
+    path('sample-create', sample_create),
+    path('sample-modify/<int:id>', sample_modify),
+    path('sample-delete/<int:id>/', DeleteSampleView.as_view()),
+
 
 
 
@@ -198,6 +217,9 @@ urlpatterns = [
     path('agent-login-update/', update_agent_login_time, name='update_agent_login_time'),
 
     path('agent-seat-update/', update_seat_admin, name='update_seat_admin'),
+
+
+    path('agents-moderation-<int:month>-<int:year>', agents_moderation),
 
 
     path('update_status_admin/', update_status_admin, name='update_status_admin'),

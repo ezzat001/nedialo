@@ -5,7 +5,7 @@ from django.template.defaultfilters import slugify  # new
 from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta, datetime
-import os,uuid
+import os,uuid,secrets
 from django.db.models import Sum, F, ExpressionWrapper, DurationField
 
 import uuid
@@ -41,6 +41,11 @@ TEAM_TYPES = (
     ('data', 'Data Management'),
     ('quality', 'Quality'),
     ('team_leaders', 'Team Leaders'),
+)
+
+CONTRACT_FIELD_TYPES = (
+    ('roofing', 'Roofing'),
+    ('realestate', 'Real Estate'),
 )
 
 APPLICATION_POS_CHOICES = (
@@ -482,6 +487,9 @@ class Role(models.Model):
     admin_provided_services = models.BooleanField(default=False)
     admin_dialers = models.BooleanField(default=False)
     admin_sources = models.BooleanField(default=False)
+    admin_packages = models.BooleanField(default=False)
+    admin_contracts = models.BooleanField(default=False)
+
     admin_server_settings = models.BooleanField(default=False)
 
 
@@ -541,6 +549,8 @@ class Role(models.Model):
         "admin_provided_services": "Admin Provided Services",
         "admin_dialers": "Admin Dialers",
         "admin_sources": "Admin Third-Parties",
+        "admin_packages": "Admin Packages",
+        "admin_contracts": "Admin Contracts",
         "admin_server_settings": "Admin Server Settings",
         }
 
@@ -625,6 +635,13 @@ class Service(models.Model): #Company Provided Services
     def __str__(self):
         return self.name
 
+
+
+
+
+
+
+    
 
 
 
@@ -1550,3 +1567,107 @@ class ManualHours(models.Model):
     reason = models.CharField(max_length=200,blank=True, null=True)
 
     active = models.BooleanField(default=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ContractSample(models.Model):
+    creator = models.ForeignKey(Profile, null=True, blank=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=100)
+    field = models.CharField(max_length=100, choices=CONTRACT_FIELD_TYPES, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    active = models.BooleanField(default=True)
+    def __str__(self):
+        return self.name
+    
+
+
+
+class Package(models.Model): #Company Provided Services
+    name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+
+
+    count_va = models.CharField(max_length=100, null=True, blank=True)
+    rate_va = models.CharField(max_length=100, null=True, blank=True)
+
+    count_lm = models.CharField(max_length=100, null=True, blank=True)
+    rate_lm = models.CharField(max_length=100, null=True, blank=True)
+
+    count_acq = models.CharField(max_length=100, null=True, blank=True)
+    rate_acq = models.CharField(max_length=100, null=True, blank=True)
+
+    count_dm = models.CharField(max_length=100, null=True, blank=True)
+    rate_dm = models.CharField(max_length=100, null=True, blank=True)
+
+    active = models.BooleanField(default=True)
+    def __str__(self):
+        return self.name
+
+
+class Contract(models.Model):
+    created = models.DateTimeField(default=timezone.now)
+    unique_id = models.CharField(max_length=10, unique=True, editable=False, blank=True)
+
+    client_name = models.CharField(max_length=100, null=True, blank=True)
+    client_phone = models.CharField(max_length=100, null=True, blank=True)
+    client_email = models.CharField(max_length=100, null=True, blank=True)
+
+    package = models.ForeignKey(Package, on_delete=models.SET_NULL, null=True, blank=True)
+    sample = models.ForeignKey(ContractSample, on_delete=models.SET_NULL, null=True, blank=True)
+    contract_text = models.TextField(null=True, blank=True)
+
+
+    count_va = models.CharField(max_length=100, null=True, blank=True)
+    rate_va = models.CharField(max_length=100, null=True, blank=True)
+
+    count_lm = models.CharField(max_length=100, null=True, blank=True)
+    rate_lm = models.CharField(max_length=100, null=True, blank=True)
+
+    count_acq = models.CharField(max_length=100, null=True, blank=True)
+    rate_acq = models.CharField(max_length=100, null=True, blank=True)
+
+    count_dm = models.CharField(max_length=100, null=True, blank=True)
+    rate_dm = models.CharField(max_length=100, null=True, blank=True)
+
+
+    paid = models.BooleanField(default=False)
+
+
+    active = models.BooleanField(default=True)
+
+
+
+    def save(self, *args, **kwargs):
+        if not self.unique_id:  # Generate only if it doesn't already exist
+            self.unique_id = self.generate_unique_id()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_unique_id():
+        return secrets.token_urlsafe(8)[:10]
+    
+
+
+class ContractVisit(models.Model):
+
+    created = models.DateTimeField(default=timezone.now)
+    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True)
+    ip_address = models.CharField(null=True, blank=True, max_length=100)
+    location = models.CharField(null=True, blank=True, max_length=100)
+    isp = models.CharField(null=True, blank=True, max_length=100)
+
+    active = models.BooleanField(default=True)
+
+
+

@@ -22,6 +22,19 @@ from core.models import DIALERS
 from collections import defaultdict
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import date as _date
+from discord_app.views import get_ip_info
+import pytz
+
+
+
+
+
+
+
+
+
+
+
 
 
 @login_required
@@ -128,7 +141,6 @@ def campaigns_table(request):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
     context['campaigns'] = Campaign.objects.filter(active=True)
-                                                   #add accounts in data sources
 
 
     return render(request,'admin/campaigns/campaigns.html',context)
@@ -809,7 +821,7 @@ def agents_table(request):
     context['profile'] = profile
     excluded_roles = []
     excluded_roles.append(Role.objects.get(role_name="Client"))
-    context['accounts'] = Profile.objects.filter(active=True).exclude(role__in=excluded_roles)
+    context['accounts'] = Profile.objects.all().exclude(role__in=excluded_roles)
 
     return render(request,'admin/agents/agents.html',context)
 
@@ -958,6 +970,8 @@ def agent_modify(request,username):
 
             if status in inactive_statuses:
                 agent_profile.active = False
+            else:
+                agent_profile.active = True
 
             agent_profile.save()
 
@@ -2016,6 +2030,524 @@ def role_modify(request, role_id):
     return render(request, 'admin/roles/role_modify.html', context)
 
 
+
+
+@permission_required('admin_packages')
+@login_required
+def packages_table(request):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['packages'] = Package.objects.filter(active=True)
+
+    return render(request,'admin/packages/packages.html',context)
+
+
+
+
+
+
+@permission_required('admin_packages')
+@login_required
+def package_create(request):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['services'] = Service.objects.filter(active=True, status="active")
+
+
+
+
+    if request.method == "POST":
+        data = request.POST
+
+
+        name = data.get('name')
+        description = data.get('description')
+
+        count_va = data.get('count_va')
+        rate_va = data.get('rate_va')
+
+        count_lm = data.get('count_lm')
+        rate_lm = data.get('rate_lm')
+
+        count_acq = data.get('count_acq')
+        rate_acq = data.get('rate_acq')
+
+        count_dm = data.get('count_dm')
+        rate_dm = data.get('rate_dm')
+
+
+        
+
+        package = Package.objects.create(
+            name=name,
+            description=description,
+            count_va=count_va,
+            rate_va=rate_va,
+            count_lm=count_lm,
+            rate_lm=rate_lm,
+            count_acq=count_acq,
+            rate_acq=rate_acq,
+            count_dm=count_dm,
+            rate_dm=rate_dm,
+
+        )
+
+        
+
+        
+        
+        
+
+        return redirect('/admin-packages')
+            
+    
+    return render(request,'admin/packages/package_create.html',context)
+
+
+
+
+@permission_required('admin_packages')
+@login_required
+def package_modify(request, id):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['services'] = Service.objects.filter(active=True, status="active")
+
+    context['package'] = Package.objects.get(id=id)
+
+
+
+
+    if request.method == "POST":
+        data = request.POST
+
+        name = data.get('name')
+        description = data.get('description')
+
+        count_va = data.get('count_va')
+        rate_va = data.get('rate_va')
+
+        count_lm = data.get('count_lm')
+        rate_lm = data.get('rate_lm')
+
+        count_acq = data.get('count_acq')
+        rate_acq = data.get('rate_acq')
+
+        count_dm = data.get('count_dm')
+        rate_dm = data.get('rate_dm')
+
+
+        
+
+        package = Package.objects.get(id=id)
+        package.name=name
+        package.description=description
+        package.count_va=count_va
+        package.rate_va=rate_va
+        package.count_lm=count_lm
+        package.rate_lm=rate_lm
+        package.count_acq=count_acq
+        package.rate_acq=rate_acq
+        package.count_dm=count_dm
+        package.rate_dm=rate_dm
+
+        package.save()
+
+        
+        
+
+        return redirect('/admin-packages')
+            
+    
+    return render(request,'admin/packages/package_modify.html',context)
+
+
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(require_http_methods(["POST"]), name='dispatch')
+class DeletePackageView(View):
+    def post(self, request, id):
+        current_user = request.user
+
+        # Ensure correct data access
+        try:
+            body = json.loads(request.body)
+            password = body['password']
+        except (KeyError, json.JSONDecodeError):
+            return JsonResponse({'error': 'Password not provided.'}, status=400)
+
+        # Authenticate user based on current_user and provided password
+        user = authenticate(username=current_user.username, password=password)
+
+        if user is not None:
+            # Check if the authenticated user can delete the target user
+            package = get_object_or_404(Package, id=id)
+            package.active=False
+            package.save()
+            return JsonResponse({'message': 'Account deleted successfully.'}, status=200)
+        
+        else:
+            return JsonResponse({'error': 'Invalid password.'}, status=401)
+        
+
+
+
+
+
+
+
+
+
+
+
+
+@permission_required('admin_contracts')
+@login_required
+def contract_samples_table(request):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['contract_samples'] = ContractSample.objects.filter(active=True)
+
+    return render(request,'admin/contracts/samples.html',context)
+
+
+
+
+
+
+@permission_required('admin_contracts')
+@login_required
+def sample_create(request):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['fields'] = CONTRACT_FIELD_TYPES
+
+
+
+
+    if request.method == "POST":
+        data = request.POST
+
+
+        name = data.get('name')
+        field = data.get('field')
+
+        editor = data.get('editor')
+
+        ContractSample.objects.create(name=name, field=field, description=editor, creator=profile)
+        
+
+
+        
+
+        
+
+        
+
+        
+        
+        
+
+        return redirect('/admin-contract-samples')
+            
+    
+    return render(request,'admin/contracts/sample_create.html',context)
+
+
+
+
+@permission_required('admin_packages')
+@login_required
+def sample_modify(request, id):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['fields'] = CONTRACT_FIELD_TYPES
+
+    context['sample'] = ContractSample.objects.get(id=id)
+
+
+
+
+    if request.method == "POST":
+        data = request.POST
+
+        name = data.get('name')
+        field = data.get('field')
+
+        editor = data.get('editor')
+
+
+        
+
+        sample = ContractSample.objects.get(id=id)
+        sample.name=name
+        sample.description=editor
+        sample.field=field
+ 
+        sample.save()
+
+        
+        
+
+        return redirect('/admin-contract-samples')
+            
+    
+    return render(request,'admin/contracts/sample_modify.html',context)
+
+
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(require_http_methods(["POST"]), name='dispatch')
+class DeleteSampleView(View):
+    def post(self, request, id):
+        current_user = request.user
+
+        # Ensure correct data access
+        try:
+            body = json.loads(request.body)
+            password = body['password']
+        except (KeyError, json.JSONDecodeError):
+            return JsonResponse({'error': 'Password not provided.'}, status=400)
+
+        # Authenticate user based on current_user and provided password
+        user = authenticate(username=current_user.username, password=password)
+
+        if user is not None:
+            # Check if the authenticated user can delete the target user
+            sample = get_object_or_404(ContractSample, id=id)
+            sample.active=False
+            sample.save()
+            return JsonResponse({'message': 'Account deleted successfully.'}, status=200)
+        
+        else:
+            return JsonResponse({'error': 'Invalid password.'}, status=401)
+        
+
+
+
+
+
+@permission_required('admin_contracts')
+@login_required
+def contracts_table(request):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['contracts'] = Contract.objects.filter(active=True)
+
+    return render(request,'admin/contracts/contracts_table.html',context)
+
+
+
+
+
+
+@permission_required('admin_contracts')
+@login_required
+def contract_create(request):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    context['packages'] = Package.objects.filter(active=True)
+    context['samples'] = ContractSample.objects.filter(active=True)
+
+
+
+
+
+    if request.method == "POST":
+        data = request.POST
+
+        package = data.get('package')
+        sample = data.get('sample')
+
+
+        return redirect(f'/contract-create-actual?package={package}&sample={sample}')
+
+
+        
+
+       
+
+        
+
+
+            
+    
+    return render(request,'admin/contracts/contract_create.html',context)
+
+
+
+
+
+def contract_create_actual(request):
+    # Get the package_id and sample_id from the URL query parameters
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    package_id = request.GET.get('package')
+    sample_id = request.GET.get('sample')
+
+    package = Package.objects.get(id=package_id)
+    sample = ContractSample.objects.get(id=sample_id)
+
+
+    context['package'] = package
+    context['sample'] = sample
+    # Check if both parameters exist
+    if package_id and sample_id:
+        # Fetch the Package and Sample objects based on the passed IDs
+        if request.method == "POST":
+            package = Package.objects.get(id=package_id)
+            sample = ContractSample.objects.get(id=sample_id)
+
+            data = request.POST
+
+            client_name = data.get('client_name')
+            client_phone = data.get('client_phone')
+            client_email = data.get('client_email')
+
+            count_va = data.get('count_va')
+            rate_va = data.get('rate_va')
+            
+            count_lm = data.get('count_lm')
+            rate_lm = data.get('rate_lm')
+
+            count_acq = data.get('count_acq')
+            rate_acq = data.get('rate_acq')
+
+            count_dm = data.get('count_dm')
+            rate_dm = data.get('rate_dm')
+            
+            contract_text = data.get('editor')
+
+            Contract.objects.create(
+                client_name=client_name,
+                client_phone=client_phone,
+                client_email=client_email,
+                package=package,
+                sample=sample,
+                count_va=count_va,
+                rate_va=rate_va,
+                count_lm=count_lm,
+                rate_lm=rate_lm,
+                count_acq=count_acq,
+                rate_acq=rate_acq,
+                count_dm=count_dm,
+                rate_dm=rate_dm,
+                contract_text=contract_text,
+            )
+
+            return redirect('/admin-contracts')
+
+        # Pass the objects to the template
+
+    return render(request, 'admin/contracts/contract_create_actual.html', context)
+
+
+
+
+
+
+
+
+def contract_view(request, id):
+
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['contract'] = Contract.objects.get(unique_id = id)
+    context['sales_leads'] = SalesLead.objects.filter(active=True)
+
+    
+
+
+
+    # Construct the content of the embed with quote formatting
+    request_ip = request.META.get('REMOTE_ADDR')
+    data = get_ip_info(request_ip)
+
+    ContractVisit.objects.create(contract=context['contract'], ip_address=request_ip, isp=data['isp'], location=data['location'])
+
+    if request.method == "POST":
+        data = request.POST
+
+        contract = Contract.objects.get(unique_id=id)
+        contract.paid=True
+        contract.save()
+
+
+        return render(request, 'statuses/contract_200.html',{})
+
+        
+
+       
+
+        
+
+
+            
+    
+    return render(request,'admin/contracts/contract_view.html',context)
+
+
+
+
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(csrf_protect, name='dispatch')
+@method_decorator(require_http_methods(["POST"]), name='dispatch')
+class DeleteContractView(View):
+    def post(self, request, id):
+        current_user = request.user
+
+        # Ensure correct data access
+        try:
+            body = json.loads(request.body)
+            password = body['password']
+        except (KeyError, json.JSONDecodeError):
+            return JsonResponse({'error': 'Password not provided.'}, status=400)
+
+        # Authenticate user based on current_user and provided password
+        user = authenticate(username=current_user.username, password=password)
+
+        if user is not None:
+            # Check if the authenticated user can delete the target user
+            contract = get_object_or_404(Contract, id=id)
+            contract.active=False
+            contract.save()
+            return JsonResponse({'message': 'Contract deleted successfully.'}, status=200)
+        
+        else:
+            return JsonResponse({'error': 'Invalid password.'}, status=401)
 
 
 
