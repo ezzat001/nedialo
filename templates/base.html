@@ -1062,11 +1062,11 @@ crossorigin=""></script>
         {% if perms.agents_table or  perms.working_hours or perms.attendance_monitor or perms.lateness_monitor  %}
 
         <li class="nav-item">
-          <a data-bs-toggle="collapse" href="#agentscategory" class="nav-link text-white {% if '/agents-list' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path  or '/lateness-monitor' in request.path or '/agent-leads/' in request.path or '/feedbacks-agent/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/agents-list' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path or '/lateness-monitor' in request.path or '/agent-leads/' in request.path or  '/feedbacks-agent/' in request.path  %}true{% else %}false{% endif %}">
+          <a data-bs-toggle="collapse" href="#agentscategory" class="nav-link text-white {% if '/agents-list' in request.path or '/agents-moderation' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path  or '/lateness-monitor' in request.path or '/agent-leads/' in request.path or '/feedbacks-agent/' in request.path  %}active{% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/agents-list' in request.path or '/agents-moderation' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path or '/lateness-monitor' in request.path or '/agent-leads/' in request.path or  '/feedbacks-agent/' in request.path  %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">people</i>
             <span class="nav-link-text ms-2 ps-1">Agents</span>
           </a>
-          <div class="collapse {% if '/agents-list' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path  or '/lateness-monitor' in request.path or '/agent-leads/'  in request.path or '/feedbacks-agent/' in request.path %}show{% endif %} " id="agentscategory">
+          <div class="collapse {% if '/agents-list' in request.path or '/agents-moderation' in request.path or '/working-hours' in request.path or '/attendance-monitor' in request.path  or '/lateness-monitor' in request.path or '/agent-leads/'  in request.path or '/feedbacks-agent/' in request.path %}show{% endif %} " id="agentscategory">
             <ul class="nav ">
 
               
@@ -1080,16 +1080,7 @@ crossorigin=""></script>
 
                 {% endif %}
 
-                {% if perms.agents_table %}
-
-              <li class="nav-item {% if '/agents-moderation' in request.path %}active{% endif %}">
-                <a class="nav-link text-grey {% if '/agents-moderation' in request.path %}active{% endif %}" href="/agents-moderation-{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons">warning</span>
-                  <span class="sidenav-normal ms-2 ps-1">Agents Moderation</span>
-                </a>
-              </li>
-
-              {% endif %}
+                
 
 
                 <div class="collapse " id="aglistdata">
@@ -1110,6 +1101,16 @@ crossorigin=""></script>
                 </div>
 
               </li>
+              {% if perms.agents_table %}
+
+              <li class="nav-item {% if '/agents-moderation' in request.path %}active{% endif %}">
+                <a class="nav-link text-grey {% if '/agents-moderation' in request.path %}active{% endif %}" href="/agents-moderation-{{current_month}}-{{current_year}}" target="_parent">
+                  <span class="sidenav-mini-icon material-icons">warning</span>
+                  <span class="sidenav-normal ms-2 ps-1">Agents Moderation</span>
+                </a>
+              </li>
+
+              {% endif %}
 
               {% if perms.working_hours %}
 

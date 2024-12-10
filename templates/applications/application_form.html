@@ -151,7 +151,7 @@
 
                     <div class="row mt-4">
                         <div class="col-sm-12">
-                            <button type="submit" class="btn btn-info">Submit Application</button>
+                            <button type="submit" onclick="checkDuplicateAndSubmit()" class="btn btn-info">Submit Application</button>
                         </div>
                     </div>
                 </form>
@@ -160,6 +160,9 @@
     </div>
 </div>
 </div>
+
+
+<!--
 
 <script>
     let chunks = [];
@@ -250,7 +253,7 @@
         });
     });
 </script>
-
+-->
 
 
 
@@ -281,8 +284,143 @@
     });
   </script>
   
-  
-  <script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+
+<script>
+
+    let chunks = [];
+    let mediaRecorder;
+    let audioBlob;
+
+    document.getElementById('startRecording').addEventListener('click', function() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.error('getUserMedia is not supported in this browser');
+            return;
+        }
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                document.getElementById('startRecording').style.display = 'none';
+                document.getElementById('stopRecording').style.display = 'block';
+                document.getElementById('audioPlayback').style.display = 'none';
+                document.getElementById('audioData').value = ''; // Clear previous audio data
+
+                mediaRecorder.ondataavailable = function(event) {
+                    chunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = function() {
+                    audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                    chunks = []; // Reset chunks array
+                    const audioURL = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioURL;
+                    document.getElementById('audioPlayback').style.display = 'block';
+                };
+            })
+            .catch(function(err) {
+                console.error('Error accessing microphone:', err);
+                alert('Error accessing microphone. Please check permissions and try again.');
+            });
+    });
+
+    document.getElementById('stopRecording').addEventListener('click', function() {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            document.getElementById('stopRecording').style.display = 'none';
+            document.getElementById('startRecording').style.display = 'block';
+        }
+    });
+
+    function handleAudioAndSubmit() {
+        const formData = new FormData(document.getElementById("application-form"));
+
+        // Append audio data if available
+        if (audioBlob instanceof Blob) {
+            formData.append('audio_data', audioBlob, 'audio.webm');
+        }
+
+        fetch('{% url "application_record" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value // Ensure CSRF token is included
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                Swal.fire("Success!", "Your application was submitted successfully.", "success").then(() => {
+                    window.location.href = "/application-success";
+                });
+            } else {
+                alert('Error submitting application. Please try again.');
+                response.text().then(text => {
+                    console.error('Server response:', text);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting application:', error);
+            alert('An error occurred while submitting the application.');
+        });
+    }
+
+    document.getElementById('application-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+    
+        checkDuplicateAndSubmit(); // Perform duplicate check first
+    });
+
+    function checkDuplicateAndSubmit() {
+        const phoneNumber = document.getElementById("phone_number").value;
+    
+        $.ajax({
+            url: "/check-duplicate-application/", // Replace with your URL
+            method: "POST",
+            data: {
+                phone_number: phoneNumber,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.exists) {
+                    Swal.fire({
+                        title: "Application Already Exists",
+                        text: `You just submitted an application ${response.time_message}. Do you want to submit another one?`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, submit another",
+                        cancelButtonText: "No",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Directly submit the application if the user confirms
+                            handleAudioAndSubmit(); // Proceed with submitting the application
+                        } else {
+                            Swal.fire("Cancelled", "Your application was not submitted.", "info");
+                        }
+                    });
+                } else {
+                    handleAudioAndSubmit(); // Proceed with submitting the application if no duplicate
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.fire(
+                    "Error!",
+                    "There was a problem checking the application. Please try again later.",
+                    "error"
+                );
+            }
+        });
+    }
+    
+
+
+</script>
+
+
+<!--  <script>
         // Generate a UUID and set it in the hidden field
         document.addEventListener('DOMContentLoaded', function() {
             let appUuid = localStorage.getItem('app_uuid');
@@ -301,7 +439,7 @@
             });
         }
 
-  </script>
+  </script>-->
 
   
   <script>

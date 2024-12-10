@@ -2081,61 +2081,92 @@ def handle_audio_upload(request):
         except:
             audio_file = None
         
-        submitted_uuid = request.POST.get('app_uuid')  # Get the UUID passed from the form
-
-        if not submitted_uuid:
-            # If no UUID is passed, generate one (this should not happen in normal cases)
-            submitted_uuid = str(uuid.uuid4())
-
+        
 
         try:
             # Example code to save file to media root
-            if Application.objects.filter(app_uuid=submitted_uuid).exists():
-                print('duplicated')
-                return render(request,'statuses/application_dup_400.html',{})
-            else:
-                new_application = Application(audio_file=audio_file)
-                new_application.app_uuid = submitted_uuid  # Store the UUID
-                new_application.full_name = request.POST.get('full_name')
-                new_application.position = request.POST.get('position')
-                new_application.phone = request.POST.get('phone_number')
-                new_application.email = request.POST.get('email')
-                new_application.education = request.POST.get('education')
-                new_application.start_date = request.POST.get('start_date')
-                new_application.shift = request.POST.get('shift')
-                new_application.experience = request.POST.get('previous_experience')
-                new_application.app_discovery = request.POST.get('discovery')
-                new_application.recording_link = request.POST.get('recording_external')
-                new_application.save()
 
-                app = new_application
+            phone = request.POST.get('phone_number')
+            
+            new_application = Application(phone=phone)
+            #new_application.app_uuid = submitted_uuid  # Store the UUID
+            new_application.full_name = request.POST.get('full_name')
+            new_application.position = request.POST.get('position')
+            new_application.phone = request.POST.get('phone_number')
+            new_application.email = request.POST.get('email')
+            new_application.education = request.POST.get('education')
+            new_application.start_date = request.POST.get('start_date')
+            new_application.shift = request.POST.get('shift')
+            new_application.experience = request.POST.get('previous_experience')
+            new_application.app_discovery = request.POST.get('discovery')
+            new_application.recording_link = request.POST.get('recording_external')
+            new_application.save()
 
-                utc_now = datetime.utcnow()
+            app = new_application
 
-                # Get the timezone object for 'America/New_York'
-                est_timezone = pytz.timezone('America/New_York')
+            utc_now = datetime.utcnow()
 
-                # Convert UTC time to Eastern timezone
-                est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+            # Get the timezone object for 'America/New_York'
+            est_timezone = pytz.timezone('America/New_York')
 
-                # Format the time as HH:MM:SS string
-                est = est_time.strftime('%I:%M:%S %p')
+            # Convert UTC time to Eastern timezone
+            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
 
-                # Construct the content of the embed with quote formatting
-                request_ip = request.META.get('REMOTE_ADDR')
+            # Format the time as HH:MM:SS string
+            est = est_time.strftime('%I:%M:%S %p')
 
-                content = f'\n**APPLICATION**\n\n\n**Applicant:** {app.full_name}\n\n**Position:** {app.get_position_display()}\n\n**Can Start on:** {app.start_date}\n\n**Shift:** {app.get_shift_display()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
-                
-                try:
-                    send_discord_message_application(content,app.id)
-                except:
-                    pass
-                
-                return redirect('/application-success')
+            # Construct the content of the embed with quote formatting
+            request_ip = request.META.get('REMOTE_ADDR')
+
+            content = f'\n**APPLICATION**\n\n\n**Applicant:** {app.full_name}\n\n**Position:** {app.get_position_display()}\n\n**Can Start on:** {app.start_date}\n\n**Shift:** {app.get_shift_display()}\n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}  '
+            
+            try:
+                send_discord_message_application(content,app.id)
+            except:
+                pass
+            
+            return redirect('/application-success')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'No audio file found.'}, status=400)
+
+
+
+
+@csrf_exempt
+def check_duplicate_application(request):
+    if request.method == 'POST':
+        print("inside view")
+        phone_number = request.POST.get('phone_number')
+        print(phone_number)
+        if phone_number:
+            existing_app = Application.objects.filter(phone=phone_number).order_by('-submission_date').first()
+            if existing_app:
+                print('duplication found')
+
+                # Make sure datetime.now() is timezone-aware
+                now = tz.now()
+
+                # Subtracting timezone-aware datetime objects
+                time_difference = now - existing_app.submission_date
+                minutes_ago = int(time_difference.total_seconds() // 60)
+                hours_ago = minutes_ago // 60
+                days_ago = hours_ago // 24
+
+                time_message = (
+                    f"{days_ago} days ago" if days_ago > 0 else
+                    f"{hours_ago} hours ago" if hours_ago > 0 else
+                    f"{minutes_ago} minutes ago"
+                )
+                return JsonResponse({
+                    'exists': True,
+                    'time_message': time_message
+                })
+
+        return JsonResponse({'exists': False})
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 
 
 

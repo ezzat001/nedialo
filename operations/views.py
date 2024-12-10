@@ -1945,11 +1945,11 @@ def agents_moderation(request, month, year):
         agent_totals['total_lateness'] = formatted_late_time
 
         
-        agent_totals['positive_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,type="positive"))
+        agent_totals['positive_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,feedback_type="positive"))
 
-        agent_totals['negative_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,type="negative"))
+        agent_totals['negative_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,feedback_type="negative"))
 
-        agent_totals['neutral_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,type="neutral"))
+        agent_totals['neutral_feedbacks'] = len(Feedback.objects.filter(agent_profile=agent, created__month=month, created__year=year,feedback_type="neutral"))
 
         status_totals[agent] = agent_totals
 
