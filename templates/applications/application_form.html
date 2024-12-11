@@ -293,13 +293,14 @@
     let chunks = [];
     let mediaRecorder;
     let audioBlob;
-
+    let isSubmitting = false; // Prevent multiple submissions
+    
     document.getElementById('startRecording').addEventListener('click', function() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             console.error('getUserMedia is not supported in this browser');
             return;
         }
-
+    
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function(stream) {
                 mediaRecorder = new MediaRecorder(stream);
@@ -308,11 +309,11 @@
                 document.getElementById('stopRecording').style.display = 'block';
                 document.getElementById('audioPlayback').style.display = 'none';
                 document.getElementById('audioData').value = ''; // Clear previous audio data
-
+    
                 mediaRecorder.ondataavailable = function(event) {
                     chunks.push(event.data);
                 };
-
+    
                 mediaRecorder.onstop = function() {
                     audioBlob = new Blob(chunks, { type: 'audio/webm' });
                     chunks = []; // Reset chunks array
@@ -326,7 +327,7 @@
                 alert('Error accessing microphone. Please check permissions and try again.');
             });
     });
-
+    
     document.getElementById('stopRecording').addEventListener('click', function() {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
@@ -334,15 +335,18 @@
             document.getElementById('startRecording').style.display = 'block';
         }
     });
-
+    
     function handleAudioAndSubmit() {
+        if (isSubmitting) return; // Prevent multiple submissions
+    
+        isSubmitting = true; // Set flag to prevent resubmission
         const formData = new FormData(document.getElementById("application-form"));
-
+    
         // Append audio data if available
         if (audioBlob instanceof Blob) {
             formData.append('audio_data', audioBlob, 'audio.webm');
         }
-
+    
         fetch('{% url "application_record" %}', {
             method: 'POST',
             body: formData,
@@ -365,15 +369,18 @@
         .catch(error => {
             console.error('Error submitting application:', error);
             alert('An error occurred while submitting the application.');
+        })
+        .finally(() => {
+            isSubmitting = false; // Reset flag after submission attempt
         });
     }
-
+    
     document.getElementById('application-form').addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent default form submission
-    
+        
         checkDuplicateAndSubmit(); // Perform duplicate check first
     });
-
+    
     function checkDuplicateAndSubmit() {
         const phoneNumber = document.getElementById("phone_number").value;
     
@@ -395,7 +402,6 @@
                         cancelButtonText: "No",
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Directly submit the application if the user confirms
                             handleAudioAndSubmit(); // Proceed with submitting the application
                         } else {
                             Swal.fire("Cancelled", "Your application was not submitted.", "info");
@@ -414,8 +420,6 @@
             }
         });
     }
-    
-
 
 </script>
 

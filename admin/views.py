@@ -123,6 +123,7 @@ def application_report(request, app_id):
         app.handled_by=request.user
         app.language_exp = data.get('language_exp')
         app.skills = request.POST.getlist('skills')
+        app.comments = data.get('comments')
         app.save()
         
             

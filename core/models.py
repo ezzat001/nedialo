@@ -591,6 +591,7 @@ class Application(models.Model):
     
     audio_file = models.FileField(upload_to='applications_audio', blank=True, null=True)
     status = models.CharField(max_length=50, choices=APPLICATION_STATUS_CHOICES, blank=True, null=True,default="pending")
+    comments = models.TextField(null=True, blank=True)
     handled_by = models.ForeignKey(User,on_delete=models.SET_NULL, related_name="handled_by_app",null=True,blank=True)
 
     active = models.BooleanField(default=True)

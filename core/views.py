@@ -2091,6 +2091,7 @@ def handle_audio_upload(request):
             new_application = Application(phone=phone)
             #new_application.app_uuid = submitted_uuid  # Store the UUID
             new_application.full_name = request.POST.get('full_name')
+            new_application.audio_file = audio_file
             new_application.position = request.POST.get('position')
             new_application.phone = request.POST.get('phone_number')
             new_application.email = request.POST.get('email')
