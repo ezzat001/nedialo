@@ -63,13 +63,18 @@
                               <table class="table align-items-center mb-0">
                                 <thead>
                                   <tr>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Package</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Virtual Assistants</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lead Managers</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acquisitions</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data Managers</th>
-                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Total</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
+                                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Package</th>
+                                      <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Virtual Assistants</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cost</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lead Managers</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cost</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Acquisitions</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cost</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Data Managers</th>
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cost</th>
+
+                                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Total Charged</th>
 
                                     </tr>
                                 </thead>
@@ -92,17 +97,37 @@
                                     <td>
                                       <p class="text-sm font-weight-normal mb-0">{{contract.count_va}} Agent/s</p>
                                     </td>
+
+                                    <td>
+                                      <p class="text-sm font-weight-normal mb-0">${{contract|total_va_cost}}</p>
+                                    </td>
+
                                     <td class="align-middle text-center text-sm">
                                       <p class="text-sm font-weight-normal mb-0">{{contract.count_lm}} Agent/s</p>
                                     </td>
+
+                                    <td>
+                                      <p class="text-sm font-weight-normal mb-0">${{contract|total_lm_cost}}</p>
+                                    </td>
+
                                     <td class="align-middle text-center text-sm">
                                         <p class="text-sm font-weight-normal mb-0">{{contract.count_acq}} Agent/s</p>
                                     </td>
+
+                                    <td>
+                                      <p class="text-sm font-weight-normal mb-0">${{contract|total_acq_cost}}</p>
+                                    </td>
+
                                     <td class="align-middle text-center text-sm">
                                         <p class="text-sm font-weight-normal mb-0">{{contract.count_dm}} Agent/s</p>
-                                      </td>
+                                    </td>
+
+                                    <td>
+                                      <p class="text-sm font-weight-normal mb-0">${{contract|total_dm_cost}}</p>
+                                    </td>
+
                                     <td class="align-middle text-center">
-                                        <p class="text-sm font-weight-normal mb-0">${{contract|total_contract_cost}}</p>
+                                      <h6 class="mb-0 text-sm">${{contract|total_contract_cost}}</h6>
 
                                     </td>
                                   </tr>
@@ -116,7 +141,7 @@
                     <form class="multisteps-form__form" role="form" method="POST" enctype="multipart/form-data" id="user-create">
                         {% csrf_token %}
                         <div class="row">
-                            <label class="form-label mt-4 ms-0">Please write your name and click paid after paying the subscription.</label>
+                            <label class="form-label mt-4 ms-0">Please enter your name and click 'Pay' to proceed to the payment gateway.</label>
  
                             <div class="input-group input-group-dynamic ">
                             <input type="text" class="form-control" name="client_name" required>
@@ -125,7 +150,7 @@
 
 
                         <div class="button-row d-flex mt-4">
-                            <button class="btn bg-gradient-info ms-auto mb-0" type="submit" title="Next">Paid</button>
+                            <button class="btn bg-gradient-info ms-auto mb-0" type="submit" title="Next">Pay</button>
                         </div>
 
 

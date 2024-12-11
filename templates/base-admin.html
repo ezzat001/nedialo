@@ -291,7 +291,7 @@
 
 
 
-        {% if perms.admin_contracts or perms.admin_contactlists or perms.admin_provided_services or perms.admin_packages %}
+        {% if perms.admin_packages or perms.admin_contracts  %}
         <li class="nav-item">
           <a data-bs-toggle="collapse" href="#contracts_settings" class="nav-link text-white {% if  '/admin-packages' in request.path or '/admin-contract-samples' in request.path or  '/admin-contracts' in request.path  %} active {% endif %}" aria-controls="authExamples" role="button" aria-expanded="{% if '/admin-packages' in request.path or '/admin-contracts' in request.path or 'admin-contract-samples' in request.path %}true{% else%}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">description </i>

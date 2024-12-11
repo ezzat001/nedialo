@@ -978,14 +978,14 @@ crossorigin=""></script>
         <li class="nav-item">
 
           <a data-bs-toggle="collapse" href="#salesoutleads" class="nav-link text-white 
-            {% if '/sales-dashboard' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}active{% endif %}" 
-            aria-controls="salesoutleads" role="button" aria-expanded="{% if '/sales-dashboard' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}true{% else %}false{% endif %}">
+            {% if '/sales-dashboard' in request.path or '/sales-clients-list' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}active{% endif %}" 
+            aria-controls="salesoutleads" role="button" aria-expanded="{% if '/sales-dashboard' in request.path or '/sales-clients-list' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}true{% else %}false{% endif %}">
             <i class="material-icons-round {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">attach_money</i>
             <span class="nav-link-text ms-2 ps-1">Sales & Outreach</span>
           </a>
 
           
-          <div class="collapse {% if '/sales-dashboard' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}show{% endif %}" id="salesoutleads">
+          <div class="collapse {% if '/sales-dashboard' in request.path or '/sales-clients-list' in request.path or '/sales-calendar' in request.path or '/sales-lookerstudio' in request.path or '/campleads-sales' in request.path %}show{% endif %}" id="salesoutleads">
             <ul class="nav">
 
               {% if perms.sales_dashboard %}
@@ -1002,12 +1002,23 @@ crossorigin=""></script>
 
 
               {% if perms.sales_dashboard  %}
-              <li class="nav-item {% if '/sales-calendar' in request.path %}active{% endif %}">
-                <a class="nav-link text-grey {% if '/sales-calendar' in request.path %}active{% endif %}" href="/sales-calendar-{{current_month}}-{{current_year}}" target="_parent">
-                  <span class="sidenav-mini-icon material-icons">today</span>
-                  <span class="sidenav-normal ms-2 ps-1">Sales Calendar</span>
-                </a>
-              </li>
+                <li class="nav-item {% if '/sales-calendar' in request.path %}active{% endif %}">
+                  <a class="nav-link text-grey {% if '/sales-calendar' in request.path %}active{% endif %}" href="/sales-calendar-{{current_month}}-{{current_year}}" target="_parent">
+                    <span class="sidenav-mini-icon material-icons">today</span>
+                    <span class="sidenav-normal ms-2 ps-1">Sales Calendar</span>
+                  </a>
+                </li>
+
+              {% endif %}
+
+
+              {% if perms.sales_dashboard  %}
+                <li class="nav-item {% if '/sales-clients-list' in request.path %}active{% endif %}">
+                  <a class="nav-link text-grey {% if '/sales-clients-list' in request.path %}active{% endif %}" href="/sales-clients-list-{{current_year}}" target="_parent">
+                    <span class="sidenav-mini-icon material-icons">work</span>
+                    <span class="sidenav-normal ms-2 ps-1">Clients List</span>
+                  </a>
+                </li>
 
               {% endif %}
               

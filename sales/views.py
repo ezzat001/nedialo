@@ -321,7 +321,20 @@ def sales_lead_info(request, lead_id):
 
 
 
+@permission_required('sales_dashboard')
+@login_required
+def sales_clients_list(request, year):
 
+    context = {}
+    context['year'] = year
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+    
+    sales_leads = SalesLead.objects.filter(active=True, pushed__year=year)
+
+    context['sales_leads'] = sales_leads
+
+    return render(request,'sales/clients_list.html', context)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SalesLeadSubmitView(View):

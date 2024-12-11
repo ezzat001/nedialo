@@ -296,6 +296,64 @@ def total_contract_cost(contract):
     
 
 
+
+@register.filter
+def total_va_cost(contract):
+    try:
+        # Log the input values
+        
+        # Multiply each count by 160, then by rate, and sum the results
+        total = (float(contract.count_va or 0) * 160 * float(contract.rate_va or 0)) 
+        
+        return round(total, 2)
+    except (ValueError, TypeError) as e:
+        return 0
+    
+
+@register.filter
+def total_lm_cost(contract):
+    try:
+        # Log the input values
+        
+        # Multiply each count by 160, then by rate, and sum the results
+        total = (float(contract.count_lm or 0) * 160 * float(contract.rate_lm or 0)) 
+        
+        return round(total, 2)
+    except (ValueError, TypeError) as e:
+        return 0
+    
+
+
+@register.filter
+def total_acq_cost(contract):
+    try:
+        # Log the input values
+        
+        # Multiply each count by 160, then by rate, and sum the results
+        total = (float(contract.count_acq or 0) * 160 * float(contract.rate_acq or 0)) 
+        
+        return round(total, 2)
+    except (ValueError, TypeError) as e:
+        return 0
+    
+
+    
+@register.filter
+def total_dm_cost(contract):
+    try:
+        # Log the input values
+        
+        # Multiply each count by 160, then by rate, and sum the results
+        total = (float(contract.count_dm or 0) * 160 * float(contract.rate_dm or 0)) 
+        
+        return round(total, 2)
+    except (ValueError, TypeError) as e:
+        return 0
+
+
+    
+
+
 @register.filter
 def contract_total_visits(contract):
     try:

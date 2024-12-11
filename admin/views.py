@@ -2257,13 +2257,6 @@ def sample_create(request):
 
 
         
-
-        
-
-        
-
-        
-        
         
 
         return redirect('/admin-contract-samples')
@@ -2434,6 +2427,9 @@ def contract_create_actual(request):
             client_phone = data.get('client_phone')
             client_email = data.get('client_email')
 
+            checkout_link = data.get('checkout_link')
+
+
             count_va = data.get('count_va')
             rate_va = data.get('rate_va')
             
@@ -2452,6 +2448,7 @@ def contract_create_actual(request):
                 client_name=client_name,
                 client_phone=client_phone,
                 client_email=client_email,
+                strip_link = checkout_link,
                 package=package,
                 sample=sample,
                 count_va=count_va,
@@ -2502,11 +2499,15 @@ def contract_view(request, id):
         data = request.POST
 
         contract = Contract.objects.get(unique_id=id)
-        contract.paid=True
+        contract.clicked=True
         contract.save()
 
+        redirect_link = contract.strip_link 
 
-        return render(request, 'statuses/contract_200.html',{})
+
+
+
+        return redirect(redirect_link)
 
         
 

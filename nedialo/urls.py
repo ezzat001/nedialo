@@ -265,6 +265,7 @@ urlpatterns = [
 
 
     path('sales-dashboard-<int:year>',sales_dashboard),
+    path('sales-clients-list-<int:year>',sales_clients_list),
     path('sales-lookerstudio',sales_lookerstudio),
     path('sales-calendar-<int:month>-<int:year>', sales_calendar),
     path('new-sales-lead',sales_lead_create),

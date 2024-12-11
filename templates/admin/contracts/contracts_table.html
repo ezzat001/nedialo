@@ -169,11 +169,11 @@
 
               <td class="text-xs font-weight-normal">
 
-                <span class="badge filter bg-gradient-{% if contract.paid %}success{%else%}danger{%endif%} ">
-                  {% if contract.paid %}
-                  Paid
+                <span class="badge filter bg-gradient-{% if contract.clicked %}success{%else%}danger{%endif%} ">
+                  {% if contract.clicked %}
+                  Clicked
                   {% else %}
-                  Not Paid
+                  Not Clicked
                   {% endif %}
 
                 </span>

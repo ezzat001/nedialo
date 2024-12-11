@@ -499,10 +499,10 @@ class Role(models.Model):
 
     ROLE_FIELD_NAMES = {
         "work_status": "Work Status",
-        "client_dashboard": "Client Dashboard",
-        "client_lookerstudio": "Client Looker Studio",
-        "client_campaign_performance": "Client Campaign Performance",
-        "affiliate_dashboard": "Affiliate Dashboard",
+        "client_dashboard": "Client Dashboard (Client Role Only)",
+        "client_lookerstudio": "Client Looker Studio (Client Role Only)",
+        "client_campaign_performance": "Client Campaign Performance (Client Role Only)",
+        "affiliate_dashboard": "Affiliate Dashboard (Affiliate Role Only)",
         "caller_dashboard": "Caller Dashboard",
         "lead_submission": "Lead Submission",
         "my_leads": "My Leads",
@@ -1641,8 +1641,9 @@ class Contract(models.Model):
     count_dm = models.CharField(max_length=100, null=True, blank=True)
     rate_dm = models.CharField(max_length=100, null=True, blank=True)
 
+    strip_link = models.TextField(null=True, blank=True)
 
-    paid = models.BooleanField(default=False)
+    clicked = models.BooleanField(default=False)
 
 
     active = models.BooleanField(default=True)
