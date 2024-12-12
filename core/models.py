@@ -1177,9 +1177,6 @@ class Lead(models.Model):
     extra_notes = models.TextField( null=True, blank=True)
 
 
-    insurance = models.BooleanField(default=False)
-    contractor = models.BooleanField(default=False)
-    deductible = models.BooleanField(default=False)
 
     roof_age = models.CharField(max_length=50, null=True, blank=True)
     appointment_time = models.CharField(max_length=50, null=True, blank=True)
@@ -1405,59 +1402,60 @@ class WorkStatus(models.Model):
     offline_time = models.DurationField(default=timezone.timedelta())
     login_time = models.DateTimeField(null=True, blank=True)
     logout_time = models.DateTimeField(null=True, blank=True)
-    
     lateness = models.DurationField(null=True, blank=True)
-    lateness_status = models.CharField(max_length=10, choices=[('late', 'Late'), ('early', 'Early'), ('on_time', 'On Time')], null=True, blank=True)
-    
-
+    lateness_status = models.CharField(
+        max_length=10,
+        choices=[
+            ('late', 'Late'),
+            ('early', 'Early'),
+            ('on_time', 'On Time')
+        ],
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"{self.user} - {self.date} - {self.current_status}"
 
+    def save(self, *args, **kwargs):
+        # Set login time if the object is being created and current_status is active
+        if not self.pk and self.current_status in ['ready', 'meeting', 'break']:
+            self.login_time = timezone.now()
+
+        super().save(*args, **kwargs)  # Call parent save method
+
     def update_status(self, new_status):
         now = timezone.now()
-        
+
         if self.current_status != new_status:
             # Update time spent in the previous status
             duration = now - self.last_status_change
-            setattr(self, f"{self.current_status}_time", getattr(self, f"{self.current_status}_time") + duration)
-            
-            # Check if login_time should be set
+            setattr(
+                self,
+                f"{self.current_status}_time",
+                getattr(self, f"{self.current_status}_time") + duration,
+            )
+
+            # Set login time for active statuses
             if new_status in ['ready', 'meeting', 'break'] and self.should_set_login_time():
                 self.login_time = now
-                actual_login_time = self.get_login_time_in_timezone()
-                default_login_time = Profile.objects.get(user=self.user).login_time  # Assuming `profile` is related to `User`
 
-                # Convert actual login time and default login time to datetime objects for comparison
-                actual_login_time = actual_login_time.time() if isinstance(actual_login_time, datetime) else actual_login_time
-                default_login_time = default_login_time.time() if isinstance(default_login_time, datetime) else default_login_time
+                # Calculate lateness details
+                profile = Profile.objects.filter(user=self.user).first()
+                if profile and profile.login_time:
+                    default_login_time = profile.login_time
+                    actual_login_time = timezone.localtime(self.login_time)
+                    lateness = actual_login_time - default_login_time
 
-                # Combine with today's date
-                actual_datetime = datetime.combine(datetime.today(), actual_login_time)
-                default_datetime = datetime.combine(datetime.today(), default_login_time)
+                    self.lateness = abs(lateness)
+                    if lateness.total_seconds() > 0:
+                        self.lateness_status = 'late'
+                    elif lateness.total_seconds() < 0:
+                        self.lateness_status = 'early'
+                    else:
+                        self.lateness_status = 'on_time'
 
-                # Calculate the time difference between the actual login time and the default login time
-                time_difference = actual_datetime - default_datetime
-
-                # Get the difference as total seconds, then convert to hours, minutes, and seconds
-                total_seconds = abs(time_difference.total_seconds())
-                hours, remainder = divmod(total_seconds, 3600)
-                minutes, seconds = divmod(remainder, 60)
-
-                # Optionally, store the lateness in the model
-                self.lateness = timezone.timedelta(hours=hours, minutes=minutes, seconds=seconds)
-                
-                if actual_datetime > default_datetime:
-                    self.lateness_status = 'late'
-                elif actual_datetime < default_datetime:
-                    self.lateness_status = 'early'
-                else:
-                    self.lateness_status = 'on_time'
-
-
-
-
-            # Set logout time when changing to 'offline'
+            # Set logout time for 'offline' status
             if new_status == 'offline':
                 self.logout_time = now
 
@@ -1467,11 +1465,9 @@ class WorkStatus(models.Model):
 
     def should_set_login_time(self):
         """Check if login time should be set based on time fields."""
-        # Check if any of the time fields are zero or null
-        return (
-            (self.ready_time == timezone.timedelta() or self.ready_time is None) and
-            (self.meeting_time == timezone.timedelta() or self.meeting_time is None) and
-            (self.break_time == timezone.timedelta() or self.break_time is None)
+        return all(
+            getattr(self, f"{status}_time") in [None, timezone.timedelta()]
+            for status in ['ready', 'meeting', 'break']
         )
 
     def get_total_seconds(self, status):
@@ -1484,32 +1480,27 @@ class WorkStatus(models.Model):
             'break': self.get_total_seconds('break'),
             'offline': self.get_total_seconds('offline'),
         }
-    
+
     def get_login_time_in_timezone(self):
         if self.login_time:
             return timezone.localtime(self.login_time)
         return None
-    
 
     def get_current_duration(self):
-        """
-        Returns the time spent in the current status since the last status change,
-        with the microseconds removed.
-        """
+        """Returns the time spent in the current status since the last status change."""
         now = timezone.now()
         duration = now - self.last_status_change
-        # Remove microseconds from the timedelta
-        return duration - timedelta(microseconds=duration.microseconds)
-    
+        return duration - timezone.timedelta(microseconds=duration.microseconds)
+
     @classmethod
     def get_workstatus_with_login_time(cls, agent_profile, month, year):
         return cls.objects.filter(
-            user__profile=agent_profile, 
+            user__profile=agent_profile,
             login_time__isnull=False,
             date__month=month,
-            date__year=year
-        )    
-    
+            date__year=year,
+        )
+
     class Meta:
         indexes = [
             models.Index(fields=['user', 'last_status_change']),

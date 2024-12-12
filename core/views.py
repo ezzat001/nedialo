@@ -541,28 +541,13 @@ def lead_submission_roofing(request):
         property_type = data.get('property_type')
         address = data.get('address')
 
-        insurance = data.get('insurance')
-        contractor = data.get('contractor')
-        deductible = data.get('deductible')
+
         roof_age = data.get('roof_age')
         appointment_time = data.get('appointment_time')
         known_issues = data.get('known_issues')
 
 
-        if str(insurance) == "yes":
-            insurance = True
-        elif str(insurance) == "no":
-            insurance = False
 
-        if str(contractor) == "yes":
-            contractor = True
-        elif str(contractor) == "no":
-            contractor = False
-
-        if str(deductible) == "yes":
-            deductible = True
-        elif str(deductible) == "no":
-            deductible = False
 
 
 
@@ -587,10 +572,9 @@ def lead_submission_roofing(request):
             seller_name = prospect_name,
             seller_phone= phone_number,
             seller_email= email,
-            insurance=insurance,
-            contractor=contractor,
+
             property_address=address,
-            deductible=deductible,
+
             roof_age=roof_age,
             appointment_time=appointment_time,
             known_issues=known_issues,
@@ -835,37 +819,13 @@ def lead_report(request, lead_id):
         if lead.status == "pending":
 
 
-            insurance = data.get('insurance')
-            contractor = data.get('contractor')
-            deductible = data.get('deductible')
             
-            if str(insurance) == "yes":
-                insurance = True
-            elif str(insurance) == "no":
-                insurance = False
-            else:
-                insurance = False
-
-            if str(contractor) == "yes":
-                contractor = True
-            elif str(contractor) == "no":
-                contractor = False
-            else:
-                contractor = False
-
-            if str(deductible) == "yes":
-                deductible = True
-            elif str(deductible) == "no":
-                deductible = False
-            else:
-                deductible = False
             
 
-        
+            camp_id = data.get('campaign')
             dialer_list = data.get('dialer_list')
+            lead.campaign = Campaign.objects.get(id=camp_id)
             lead.seller_name = data.get('owner_name')
-            lead.seller_phone = data.get('phone_number')
-            lead.seller_email = data.get('email')
             lead.property_type = data.get('property_type')
             #lead.property_address = data.get('address')
             lead.asking_price = data.get('asking_price')
@@ -879,9 +839,8 @@ def lead_report(request, lead_id):
 
 
 
-            lead.insurance = insurance
-            lead.contractor = contractor
-            lead.deductible = deductible
+
+
             lead.roof_age = data.get('roof_age')
             lead.appointment_time = data.get('appointment_time')
             lead.known_issues = data.get('known_issues')
@@ -2292,6 +2251,8 @@ ALLOWED_EXTENSIONS = {
     'mp4': 'video/mp4',
     'mov': 'video/quicktime',
     'avi': 'video/x-msvideo',
+    'zip': 'application/zip',
+    'rar': 'application/vnd.rar',
     # Add more video extensions if needed
 }
 

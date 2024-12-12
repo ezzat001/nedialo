@@ -141,56 +141,15 @@
                             </div>
 
                         </div>
+                        
                         <div class="row mt-4">
-
-                            <div class="col-sm-6">
-                                <div class="input-group input-group-static">
-                                    <label>Do you have insurance? *</label>
-                                    <select class="form-control" name="insurance" id="insurance" required>
-                                        <option value="">Select...</option> <!-- Blank option for initial selection -->
-                                          <option value="yes" {% if lead.insurance %}selected{% endif %}>Yes</option>
-                                          <option value="no" {% if not lead.insurance %}selected{% endif %}>No</option>
-                                          
-    
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="input-group input-group-static">
-                                    <label>Are you currently working with any other roofing contractors? *</label>
-                                    <select class="form-control" name="contractor" id="contractor" required>
-                                        <option value="">Select...</option> <!-- Blank option for initial selection -->
-                                          <option value="yes" {% if lead.contractor %}selected{% endif %}>Yes</option>
-                                          <option value="no" {% if not lead.contractor %}selected{% endif %}>No</option>
-                                          
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col-sm-6">
-                                <div class="input-group input-group-static">
-                                    <label>Are you prepared to cover or finance your insurance deductible if needed? *</label>
-                                    <select class="form-control" name="deductible" id="deductible" required>
-                                    <option value="">Select...</option> <!-- Blank option for initial selection -->
-                                      <option value="yes" {% if lead.deductible %}selected{% endif %}>Yes</option>
-                                      <option value="no" {% if not lead.deductible %}selected{% endif %}>No</option>
-                                      
-
-                                    </select>
-                                </div>
-                            </div>
-
+                            
                             <div class="col-sm-6">
                                 <div class="input-group input-group-static">
                                     <label>Age of the roof (Years) *</label>
                                     <input type="number" class="form-control" value="{{lead.roof_age}}" name="roof_age" id="roof_age" min="1" required>
                                 </div>
                             </div>
-                            
-                        </div>
-
-                        <div class="row mt-4">
 
                             <div class="col-sm-6">
                                 <div class="input-group input-group-static">
@@ -200,6 +159,8 @@
                             </div>
                             
                         </div>
+
+
                         <div class="row mt-4">
                             <div class="col-sm-12">
                                 <div class="input-group input-group-static">

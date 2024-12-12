@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import *
+from django.utils.html import format_html
 
 
 # Register your models here.
@@ -103,7 +104,32 @@ class ManualHoursAdmin(admin.ModelAdmin):
     list_display = ('agent_profile','created', 'positive','hours', 'active')
 
 
-admin.site.register(WorkStatus)
+
+
+@admin.register(WorkStatus)
+class WorkStatusAdmin(admin.ModelAdmin):
+    list_display = ('user', 'date', 'formatted_current_status', 'login_time', 'logout_time')
+
+    def formatted_current_status(self, obj):
+        if obj.current_status == 'ready':
+            color = 'green'
+        elif obj.current_status == 'meeting':
+            color = 'blue'
+        elif obj.current_status == 'break':
+            color = 'orange'
+        elif obj.current_status == 'offline':
+            color = 'red'
+        else:
+            color = 'black'
+
+        return format_html(
+            '<span style="font-weight: bold; color: {};">{}</span>',
+            color,
+            obj.current_status.upper()  # Optional: Convert to uppercase
+        )
+
+    formatted_current_status.short_description = 'Current Status'
+
 
 
 admin.site.register(Absence)

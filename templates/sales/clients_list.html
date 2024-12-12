@@ -94,7 +94,7 @@
                   </div>
                 </td>
                 <td class="font-weight-normal">
-                  <span class="my-2 text-xs">{{lead.pushed}}</span>
+                  <span class="my-2 text-xs">{{lead.pushed|date:"Y-m-d\\TH:i"}}</span>
                 </td>
                 <td class="text-xs font-weight-normal">
                   {{lead.contact}}
@@ -123,7 +123,7 @@
                 </td>
                 
                 <td class="text-xs font-weight-normal">
-                    {{lead.followup_date}}
+                    {{lead.followup_date|date:"Y-m-d"}}
                 </td> 
 
                 <td class="text-xs font-weight-normal">
@@ -205,7 +205,7 @@
         // Set camp-id dynamically or statically here
   
         var fp = flatpickr(calendarContainer, {
-            
+
             dateFormat: "Y-m", // Internal format
             altInput: true, // Use an alternative input
             altFormat: "F Y", // Display format in the button
