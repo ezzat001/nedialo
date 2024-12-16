@@ -138,20 +138,34 @@
                     <div class="checklist-item checklist-item-{% if lead.assigned %}danger{% else %}info{% endif %} ps-2 ms-3">
                       <div class="d-flex align-items-center">
                         <div class="form-check">
+                          
                         </div>
                         <h6 class="mb-0 text-dark text-sm" href="lead-handling/{{lead.id}}">
                         <a href="lead-handling/{{lead.lead_id}}" target="_blank">
                           {{lead.agent_profile}}
                         </a>
                         </h6>
-                        <div class="dropstart  float-lg-end ms-auto">
-                          <a href="javascript:;"  onclick="confirmAssignWithSwal({{ lead.lead_id }})"  class="float-lg-end ms-auto cursor-pointer"  aria-expanded="false">
-                            <i class="material-icons text-secondary">
-                              open_in_new 
-                            </i>
-                          </a>
+                        <div class="dropstart float-lg-end ms-auto">
+                          <!-- X Button (Remove) -->
                           
-                        </div>
+                          <!-- Open in New Button -->
+                          <a href="javascript:;" data-tippy-content="open" data-tippy-placement="top" onclick="confirmAssignWithSwal({{ lead.lead_id }})" class="float-lg-end ms-auto cursor-pointer" aria-expanded="false">
+                              <i class="material-icons text-secondary">
+                                  open_in_new
+                              </i>
+                          </a>
+                          {% if lead.assigned %}
+                           
+                            <a href="javascript:;" data-tippy-content="unassign" data-tippy-placement="top" onclick="confirmUnassignLead({{ lead.lead_id }})" class="float-lg-end ms-auto cursor-pointer" aria-expanded="false" style="margin-right: 10px;">
+                              <i class="material-icons text-secondary">
+                                  cancel
+                              </i>
+                            </a>
+                          {% endif %}
+
+                        
+                      </div>
+                      
                       </div>
                       <div class="d-flex align-items-center ms-4 mt-3 ps-1">
                         <div>
@@ -168,10 +182,14 @@
                         </div>
 
                         <div class="mx-auto">
-                          <p class="mb-0 text-secondary">Assigned</p>
+                          <p class="mb-0 text-secondary">Assigned
+                            
+                          </p> 
+                          
                           <span class="text-xs">
                             {% if lead.assigned %}
-                              {{lead.assigned}}
+                              {{lead.assigned}}                           
+                              
                             {% else %}
                               Not Assigned
                             {% endif %}
@@ -337,12 +355,101 @@
               console.error("Error during fetch:", error);
           });
       }
+    </script>
+  
+  
+  
+  
+    <script>
+      function confirmUnassignLead(leadId) {
+          // Step 1: Check if the user has access to unassign the lead
+          fetch(`/unassign-lead/${leadId}/`, {
+              method: 'GET',
+              headers: {
+                  'X-CSRFToken': '{{ csrf_token }}',  // CSRF token from the template context
+              }
+          })
+          .then(response => response.json())
+          .then(data => {
+              // Step 2: Check if the user has access to unassign leads
+              console.log(data.access)
+              if (!data.access) {
+                  Swal.fire(
+                      'You cannot unassign!',
+                      'You are not allowed to unassign leads.',
+                      'error'
+                  );
+              } else {
+                  // Step 3: Confirm the unassign action
+                  Swal.fire({
+                      title: "Confirm Unassign",
+                      text: "Are you sure you want to unassign this lead?",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: '#3085d6',
+                      cancelButtonColor: '#d33',
+                      confirmButtonText: 'Yes, unassign it!',
+                      cancelButtonText: 'No, cancel'
+                  }).then((result) => {
+                      if (result.isConfirmed) {
+                          // Step 4: If confirmed, send POST request to unassign the lead
+                          fetch(`/unassign-lead/${leadId}/`, {
+                              method: 'POST',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'X-CSRFToken': '{{ csrf_token }}',  // CSRF token from the template context
+                              },
+                              body: JSON.stringify({}),  // Body is empty, but it is required for the POST request
+                          })
+                          .then(response => response.json())
+                          .then(data => {
+                              if (data.message) {
+                                  Swal.fire(
+                                      'Unassigned!',
+                                      'The lead has been successfully unassigned.',
+                                      'success'
+                                  ).then(() => {
+                                      window.location.reload();  // Refresh the page after unassigning
+                                  });
+                              } else {
+                                  Swal.fire(
+                                      'Error!',
+                                      'Failed to unassign the lead.',
+                                      'error'
+                                  );
+                              }
+                          })
+                          .catch(error => {
+                              Swal.fire(
+                                  'Error!',
+                                  'There was an error processing the unassign request.',
+                                  'error'
+                              );
+                              console.error("Error during fetch:", error);
+                          });
+                      } else {
+                          Swal.fire(
+                              'Cancelled',
+                              'The unassign action was canceled.',
+                              'info'
+                          );
+                      }
+                  });
+              }
+          })
+          .catch(error => {
+              Swal.fire(
+                  'Error!',
+                  'There was a problem checking the lead status.',
+                  'error'
+              );
+              console.error("Error during fetch:", error);
+          });
+      }
   </script>
   
-  
-  
-  
-
+    
+    
 
 
 
@@ -486,6 +593,17 @@
     </script>
 
 
-
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        tippy('[data-tippy-content]', {
+          placement: 'top', // Default placement
+          fallbackPlacements: ['top', 'right', 'bottom', 'left'], // Fallbacks if top doesn't fit
+          boundary: 'window', // Consider the window as the boundary for fitting
+          animation: 'scale', // Optional: Define animation style
+          theme: 'light', // Optional: Define theme
+        });
+      });
+    </script>
+    
 
 {% endblock %}

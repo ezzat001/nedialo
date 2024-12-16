@@ -1599,6 +1599,39 @@ def get_lead_status(request, lead_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+
+def unassign_lead(request, lead_id):
+    try:
+        # Fetch the lead and user profile
+        lead = get_object_or_404(Lead, lead_id=lead_id)
+        user_profile = Profile.objects.get(user=request.user)
+        access = user_profile.role.qa_unassign_lead
+
+        # Check if the lead is already assigned to the user
+        if access:
+            if request.method == 'POST':
+                # If confirmed (POST), unassign the lead
+                lead.assigned = None
+                lead.assigned_time = None
+                lead.save()
+                return JsonResponse({'message': 'Lead successfully unassigned', 'access': access}, status=200)
+            else:
+                # If not POST, return a confirmation prompt for unassigning
+                return JsonResponse({'message': 'Do you want to unassign this lead?', 'access': access}, status=200)
+        else:
+            # If the lead is not assigned to the current user
+            return JsonResponse({'message': 'You are not allowed to unassign leads', 'access': access}, status=400)
+
+    except Lead.DoesNotExist:
+        return JsonResponse({'error': 'Lead not found'}, status=404)
+    except Profile.DoesNotExist:
+        return JsonResponse({'error': 'Profile not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
 @permission_required('qa_lead_handling')
 @login_required
 def lead_handling(request, lead_id):
@@ -2977,9 +3010,8 @@ def update_status(request):
             )
             previous_status = work_status.current_status
             duration = work_status.get_current_duration()
-            if not created:
 
-                work_status.update_status(new_status)
+            work_status.update_status(new_status)
 
 
             """

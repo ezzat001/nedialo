@@ -4,6 +4,8 @@ from nedialo.constants import US_STATES_CHOICES,COUNTRIES_CHOICES
 from django.template.defaultfilters import slugify  # new
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.timezone import make_aware
+
 from datetime import timedelta, datetime
 import os,uuid,secrets
 from django.db.models import Sum, F, ExpressionWrapper, DurationField
@@ -442,6 +444,7 @@ class Role(models.Model):
 
     qa_pending = models.BooleanField(default=False)
     qa_lead_handling = models.BooleanField(default=False)
+    qa_unassign_lead = models.BooleanField(default=False)
     qa_lead_reports = models.BooleanField(default=False)
     qa_auditing = models.BooleanField(default=False)
     qa_auditing_handling = models.BooleanField(default=False)
@@ -519,6 +522,7 @@ class Role(models.Model):
         "delete_handling_request": "Delete Handling Request",
         "qa_pending": "QA Pending",
         "qa_lead_handling": "QA Lead Handling",
+        "qa_unassign_lead": "QA Lead Unassignment",
         "qa_lead_reports": "QA Lead Reports",
         "qa_auditing": "QA Auditing",
         "qa_auditing_handling": "QA Auditing Handling",
@@ -1419,8 +1423,46 @@ class WorkStatus(models.Model):
 
     def save(self, *args, **kwargs):
         # Set login time if the object is being created and current_status is active
-        if not self.pk and self.current_status in ['ready', 'meeting', 'break']:
-            self.login_time = timezone.now()
+        
+
+        if self.current_status in ['ready', 'meeting', 'break'] and self.should_set_login_time():
+                self.login_time = timezone.now()
+
+                # Calculate lateness details
+                profile = Profile.objects.filter(user=self.user).first()
+                if profile and profile.login_time:
+                    default_login_time = profile.login_time  # This is a datetime.time object
+                    actual_login_time = timezone.localtime(self.login_time).time()  # Extract only the time part
+
+                    # Convert both times to seconds since midnight
+                    default_login_seconds = (
+                        default_login_time.hour * 3600
+                        + default_login_time.minute * 60
+                        + default_login_time.second
+                    )
+                    actual_login_seconds = (
+                        actual_login_time.hour * 3600
+                        + actual_login_time.minute * 60
+                        + actual_login_time.second
+                    )
+
+                    # Calculate lateness in seconds
+                    lateness_seconds = actual_login_seconds - default_login_seconds
+
+                    # Convert seconds back into timedelta
+                    lateness = timedelta(seconds=abs(lateness_seconds))
+
+                    # Determine lateness status
+                    self.lateness = lateness
+                    if lateness_seconds > 0:
+                        self.lateness_status = 'late'
+                    elif lateness_seconds < 0:
+                        self.lateness_status = 'early'
+                    else:
+                        self.lateness_status = 'on_time'
+
+
+
 
         super().save(*args, **kwargs)  # Call parent save method
 
@@ -1437,24 +1479,7 @@ class WorkStatus(models.Model):
             )
 
             # Set login time for active statuses
-            if new_status in ['ready', 'meeting', 'break'] and self.should_set_login_time():
-                self.login_time = now
-
-                # Calculate lateness details
-                profile = Profile.objects.filter(user=self.user).first()
-                if profile and profile.login_time:
-                    default_login_time = profile.login_time
-                    actual_login_time = timezone.localtime(self.login_time)
-                    lateness = actual_login_time - default_login_time
-
-                    self.lateness = abs(lateness)
-                    if lateness.total_seconds() > 0:
-                        self.lateness_status = 'late'
-                    elif lateness.total_seconds() < 0:
-                        self.lateness_status = 'early'
-                    else:
-                        self.lateness_status = 'on_time'
-
+            
             # Set logout time for 'offline' status
             if new_status == 'offline':
                 self.logout_time = now

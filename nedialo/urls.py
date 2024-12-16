@@ -150,6 +150,7 @@ urlpatterns = [
 
     path('lead-handling/<int:lead_id>', lead_handling, name='lead_handling'),
     path('get-lead-status/<int:lead_id>/',get_lead_status, name='get_lead_status'),
+    path('unassign-lead/<int:lead_id>/',unassign_lead, name='get_lead_status'),
     path('feedbacks', feedbacks_table),
     path('feedbacks-agent/<int:agent_id>', feedbacks_agent),
 

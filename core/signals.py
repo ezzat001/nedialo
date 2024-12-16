@@ -123,18 +123,4 @@ def handle_user_timeout(sender, user, request, **kwargs):
 
                 
 
-"""        if request:
-            try:
-                discord_crm_timeout(profile.full_name, request)
-            except:
-                pass
 
-            message = "Your connection timed out from the CRM! Please log back in and reset your working status."
-
-            try:
-                discord_private(int(profile.discord), message)
-            except Exception as e:
-                print(e)
-
-            logout(request)        # Send notification if request is available
-"""
