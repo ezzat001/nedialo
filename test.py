@@ -1,28 +1,65 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
+from bs4 import BeautifulSoup
+import time
 
-email = "ahmedezzat@nedialo.com"  # Replace with the sender's email
-password = ""  # App password if using 2SV
-recipient_email = "recipient@example.com"  # Replace with the recipient's email
+# Define the base URL for Yellow Pages search (you can modify the search query and location)
+BASE_URL = 'https://www.yellowpages.com.lb/search?query={query}&location={location}'
 
-smtp_server = "smtp-relay.gmail.com"
-smtp_port = 587  # TLS port
+# Define a function to fetch and parse the page
+def get_yellow_pages_results(query, location):
+    # Format the search URL
+    url = BASE_URL.format(query=query, location=location)
+    response = requests.get(url)
+    
+    # Check if the request was successful (status code 200)
+    if response.status_code != 200:
+        print(f"Error fetching page {url}, status code: {response.status_code}")
+        return None
 
-msg = MIMEMultipart()
-msg['From'] = email
-msg['To'] = recipient_email
-msg['Subject'] = "Test Email from External User"
+    # Parse the page using BeautifulSoup
+    soup = BeautifulSoup(response.text, 'html.parser')
+    return soup
 
-msg.attach(MIMEText("This email is sent from an external user!", "plain"))
+# Define a function to extract business details from the results page
+def extract_business_details(soup):
+    business_details = []
+    
+    # Find the container that holds business listing information
+    listings = soup.find_all('div', class_='listing-info')
 
-try:
-    server = smtplib.SMTP(smtp_server, smtp_port)
-    server.starttls()  # Start TLS encryption
-    server.login(email, password)  # Log in
-    server.sendmail(email, recipient_email, msg.as_string())
-    print("Email sent successfully!")
-except Exception as e:
-    print(f"Error sending email: {e}")
-finally:
-    server.quit()
+    # Loop through each listing and extract the business info
+    for listing in listings:
+        name = listing.find('h2').text.strip() if listing.find('h2') else 'N/A'
+        phone = listing.find('div', class_='phone-number').text.strip() if listing.find('div', class_='phone-number') else 'N/A'
+        address = listing.find('div', class_='address').text.strip() if listing.find('div', class_='address') else 'N/A'
+        
+        business_details.append({
+            'name': name,
+            'phone': phone,
+            'address': address
+        })
+    
+    return business_details
+
+# Define the main function to fetch and display the details
+def fetch_roofing_companies(query, location):
+    # Get the Yellow Pages results page
+    soup = get_yellow_pages_results(query, location)
+    
+    if soup:
+        # Extract business details
+        businesses = extract_business_details(soup)
+        
+        # Print the extracted details
+        for business in businesses:
+            print(f"Name: {business['name']}")
+            print(f"Phone: {business['phone']}")
+            print(f"Address: {business['address']}")
+            print("-" * 50)
+
+# Example usage: Fetch roofing companies in a specified location
+if __name__ == '__main__':
+    query = 'roofing'  # Search term
+    location = 'New York'  # Location (modify as needed)
+    
+    fetch_roofing_companies(query, location)

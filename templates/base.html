@@ -1451,54 +1451,47 @@ crossorigin=""></script>
             </div>
           </a>
         </div>
-        <div class="input-group input-group-outline" style="max-width: 150px;">
-          <select class="form-control" data-user-id="{{ profile.id }}" 
-          data-has-credentials="{% if profile.assigned_credentials %}{{ profile.assigned_credentials }}{% else %}none{% endif %}" name="work_status" id="work_status">
-            {% if work_status %}
-              <option value="ready" {% if work_status.current_status == 'ready' %}selected{% endif %}>Ready</option>
-              <option value="break" {% if work_status.current_status == 'break' %}selected{% endif %}>Break</option>
-              <option value="meeting" {% if work_status.current_status == 'meeting' %}selected{% endif %}>Meeting</option>
-              <option value="offline" {% if work_status.current_status == 'offline' %}selected{% endif %}>Offline</option>
-            {% else %}
-            <option value="ready">Ready</option>
-            <option value="break">Break</option>
-            <option value="meeting">Meeting</option>
-            <option value="offline" selected>Offline</option>
-            {% endif %}
-            </select>
+          <div class="input-group input-group-outline" style="max-width: 150px;">
+            <select class="form-control" data-user-id="{{ profile.id }}" 
+            data-has-credentials="{% if profile.assigned_credentials %}{{ profile.assigned_credentials }}{% else %}none{% endif %}" name="work_status" id="work_status">
+              {% if work_status %}
+                <option value="ready" {% if work_status.current_status == 'ready' %}selected{% endif %}>Ready</option>
+                <option value="break" {% if work_status.current_status == 'break' %}selected{% endif %}>Break</option>
+                <option value="meeting" {% if work_status.current_status == 'meeting' %}selected{% endif %}>Meeting</option>
+                <option value="offline" {% if work_status.current_status == 'offline' %}selected{% endif %}>Offline</option>
+              {% else %}
+              <option value="ready">Ready</option>
+              <option value="break">Break</option>
+              <option value="meeting">Meeting</option>
+              <option value="offline" selected>Offline</option>
+              {% endif %}
+              </select>
+          </div>
+          <div class="input-group input-group-outline" style="max-width: 150px; margin-left: 20px;">
+            <span id="ny-clock" class="badge filter bg-gradient-dark" data-color="info">NY Clock: 00:00 AM</span>
+            <script>
+                function updateNYClock() {
+                    const nyClockElement = document.getElementById('ny-clock');
+                    
+                    // Get the current time in New York using the 'America/New_York' timezone
+                    const nyTime = new Date().toLocaleString("en-US", { 
+                        timeZone: "America/New_York", 
+                        hour12: true, 
+                        hour: "numeric", 
+                        minute: "numeric"
+                    });
+                    
+                    nyClockElement.innerText = `NY Clock: ${nyTime}`;
+                }
+        
+                // Update the clock every minute
+                setInterval(updateNYClock, 60000);
+        
+                // Initialize the clock immediately
+                updateNYClock();
+            </script>
         </div>
-        <div class="input-group input-group-outline" style="max-width: 150px; margin-left: 20px;">
-          <span id="ny-clock" class="badge filter bg-gradient-dark" data-color="info" >NY Clock: 00:00:00</span>
-          <script>
-            function formatTimeUnit(unit) {
-                return unit.toString().padStart(2, '0');
-            }
-    
-            function updateNYClock() {
-                const nyClockElement = document.getElementById('ny-clock');
-                const now = new Date();
-                // Convert the current time to New York Time (Eastern Time)
-                const nyOffset = -4; // New York Time is UTC-4 (consider daylight saving changes if needed)
-                const nyTime = new Date(now.getTime() + (nyOffset * 60 * 60 * 1000));
-    
-                let hours = nyTime.getUTCHours();
-                const minutes = nyTime.getUTCMinutes();
-                const period = hours >= 12 ? 'PM' : 'AM';
-    
-                // Convert to 12-hour format
-                hours = hours % 12;
-                hours = hours ? hours : 12; // Handle midnight (0 hours)
-    
-                nyClockElement.innerText = `NY Clock: ${formatTimeUnit(hours)}:${formatTimeUnit(minutes)} ${period}`;
-            }
-    
-            // Update the clock every minute
-            setInterval(updateNYClock, 60000);
-    
-            // Initialize the clock immediately
-            updateNYClock();
-          </script>
-        </div>
+      
 
         
         <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">

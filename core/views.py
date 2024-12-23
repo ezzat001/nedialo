@@ -1261,6 +1261,12 @@ def quality_lead_reports(request, month, year):
     first_week = first_day.isocalendar()[1]
     last_week = last_day.isocalendar()[1]
 
+    # Adjust for the case where the last day belongs to Week 1 of the next year
+    if last_week == 1:
+        last_week = 52  # Set last_week to Week 52, avoiding an extra week from the next year
+
+
+
     # Initialize a dictionary to store total leads per week
     weekly_leads_count = defaultdict(int)
 
@@ -1271,8 +1277,6 @@ def quality_lead_reports(request, month, year):
         active=True
     )
 
-    # Order and limit the number of leads in the context for display
-
     # Count total leads for each week
     for lead in leads:
         week_number = lead.pushed.isocalendar()[1]  # Get ISO week number
@@ -1281,12 +1285,17 @@ def quality_lead_reports(request, month, year):
     # Ensure that all weeks from first to last are represented
     weeks_in_month = range(first_week, last_week + 1)
 
+    
+
     # Prepare list with total leads for each week
     weekly_total_leads_list = [weekly_leads_count.get(week, 0) for week in weeks_in_month]
+
+    
 
     # Convert week numbers to "Week 1", "Week 2", etc.
     week_labels = [f"Week {i + 1}" for i in range(len(weeks_in_month))]
 
+    
     # Update context with week labels and total leads per week
     context['week_numbers'] = week_labels
     context['weekly_total_leads'] = weekly_total_leads_list
@@ -1980,6 +1989,10 @@ def quality_agents(request, month, year):
     first_week = first_day.isocalendar()[1]
     last_week = last_day.isocalendar()[1]
 
+    # Adjust for the case where the last day belongs to Week 1 of the next year
+    if last_week < first_week:  # Week rollover
+        last_week = 52  # Cap it to the last valid ISO week for the year
+
     # Initialize a dictionary to store the count of qualified leads per week
     weekly_leads_count = defaultdict(int)
 
@@ -1989,7 +2002,7 @@ def quality_agents(request, month, year):
         pushed__year=year,
         pushed__month=month
     )
-    
+
     # Count leads per week
     for lead in leads:
         week_number = lead.pushed.isocalendar()[1]  # Get ISO week number
@@ -1997,6 +2010,7 @@ def quality_agents(request, month, year):
 
     # Ensure that all weeks from first to last are represented
     weeks_in_month = range(first_week, last_week + 1)
+
 
     # Prepare list with total leads count for each week
     weekly_total_leads_list = [weekly_leads_count.get(week, 0) for week in weeks_in_month]
@@ -2043,6 +2057,8 @@ def quality_agents(request, month, year):
         }
 
     context['qa_reports'] = qa_reports
+
+
 
 
 
@@ -2130,13 +2146,10 @@ def handle_audio_upload(request):
 @csrf_exempt
 def check_duplicate_application(request):
     if request.method == 'POST':
-        print("inside view")
         phone_number = request.POST.get('phone_number')
-        print(phone_number)
         if phone_number:
             existing_app = Application.objects.filter(phone=phone_number).order_by('-submission_date').first()
             if existing_app:
-                print('duplication found')
 
                 # Make sure datetime.now() is timezone-aware
                 now = tz.now()
