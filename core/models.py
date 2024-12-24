@@ -448,6 +448,8 @@ class ServerSetting(models.Model):
     prepayments_webhook = models.TextField(blank=True, null=True)
     tasks_webhook = models.TextField(blank=True, null=True)
     sales_webhook = models.TextField(blank=True, null=True)
+    clients_webhook = models.TextField(blank=True, null=True)
+
 
 
     maintenance = models.BooleanField(default=False)

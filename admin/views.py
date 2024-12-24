@@ -26,7 +26,7 @@ from discord_app.views import get_ip_info
 import pytz
 from django.core.exceptions import ValidationError
 from django.views.decorators.csrf import csrf_exempt
-
+from discord_app.views import send_discord_message_contract
 
 
 
@@ -2453,7 +2453,7 @@ def contract_create_actual(request):
             
             contract_text = data.get('editor')
 
-            Contract.objects.create(
+            contract = Contract.objects.create(
                 client_name=client_name,
                 client_phone=client_phone,
                 client_email=client_email,
@@ -2473,6 +2473,31 @@ def contract_create_actual(request):
 
             )
 
+            utc_now = datetime.utcnow()
+
+            # Get the timezone object for 'America/New_York'
+            est_timezone = pytz.timezone('America/New_York')
+
+            # Convert UTC time to Eastern timezone
+            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+            # Format the time as HH:MM:SS string
+            est = est_time.strftime('%I:%M:%S %p')
+
+
+            # Construct the content of the embed with quote formatting
+            request_ip = request.META.get('REMOTE_ADDR')
+            try:
+
+            
+
+                content = f'**Agent:** {profile.full_name}\n\n**Action:** Created a **{contract.get_field_display()} Contract** for **{contract.client_name}**\n\n**ID:** {contract.unique_id} \n\n**Eastern:** {est}\n\n**IP Address:** {request_ip} '
+
+                send_discord_message_contract(content, 'created')
+                
+            except Exception as e:
+                pass
+
             return redirect('/admin-contracts')
 
         # Pass the objects to the template
@@ -2490,9 +2515,13 @@ def contract_view(request, id):
 
 
     context = {}
-    profile = Profile.objects.get(user=request.user)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        profile = "Guest"
     context['profile'] = profile
 
+    contract = Contract.objects.get(unique_id = id)
     context['contract'] = Contract.objects.get(unique_id = id)
 
     
@@ -2504,6 +2533,30 @@ def contract_view(request, id):
     data = get_ip_info(request_ip)
 
     ContractVisit.objects.create(contract=context['contract'], ip_address=request_ip, isp=data['isp'], location=data['location'])
+    utc_now = datetime.utcnow()
+
+    # Get the timezone object for 'America/New_York'
+    est_timezone = pytz.timezone('America/New_York')
+
+    # Convert UTC time to Eastern timezone
+    est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+    # Format the time as HH:MM:SS string
+    est = est_time.strftime('%I:%M:%S %p')
+
+    location = data['location']
+    isp = data['isp']
+
+    try:
+
+        
+        content = f'**Agent:** {profile}\n\n**Action:** Viewed **{contract.client_name}\'s Contract**\n\n**ID:** {contract.unique_id}  \n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}\n\n**Location:** {location}\n\n**Service Provider:** {isp}'
+
+        send_discord_message_contract(content, 'visit')
+        
+    except Exception as e:
+        print(e)
+        pass
 
     if request.method == "POST":
         data = request.POST
@@ -2537,8 +2590,13 @@ def contract_view(request, id):
 @csrf_exempt
 def contract_pref(request, id):
     context = {}
-    profile = Profile.objects.get(user=request.user)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        profile = "Guest"
     context['profile'] = profile
+
+    
 
     context['contract_id'] = id
 
@@ -2617,6 +2675,36 @@ def contract_pref(request, id):
 
             contract.pref_submitted = True
             contract.save()
+
+
+
+            request_ip = request.META.get('REMOTE_ADDR')
+            data = get_ip_info(request_ip)
+
+            utc_now = datetime.utcnow()
+
+            # Get the timezone object for 'America/New_York'
+            est_timezone = pytz.timezone('America/New_York')
+
+            # Convert UTC time to Eastern timezone
+            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+            # Format the time as HH:MM:SS string
+            est = est_time.strftime('%I:%M:%S %p')
+
+            location = data['location']
+            isp = data['isp']
+
+            try:
+
+                
+                content = f'**User:** {profile}\n\n**Action:** Filled **{contract.client_name}\'s Preferences**\n\n**ID:** {contract.unique_id}  \n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}\n\n**Location:** {location}\n\n**Service Provider:** {isp}'
+
+                send_discord_message_contract(content, 'filled')
+                
+            except Exception as e:
+                print(e)
+                pass
 
 
 
@@ -2726,7 +2814,33 @@ def contract_pref(request, id):
             contract.pref_submitted = True
             contract.save()
 
+            request_ip = request.META.get('REMOTE_ADDR')
+            data = get_ip_info(request_ip)
 
+            utc_now = datetime.utcnow()
+
+            # Get the timezone object for 'America/New_York'
+            est_timezone = pytz.timezone('America/New_York')
+
+            # Convert UTC time to Eastern timezone
+            est_time = utc_now.replace(tzinfo=pytz.utc).astimezone(est_timezone)
+
+            # Format the time as HH:MM:SS string
+            est = est_time.strftime('%I:%M:%S %p')
+
+            location = data['location']
+            isp = data['isp']
+
+            try:
+
+                
+                content = f'**User:** {profile}\n\n**Action:** Filled **{contract.client_name}\'s Preferences**\n\n**ID:** {contract.unique_id}  \n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}\n\n**Location:** {location}\n\n**Service Provider:** {isp}'
+
+                send_discord_message_contract(content, 'filled')
+                
+            except Exception as e:
+                print(e)
+                pass
 
 
             return redirect('/contract-pref-success/'+contract.unique_id)
@@ -2781,7 +2895,10 @@ def contract_pref_view(request, id):
 def contract_pref_success(request, id):
 
     context = {}
-    profile = Profile.objects.get(user=request.user)
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except:
+        profile = "Guest"
     context['profile'] = profile
 
     contract = Contract.objects.get(unique_id=id)
@@ -2910,6 +3027,7 @@ def server_settings(request):
             prepayments = data.get('discord_prepayments')
             tasks = data.get('discord_tasks')
             sales = data.get('discord_sales')
+            clients = data.get('discord_clients')
 
             server_settings = ServerSetting.objects.first()
 
@@ -2922,6 +3040,7 @@ def server_settings(request):
             server_settings.prepayments_webhook = prepayments
             server_settings.tasks_webhook = tasks
             server_settings.sales_webhook = sales
+            server_settings.clients_webhook = clients
 
             server_settings.save()
 

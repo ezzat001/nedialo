@@ -433,3 +433,53 @@ def send_discord_message_sales_lead(content,lead_id, action_type):
         print('Message sent successfully')
     else:
         print(f'Failed to send message: {response.status_code}')
+
+
+
+
+
+
+
+def send_discord_message_contract(content, action_type):
+    try:
+        settings = ServerSetting.objects.first()
+    except:
+        settings = None
+
+    url = settings.clients_webhook
+
+    headers = {'Content-Type': 'application/json'}
+
+    color = 65280
+
+
+    green_color = 65280
+
+    red_color = 16711680  
+
+    orange_color = 16747520   
+
+
+    if action_type == "filled":
+        color = green_color
+    
+    elif action_type == "created":
+        color = orange_color
+
+    elif action_type == "visit":
+        color = red_color
+
+    payload = {
+        'embeds': [
+            {
+                'description': f' {content}',  # Using '>' for quote formatting
+                'color': color,  # Setting the color based on 'logged' status
+            }
+        ]
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        print('Message sent successfully')
+    else:
+        print(f'Failed to send message: {response.status_code}')
+
