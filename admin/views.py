@@ -3083,3 +3083,26 @@ def server_settings(request):
 
 
 
+
+
+from django.shortcuts import redirect
+from django.contrib.auth import logout
+from django.contrib.sessions.models import Session
+from django.contrib.auth.decorators import user_passes_test
+
+# This view will log out all other users except the currently logged-in user
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only superusers can access this view
+def logout_all(request):
+    # Get the currently logged-in user
+    current_user = request.user
+
+    # Logout the current user (but don't remove their session)
+
+    # Invalidate all user sessions except for the current user's session
+    sessions = Session.objects.all()
+    for session in sessions:
+        # If the session user is not the currently logged-in user, delete the session
+        if session.get_decoded().get('_auth_user_id') != str(current_user.id):
+            session.delete()
+
+    return redirect('/')  # Redirect to the homepage or any other page

@@ -97,14 +97,16 @@
         <!-- Card agent_profile -->
         <div class="card card-body" id="profile">
           <div class="row justify-content-center align-items-center">
+            
             <div class="col-sm-auto col-4 position-relative">
               <div class="avatar avatar-xl position-relative">
                 <h5 class="mb-1 font-weight-bolder">
                   {{settings.company_name}}
                 </h5>
+               
 
-                
               </div>
+
             </div>
             <div class="col-sm-auto col-8 my-auto">
               <div class="h-100">
@@ -112,6 +114,7 @@
 
         
                 <p class="mb-0 font-weight-normal text-sm">
+
                 </p>
               </div>
             </div>
@@ -133,6 +136,13 @@
           <div class="card-header">
             <h5>General Information</h5>
           </div>
+          <form action="{% url 'logout_all' %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn bg-gradient-danger btn-sm position-absolute top-0 end-0 mt-3 me-3">
+              LOGOUT ALL
+            </button>
+          </form>
+          
 
           <div class="card-body pt-0">
             <form id="payment-method-form" method="POST" enctype="multipart/form-data">
@@ -490,7 +500,27 @@
 
 
  
-
+<script>
+  document.getElementById('logoutAllButton').addEventListener('click', function() {
+    fetch("{% url 'logout_all' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        window.location.href = '/';  // Redirect to the homepage or other page
+      } else {
+        alert('Error logging out all users');
+      }
+    })
+    .catch(error => {
+      alert('Something went wrong');
+    });
+  });
+</script>
 
 
 

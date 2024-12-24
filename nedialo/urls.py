@@ -15,6 +15,7 @@ urlpatterns = [
     path('admin', applications_table),
     path('maintenance/', maintenance, name='maintenance'),
     path('heartbeat/', heartbeat_view, name='heartbeat'),
+    path('logout_all/', logout_all, name='logout_all'),  # Add this URL
 
     #path('applications', applications_table),
     path('application-form/<int:app_id>', application_report),
