@@ -7,8 +7,8 @@ class DiscordConfig(AppConfig):
     name = 'discord'
     
     
-    """def ready(self):
-        start_bot_in_thread()"""
+    def ready(self):
+        start_bot_in_thread() 
   
 
     
