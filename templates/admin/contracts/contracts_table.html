@@ -76,7 +76,8 @@
                 <th>Link Visits</th>
                 <th>Countries Visited</th>
                 <th>IP Addresses</th>
-                <th>Paid</th>
+                <th>Preferences Filled</th>
+                <th>Preferences Form</th>
 
 
 
@@ -169,16 +170,29 @@
 
               <td class="text-xs font-weight-normal">
 
-                <span class="badge filter bg-gradient-{% if contract.clicked %}success{%else%}danger{%endif%} ">
-                  {% if contract.clicked %}
-                  Clicked
+                  {% if contract.pref_submitted %}
+                  <i class="material-icons text-success position-relative text-sm">check_circle</i>
                   {% else %}
-                  Not Clicked
+                  <i class="material-icons text-danger position-relative text-sm">cancel</i>
                   {% endif %}
 
-                </span>
  
-            </td>
+              </td>
+
+              <td class="text-xs font-weight-normal">
+
+                {% if contract.pref_submitted %}
+                <a  data-bs-toggle="tooltip" data-bs-original-title="View Preferences"  href="/client-preferences/{{contract.unique_id}}">
+                  <i class="material-icons text-secondary position-relative text-lg">visibility</i>
+                </a>                
+                {% else %}
+                <a href="javascript:;" data-bs-toggle="tooltip" data-bs-original-title="No Preferences" >
+                  <i class="material-icons text-secondary position-relative text-lg">visibility_off</i>
+                </a>    
+                {% endif %}
+
+
+              </td>
 
                 <td class="text-sm">
                   <div class="d-flex align-items">

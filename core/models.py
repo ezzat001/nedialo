@@ -50,6 +50,50 @@ CONTRACT_FIELD_TYPES = (
     ('realestate', 'Real Estate'),
 )
 
+
+CONTRACT_PREF_PROPERTY_TYPE = (
+    ('residential','Residential'),
+    ('commercial','Commercial'),
+    ('both','Residential & Commercial')
+)
+
+CONTRACT_PREF_PROPERTY_TYPE_RE = (
+    ('residential','Residential'),
+    ('commercial','Commercial'),
+    ('lands','Vacant Lands'),
+    ('parks','Parks'),
+
+)
+
+CONTRACT_PREF_OWNER_TYPE = (
+    ('individual','Individual'),
+    ('corporate','Corporate'),
+    ('any','Any')
+
+)
+
+
+
+
+CONTRACT_PREF_RE_RESD_TYPES = (
+    ('sfh','Single Family'),
+    ('mfh','Multi Family'),
+    ('condo','Condos/Townhoueses'),
+    ('mobile','Mobile Homes'),
+
+)
+
+
+CONTRACT_PREF_PRICE_RANGES = (
+    ("less_200","$50k-$200k"),
+    ('less_500', "$200k-$500k"),
+    ('less_800','$500k-$800k'),
+    ('less_1000','$800k-$1M'),
+    ('less_5000','$1M-$5M'),
+    ('more_5000','$5M+'),
+
+)
+
 APPLICATION_POS_CHOICES = (
     ("cold_caller", "Cold Caller"),
     ("acq_manager", "Acquisition Manager"),
@@ -109,22 +153,23 @@ APPLICATION_SHIFT_CHOICES = (
 
 
 APPLICATION_STATUS_CHOICES = (
-    ('accepted','Accepted'),
-    ('rejected', 'Rejected'),
+    
     ('pending', 'Pending'),
-    ('panel_1', "Panel 1"),
-    ('panel_2', "Panel 2"),
-    ('panel_3', 'Panel 3')
+    ('panel_1', "Proficent English"),
+    ('panel_2', "Waiting Interview"),
+    ('panel_3', 'Standby'),
+    ('rejected', 'Rejected'),
+    ('accepted','Hired'),
 )
 
 APPLICATION_PANEL_CHOICES = (
     
     ('pending', 'Pending'),
-    ('panel_1', "Panel 1"),
-    ('panel_2', "Panel 2"),
-    ('panel_3', 'Panel 3'),
+    ('panel_1', "Proficent English"),
+    ('panel_2', "Waiting Interview"),
+    ('panel_3', 'Standby'),
     ('rejected', 'Rejected'),
-    ('accepted','Accepted'),
+    ('accepted','Hired'),
 )
 
 
@@ -619,6 +664,13 @@ def random_name_leave_files(instance, filename):
     ext = filename.split('.')[-1]
     filename = f'{uuid.uuid4()}.{ext}'
     return os.path.join('leave_files/', filename)
+
+def random_name_contract_files(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+    return os.path.join('contract_files/', filename)
+
+
 
 def random_name_action_files(instance, filename):
     ext = filename.split('.')[-1]
@@ -1636,6 +1688,8 @@ class Contract(models.Model):
     created = models.DateTimeField(default=timezone.now)
     unique_id = models.CharField(max_length=10, unique=True, editable=False, blank=True)
 
+    field = models.CharField(max_length=100, choices=CONTRACT_FIELD_TYPES, null=True, blank=True)
+
     client_name = models.CharField(max_length=100, null=True, blank=True)
     client_phone = models.CharField(max_length=100, null=True, blank=True)
     client_email = models.CharField(max_length=100, null=True, blank=True)
@@ -1662,6 +1716,9 @@ class Contract(models.Model):
     clicked = models.BooleanField(default=False)
 
 
+    pref_submitted = models.BooleanField(default=False)
+
+
     active = models.BooleanField(default=True)
 
 
@@ -1677,6 +1734,10 @@ class Contract(models.Model):
     
 
 
+
+    
+
+
 class ContractVisit(models.Model):
 
     created = models.DateTimeField(default=timezone.now)
@@ -1684,6 +1745,45 @@ class ContractVisit(models.Model):
     ip_address = models.CharField(null=True, blank=True, max_length=100)
     location = models.CharField(null=True, blank=True, max_length=100)
     isp = models.CharField(null=True, blank=True, max_length=100)
+
+    active = models.BooleanField(default=True)
+
+
+
+
+class ContractPref(models.Model):
+
+    created = models.DateTimeField(default=timezone.now)
+    contract = models.ForeignKey(Contract, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(null=True, blank=True, max_length=100)
+    phone = models.CharField(null=True, blank=True, max_length=100)
+    email = models.CharField(null=True, blank=True, max_length=100)
+    company_name = models.CharField(null=True, blank=True, max_length=100)
+
+    mention_company = models.BooleanField(default=False)
+    remodeled = models.BooleanField(default=False)
+    on_market = models.BooleanField(default=False)
+    listed_owner = models.BooleanField(default=False)
+    closing_fees = models.BooleanField(default=False)
+    realtor_fees = models.BooleanField(default=False)
+    re_license = models.BooleanField(default=False)
+    lots_type = models.CharField(null=True, blank=True,choices=CONTRACT_PREF_PROPERTY_TYPE, max_length=100)
+    property_type_re = models.JSONField(default=list, blank=True, null=True)  # JSON field for skills
+    res_type = models.JSONField(default=list, blank=True, null=True)  # JSON field for skills
+    equity = models.CharField(null=True, blank=True, max_length=100)
+    above_market_perc = models.CharField(null=True, blank=True, max_length=100)
+
+    property_type = models.CharField(null=True, blank=True,choices=CONTRACT_PREF_PROPERTY_TYPE, max_length=100)
+    owner_type = models.CharField(null=True, blank=True,choices=CONTRACT_PREF_OWNER_TYPE, max_length=100)
+    price_range = models.JSONField(default=list, blank=True, null=True)  # JSON field for skills
+
+    coverage =  models.TextField(null=True, blank=True)
+    standout =  models.TextField(null=True, blank=True)
+    questions =  models.TextField(null=True, blank=True)
+    company_info =  models.TextField(null=True, blank=True)
+    extra_notes =  models.TextField(null=True, blank=True)
+
+    script_file = models.FileField(upload_to=random_name_contract_files, null=True, blank=True)
 
     active = models.BooleanField(default=True)
 

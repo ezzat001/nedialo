@@ -87,6 +87,26 @@
                           </div>
                         </div>
 
+                        <div class="row mt-3">
+                          <div class="col-12 col-sm-6">
+                            <label>Field *</label>
+
+                              <div class="input-group input-group-static">
+
+                              <select class="form-control" name="field" id="field" required>
+                                  <option value="">Select...</option> <!-- Blank option for initial selection -->
+                                  {% for key,value in fields %}    
+                                      <option value="{{key}}">{{value}}</option>
+                                  {% endfor %}
+                                      
+
+                              </select>
+                                
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
 
 
                         
@@ -195,6 +215,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+
+
+        if (document.getElementById('field')) {
+          var field = document.getElementById('field');
+          const example = new Choices(field, {
+              searchEnabled: true,
+              searchChoices: true,
+              searchFields: ['label', 'value'], // Fields to search within
+              searchPlaceholderValue: 'Search...', // Placeholder for the search input
+              shouldSort: false, // Disable sorting of choices
+              itemSelectText: '', // Text shown in the dropdown when an item is selected
+              fuseOptions: {
+                  includeScore: true, // Include score in search results
+                  threshold: 0.3, // Match threshold for search results
+                  keys: ['label', 'value'] // Fields to search within
+              }
+          });
+      }
     });
 
 </script>

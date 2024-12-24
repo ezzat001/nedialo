@@ -151,3 +151,4 @@ admin.site.register(Contract)
 admin.site.register(Package)
 
 admin.site.register(ContractVisit)
+admin.site.register(ContractPref)

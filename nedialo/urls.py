@@ -126,6 +126,11 @@ urlpatterns = [
     path('sample-modify/<int:id>', sample_modify),
     path('sample-delete/<int:id>/', DeleteSampleView.as_view()),
 
+    path('contract-pref/<str:id>',contract_pref),
+
+    path('contract-pref-success/<str:id>',contract_pref_success),
+
+    path('client-preferences/<str:id>',contract_pref_view),
 
 
 

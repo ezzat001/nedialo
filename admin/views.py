@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from core.views import settings
+from core.views import settings,validate_file
 from core.models import *
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
@@ -24,6 +24,8 @@ from django.utils.safestring import mark_safe
 from django.template.defaultfilters import date as _date
 from discord_app.views import get_ip_info
 import pytz
+from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import csrf_exempt
 
 
 
@@ -2351,7 +2353,7 @@ def contracts_table(request):
     profile = Profile.objects.get(user=request.user)
     context['profile'] = profile
 
-    context['contracts'] = Contract.objects.filter(active=True)
+    context['contracts'] = Contract.objects.filter(active=True).order_by('-created')
 
     return render(request,'admin/contracts/contracts_table.html',context)
 
@@ -2370,6 +2372,7 @@ def contract_create(request):
     context['profile'] = profile
     context['packages'] = Package.objects.filter(active=True)
     context['samples'] = ContractSample.objects.filter(active=True)
+    context['fields'] = CONTRACT_FIELD_TYPES
 
 
 
@@ -2380,9 +2383,10 @@ def contract_create(request):
 
         package = data.get('package')
         sample = data.get('sample')
+        field = data.get('field')
 
 
-        return redirect(f'/contract-create-actual?package={package}&sample={sample}')
+        return redirect(f'/contract-create-actual?package={package}&sample={sample}&field={field}')
 
 
         
@@ -2399,7 +2403,8 @@ def contract_create(request):
 
 
 
-
+@permission_required('admin_contracts')
+@login_required
 def contract_create_actual(request):
     # Get the package_id and sample_id from the URL query parameters
     context = {}
@@ -2407,6 +2412,10 @@ def contract_create_actual(request):
     context['profile'] = profile
     package_id = request.GET.get('package')
     sample_id = request.GET.get('sample')
+    field = request.GET.get('field')
+
+    
+
 
     package = Package.objects.get(id=package_id)
     sample = ContractSample.objects.get(id=sample_id)
@@ -2460,6 +2469,8 @@ def contract_create_actual(request):
                 count_dm=count_dm,
                 rate_dm=rate_dm,
                 contract_text=contract_text,
+                field = field,
+
             )
 
             return redirect('/admin-contracts')
@@ -2483,7 +2494,6 @@ def contract_view(request, id):
     context['profile'] = profile
 
     context['contract'] = Contract.objects.get(unique_id = id)
-    context['sales_leads'] = SalesLead.objects.filter(active=True)
 
     
 
@@ -2502,7 +2512,7 @@ def contract_view(request, id):
         contract.clicked=True
         contract.save()
 
-        redirect_link = contract.strip_link 
+        redirect_link = "/contract-pref/"+str(contract.unique_id)
 
 
 
@@ -2519,6 +2529,268 @@ def contract_view(request, id):
             
     
     return render(request,'admin/contracts/contract_view.html',context)
+
+
+
+
+
+@csrf_exempt
+def contract_pref(request, id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['contract_id'] = id
+
+    context['prices'] = CONTRACT_PREF_PRICE_RANGES
+
+    context['property_types'] = CONTRACT_PREF_PROPERTY_TYPE
+    context['property_types_re'] = CONTRACT_PREF_PROPERTY_TYPE_RE
+    context['residential_types'] = CONTRACT_PREF_RE_RESD_TYPES
+    
+    
+    context['owner_types'] = CONTRACT_PREF_OWNER_TYPE
+
+    contract = Contract.objects.get(unique_id=id)
+
+    # Get IP information
+    request_ip = request.META.get('REMOTE_ADDR')
+    ip_data = get_ip_info(request_ip)
+
+    if contract.pref_submitted:
+        return redirect('/contract-pref-success/'+contract.unique_id)
+    
+    # Handle POST request
+    if request.method == "POST":
+        data = request.POST
+
+        file=None
+        if contract.field == "roofing":
+            name = data.get('name')
+            phone = data.get('phone')
+            email = data.get('email')
+            company_name = data.get('company_name')
+            company_mention = data.get('company_mention')
+            property_type = data.get('property_type')
+            owner_type = data.get('owner_type')
+            price_ranges = request.POST.getlist('price_ranges')
+            coverage = data.get('coverage')
+            standout = data.get('standout')
+            questions = data.get('qualifying_questions')
+            company_info = data.get('company_more_info')
+            extra_notes = data.get('extra_notes')
+
+            if company_mention == "yes":
+                company_mention = True
+            else:
+                company_mention = False
+            
+
+
+
+            if 'file_upload' in request.FILES:
+                file = request.FILES.get('file_upload')
+                try:
+                    validate_file(file)
+                    
+                except ValidationError as e:
+                    file= None
+
+
+            ContractPref.objects.create(
+                contract=contract,
+                name=name,
+                phone=phone,
+                email=email,
+                company_name=company_name,
+                mention_company = company_mention,
+                property_type=property_type,
+                owner_type=owner_type,
+                price_range=price_ranges,
+                coverage=coverage,
+                standout=standout,
+                questions=questions,
+                company_info=company_info,
+                extra_notes=extra_notes,
+                script_file=file if file else None
+            )
+
+            contract.pref_submitted = True
+            contract.save()
+
+
+
+
+            return redirect('/contract-pref-success/'+contract.unique_id)
+        elif contract.field == "realestate":
+            name = data.get('name')
+            phone = data.get('phone')
+            email = data.get('email')
+            company_name = data.get('company_name')
+            remodeled = data.get('remodeled')
+            on_market = data.get('on_market')
+            listed_owner = data.get('listed_owner')
+            closing_fees = data.get('closing_fees')
+            realtor_fees = data.get('realtor_fees')
+            re_license = data.get('re_license')
+            company_mention = data.get('company_mention')
+            property_type_re = request.POST.getlist('property_type_re')
+            owner_type = data.get('owner_type')
+            price_ranges = request.POST.getlist('price_ranges')
+            lots_type = data.get('lots_type')
+            res_type = request.POST.getlist('res_types')
+            equity = data.get('equity')
+            above_market_perc = data.get('above_market_perc')
+            coverage = data.get('coverage')
+            questions = data.get('qualifying_questions')
+            extra_notes = data.get('extra_notes')
+
+            if company_mention == "yes":
+                company_mention = True
+            else:
+                company_mention = False
+
+            if remodeled == "yes":
+                remodeled = True
+            else:
+                remodeled = False
+
+
+            if on_market == "yes":
+                on_market = True
+            else:
+                on_market = False    
+
+
+            if listed_owner == "yes":
+                listed_owner = True
+            else:
+                listed_owner = False  
+
+
+
+            if closing_fees == "yes":
+                closing_fees = True
+            else:
+                closing_fees = False  
+
+            if realtor_fees == "yes":
+                realtor_fees = True
+            else:
+                realtor_fees = False  
+
+
+            if re_license == "yes":
+                re_license = True
+            else:
+                re_license = False  
+
+
+
+
+            if 'file_upload' in request.FILES:
+                file = request.FILES.get('file_upload')
+                try:
+                    validate_file(file)
+                    
+                except ValidationError as e:
+                    file= None
+
+
+            ContractPref.objects.create(
+                contract=contract,
+                name=name,
+                phone=phone,
+                email=email,
+                company_name=company_name,
+                remodeled=remodeled,
+                on_market=on_market,
+                listed_owner=listed_owner,
+                closing_fees=closing_fees,
+                realtor_fees=realtor_fees,
+                re_license=re_license,
+                property_type_re=property_type_re,
+                mention_company = company_mention,
+                owner_type=owner_type,
+                price_range=price_ranges,
+                lots_type=lots_type,
+                res_type=res_type,
+                equity=equity,
+                above_market_perc=above_market_perc,
+                coverage=coverage,
+                questions=questions,
+                extra_notes=extra_notes,
+                script_file=file if file else None
+            )
+
+            contract.pref_submitted = True
+            contract.save()
+
+
+
+
+            return redirect('/contract-pref-success/'+contract.unique_id)
+
+
+
+    # Render templates based on the 'field' value
+    if contract.field == 'roofing':
+        return render(request, 'admin/contracts/pref_form_roofing.html', context)
+    elif contract.field == 'realestate':
+        return render(request, 'admin/contracts/pref_form_re.html', context)
+
+
+
+
+@permission_required('admin_contracts')
+@login_required
+def contract_pref_view(request, id):
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    context['contract_id'] = id
+
+    context['prices'] = CONTRACT_PREF_PRICE_RANGES
+
+    context['property_types'] = CONTRACT_PREF_PROPERTY_TYPE
+    context['property_types_re'] = CONTRACT_PREF_PROPERTY_TYPE_RE
+    context['residential_types'] = CONTRACT_PREF_RE_RESD_TYPES
+    
+    
+    context['owner_types'] = CONTRACT_PREF_OWNER_TYPE
+
+    contract = Contract.objects.get(unique_id=id)
+
+    context['pref'] = ContractPref.objects.get(contract=contract)
+
+    # Get IP information
+    request_ip = request.META.get('REMOTE_ADDR')
+    ip_data = get_ip_info(request_ip)
+
+    
+    
+
+    # Render templates based on the 'field' value
+    if contract.field == 'roofing':
+        return render(request, 'admin/contracts/pref_view_roofing.html', context)
+    elif contract.field == 'realestate':
+        return render(request, 'admin/contracts/pref_view_re.html', context)
+
+
+def contract_pref_success(request, id):
+
+    context = {}
+    profile = Profile.objects.get(user=request.user)
+    context['profile'] = profile
+
+    contract = Contract.objects.get(unique_id=id)
+
+    context['contract'] = contract
+
+
+    return render(request, 'statuses/contract_200.html', context)
+
 
 
 
@@ -2550,6 +2822,12 @@ class DeleteContractView(View):
         
         else:
             return JsonResponse({'error': 'Invalid password.'}, status=401)
+
+
+
+
+
+
 
 
 

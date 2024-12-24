@@ -24281,7 +24281,7 @@ body:not(.dark-version) .sidenav.bg-transparent .collapse .nav-item .nav-link.ac
 
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active+.collapse .nav-item.active .nav-link.active,
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active+.collapsing .nav-item.active .nav-link.active {
-  background-image: linear-gradient(195deg, #e91e63 0%, #e91e63 100%);
+  background-image: linear-gradient(195deg, #1A73E8 0%, #1A73E8 100%);
 }
 
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active+.collapse .nav-item.active .nav-link.active span,
@@ -24296,7 +24296,7 @@ body:not(.dark-version) .sidenav.bg-transparent .collapse .nav-item .nav-link.ac
 
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active+.collapse .nav-item .nav-link.active+.collapse .nav-item .nav-link.active,
 .navbar-vertical .navbar-nav>.nav-item .nav-link.active+.collapsing .nav-item .nav-link.active+.collapse .nav-item .nav-link.active {
-  background-image: linear-gradient(195deg, #e91e63 0%, #e91e63 100%);
+  background-image: linear-gradient(195deg, #1A73E8 0%, #1A73E8 100%);
 }
 
 .navbar-main {
@@ -26318,7 +26318,7 @@ p {
 
 .flatpickr-months .flatpickr-prev-month:hover svg,
 .flatpickr-months .flatpickr-next-month:hover svg {
-  fill: #959ea9;
+  fill: #f64747;
 }
 
 .flatpickr-months .flatpickr-prev-month svg,
@@ -30910,19 +30910,19 @@ When it's NOT activated, the fc-button classes won't even be in the DOM.
 .fc .fc-button-primary {
   color: #fff;
   color: var(--fc-button-text-color, #fff);
-  background-color: #2C3E50;
-  background-color: var(--fc-button-bg-color, #2C3E50);
-  border-color: #2C3E50;
-  border-color: var(--fc-button-border-color, #2C3E50);
+  background-color: #1A73E8;
+  background-color: var(--fc-button-bg-color, #1A73E8);
+  border-color: #1A73E8;
+  border-color: var(--fc-button-border-color, #1A73E8);
 }
 
 .fc .fc-button-primary:hover {
   color: #fff;
   color: var(--fc-button-text-color, #fff);
-  background-color: #1e2b37;
-  background-color: var(--fc-button-hover-bg-color, #1e2b37);
-  border-color: #1a252f;
-  border-color: var(--fc-button-hover-border-color, #1a252f);
+  background-color: #1A73E8;
+  background-color: var(--fc-button-hover-bg-color, #1A73E8);
+  border-color: #1A73E8;
+  border-color: var(--fc-button-hover-border-color, #1A73E8);
 }
 
 .fc .fc-button-primary:disabled {
@@ -32462,8 +32462,8 @@ Docs & License: https://fullcalendar.io/
 }
 
 .fc .fc-button-primary {
-  background-color: #e91e63;
-  border-color: #e91e63;
+  background-color: #1A73E8;
+  border-color: #1A73E8;
 }
 
 .fc .fc-button-primary:hover,
@@ -32472,8 +32472,8 @@ Docs & License: https://fullcalendar.io/
 .fc .fc-button-primary:not(:disabled):active:focus {
   transform: none;
   box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.09), 0 2px 3px -1px rgba(0, 0, 0, 0.07);
-  background-color: #e91e63;
-  border-color: #e91e63;
+  background-color: #88d9e4;
+  border-color: #88d9e4;
 }
 
 .fc-event.fc-daygrid-event {
@@ -32733,12 +32733,12 @@ Github: https://github.com/fiduswriter/Simple-DataTables
 }
 
 .dataTable-wrapper .dataTable-bottom .dataTable-pagination .dataTable-pagination-list li a:hover {
-  background: #f0f2f5;
+  background: #1a73e8;
 }
 
 .dataTable-wrapper .dataTable-bottom .dataTable-pagination .dataTable-pagination-list .active a {
   background: transparent;
-  background-image: linear-gradient(195deg, #EC407A 0%, #D81B60 100%);
+  background-image: linear-gradient(195deg, #1a73e8 0%, #1a73e8 100%);
   box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.09), 0 2px 3px -1px rgba(0, 0, 0, 0.07);
   color: #fff;
   border: none;
@@ -32746,7 +32746,7 @@ Github: https://github.com/fiduswriter/Simple-DataTables
 }
 
 .dataTable-wrapper .dataTable-bottom .dataTable-pagination .dataTable-pagination-list .active a:hover {
-  background-image: linear-gradient(195deg, #EC407A 0%, #D81B60 100%);
+  background-image: linear-gradient(195deg, #1a73e8 0%, #1a73e8 100%);
 }
 
 .dataTable-wrapper.no-footer .dataTable-container {

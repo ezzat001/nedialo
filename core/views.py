@@ -2290,6 +2290,8 @@ ALLOWED_EXTENSIONS = {
     'pdf': 'application/pdf',
     'doc': 'application/msword',
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'dot': 'application/msword',  # Older Word templates
+    'dotx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',  # Word template
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
     'png': 'image/png',
@@ -2301,6 +2303,7 @@ ALLOWED_EXTENSIONS = {
     'rar': 'application/vnd.rar',
     # Add more video extensions if needed
 }
+
 
 MAX_FILE_SIZE_MB = 7
 
@@ -3135,7 +3138,7 @@ def update_status(request):
 
 
 
-
+@login_required
 def work_status_data(request):
     today = (tz.localtime(tz.now())).date()
     user = request.user
