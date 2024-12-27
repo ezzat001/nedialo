@@ -451,6 +451,7 @@ class ServerSetting(models.Model):
     clients_webhook = models.TextField(blank=True, null=True)
 
 
+    whatsapp_template = models.TextField(blank=True, null=True)
 
     maintenance = models.BooleanField(default=False)
 

@@ -62,9 +62,9 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h5 class="mb-0">Agents List</h5>
+          <h5 class="mb-0">Agents KPIs</h5>
           <p class="text-sm mb-0">
-            Agents List for Company
+            Agents KPIs for Company
           </p>
         </div>
         <div class="table-responsive">
@@ -76,7 +76,7 @@
                 <th>Rate</th>
                 <th>Paid Hours</th>
                 <th>Leads</th>
-                <th>Hour/Lead</th>
+                <th>Hours/Lead</th>
                 <th>USD/Lead</th>
                 <th>USD/Qualified Lead</th>
                 <th>Qualified/Disqualified</th>
@@ -111,16 +111,17 @@
                 </td>
 
                 <td class="text-xs font-weight-normal">
-                    {{totals.hours_per_lead|floatformat:2}} hr/lead
+                    {{totals.hours_per_lead|decimal_to_hms}}
                 </td>
 
                 <td class="text-xs font-weight-normal">
-                    ${{totals.usd_per_lead|floatformat:2}} /lead
+                    ${{totals.usd_per_lead|floatformat:2}}
+                </td>
+                
+                <td class="text-xs font-weight-normal">
+                    ${{totals.usd_per_qa|floatformat:2}} 
                 </td>
 
-                <td class="text-xs font-weight-normal">
-                    ${{totals.usd_per_qa|floatformat:2}} /lead
-                </td>
 
                 <td class="text-xs font-weight-normal">
                     {{totals.qa_dq_ratio|floatformat:2}}%

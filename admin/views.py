@@ -27,6 +27,7 @@ import pytz
 from django.core.exceptions import ValidationError
 from django.views.decorators.csrf import csrf_exempt
 from discord_app.views import send_discord_message_contract
+from urllib.parse import quote
 
 
 
@@ -111,6 +112,34 @@ def application_report(request, app_id):
     context['skills'] = APPLICATION_SKILLS_CHOICES
     context['lang_exp'] = APPLICATION_LANG_CHOICES
     context['app'] = Application.objects.get(id=app_id)
+
+
+    server_settings = ServerSetting.objects.first()
+    whatsapp_temp = server_settings.whatsapp_template
+
+    
+     # Fetch application details
+    app = Application.objects.get(id=app_id)
+    
+    dynamic_data = {
+        'name': app.full_name,
+        'position': app.get_position_display(),
+        'date': app.submission_date.strftime('%Y-%m-%d'),
+    }
+
+    template = whatsapp_temp
+    for var, value in dynamic_data.items():
+        template = template.replace(f'$${var}$$', str(value))
+
+    # URL encode the template message to preserve spaces, line breaks, etc.
+    encoded_message = quote(template)
+
+    phone_number = app.phone
+    whatsapp_link = f"https://wa.me/{phone_number}?text={encoded_message}"
+
+    # Add the WhatsApp link to the context
+    context['whatsapp_link'] = whatsapp_link
+
 
     if request.method == "POST":
         data = request.POST
@@ -2834,7 +2863,7 @@ def contract_pref(request, id):
             try:
 
                 
-                content = f'**User:** {profile}\n\n**Action:** Filled **{contract.client_name}\'s Preferences**\n\n**ID:** {contract.unique_id}  \n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}\n\n**Location:** {location}\n\n**Service Provider:** {isp}'
+                content = f'**User:** {profile}\n\n**Action:** Filled **{contract.client_name} Preferences**\n\n**ID:** {contract.unique_id}  \n\n**Eastern:** {est}\n\n**IP Address:** {request_ip}\n\n**Location:** {location}\n\n**Service Provider:** {isp}'
 
                 send_discord_message_contract(content, 'filled')
                 
@@ -3050,6 +3079,7 @@ def server_settings(request):
 
             break_payable = data.get('break')
             target_points = data.get('target_points')
+            whatsapp_template = data.get('whatsapp_template')
 
             if break_payable == "yes":
 
@@ -3063,6 +3093,7 @@ def server_settings(request):
 
             server_settings.break_paid = break_paid
             server_settings.monthly_leadpoints_target = int(target_points)
+            server_settings.whatsapp_template = whatsapp_template
 
             server_settings.save()
 
@@ -3106,3 +3137,44 @@ def logout_all(request):
             session.delete()
 
     return redirect('/')  # Redirect to the homepage or any other page
+
+
+
+
+import re
+# Define the formatting function (same as before)
+def format_phone_number(number):
+    # Remove spaces, dashes, and parentheses
+    number = re.sub(r'[^\d+]', '', number)
+    
+    # Check if it's already in international format
+    if number.startswith("+") and not number.startswith("+20"):
+        return number  # Foreign number, do nothing
+    
+    # Remove leading zeros, country codes, or '00' international prefixes
+    number = re.sub(r'^(00|0+20|0+)', '', number)
+
+    # Prepend +20 to numbers that aren't already formatted
+    if not number.startswith("+"):
+        return "+20" + number
+    return number
+
+# Function to format all phone numbers in the Application model
+def update_numbers():
+    # Get all applications that have a phone number
+    applications = Application.objects.all()
+    
+    for application in applications:
+        # Check if the phone field is not empty
+        if application.phone:
+            # Format the phone number using the defined function
+
+            formatted_phone = format_phone_number(application.phone)
+            print(f"Old: {application.phone} / New: {formatted_phone}")
+            # Save the updated phone number to the database
+            application.phone = formatted_phone
+            application.save()  # Save the changes for each application
+
+    print("Phone numbers have been updated.")
+
+# Call the function to update the phone numbers

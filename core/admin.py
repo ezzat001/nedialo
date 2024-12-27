@@ -25,7 +25,7 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Application)
 class ApplicationAdmin(admin.ModelAdmin):
-    list_display = ('full_name','submission_date','position','active')
+    list_display = ('full_name','phone','submission_date','position','active')
     readonly_fields = ('id','app_uuid')     
 
 

@@ -2090,11 +2090,14 @@ def handle_audio_upload(request):
             audio_file = None
         
         
+        
 
         try:
             # Example code to save file to media root
 
-            phone = request.POST.get('phone_number')
+            phone = request.POST.get('full_phone_number')
+
+            
             
             new_application = Application(phone=phone)
             #new_application.app_uuid = submitted_uuid  # Store the UUID

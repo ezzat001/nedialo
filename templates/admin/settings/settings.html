@@ -292,7 +292,7 @@
         </div>
 
 
-        <div class="card mt-4" id="general-settings">
+          <div class="card mt-4" id="general-settings">
             <div class="card-header">
               <h5>General Settings</h5>
             </div>
@@ -321,6 +321,34 @@
                   </div>
                    
                 </div>
+
+                <br>
+
+ 
+                <button class="btn bg-gradient-info btn-sm" type="button" 
+                        data-bs-toggle="collapse" data-bs-target="#collapseExample" 
+                        aria-expanded="false" aria-controls="collapseExample">
+                        Available Variables
+                        <i class="fa-solid fa-caret-down ms-1"></i>
+                </button>
+                <div class="collapse" id="collapseExample">
+                  <div class="card card-body">
+                    <h6><strong>Available Variables for Message Template</strong></h6>
+                    <p>This section contains the available variables that you can use to personalize your message template. Simply insert the placeholders like $$name$$, $$date$$, $$position$$ into your message, and they will be replaced with the corresponding applicant data.</p>
+                    <p><strong>$$name$$</strong> - Recipient's Name (use this to personalize the message)</p>
+                    <p><strong>$$date$$</strong> - Submission Date (in the format YYYY-MM-DD)</p>
+                    <p><strong>$$position$$</strong> - Position Applied For</p>
+                  </div>
+                  <br>
+                </div>
+                <div class="row">
+                  
+                 
+                  <label>Whatsapp Messages Template *</label>
+                  <div class="input-group input-group-dynamic ">
+                    <textarea class="form-control" rows="6" name="whatsapp_template" id="whatsapp_template">{{settings.whatsapp_template}}</textarea>
+                  </div>
+                </div>
   
   
             
@@ -332,6 +360,10 @@
             
             </div>
           </div>
+
+         
+
+
 
 
         <!-- Card Basic Info -->

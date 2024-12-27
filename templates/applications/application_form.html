@@ -11,6 +11,10 @@
         width: 120px; /* Adjust width as needed */
     }
 </style>
+
+
+
+
 {% endblock %}
 
 {% block body %}
@@ -53,16 +57,22 @@
                             </div>
                         </div>
                     </div>
+                    <input type="hidden" id="full_phone_number" name="full_phone_number">
+
                     <div class="row mt-4">
                         <div class="col-sm-6">
+
+                            <label>Phone Number *</label>
+
                             <div class="input-group input-group-static">
-                                <label>Phone Number *</label>
+                                
                                 <input type="tel" class="form-control" name="phone_number" id="phone_number" required>
                             </div>
                         </div>
                         <div class="col-sm-6">
+                            <label>Email *</label>
+
                             <div class="input-group input-group-static">
-                                <label>Email *</label>
                                 <input type="email" class="form-control" name="email" id="email" required>
                             </div>
                         </div>
@@ -118,7 +128,7 @@
                         <div class="col-sm-12">
                             <div class="input-group input-group-static">
                                 <label>Previous Experience *</label>
-                                <textarea class="form-control" rows="3" name="previous_experience" id="previous_experience"></textarea>
+                                <textarea class="form-control" rows="3" name="previous_experience" id="previous_experience" required></textarea>
                             </div>
                         </div>
                     </div>
@@ -147,7 +157,8 @@
                         </div>
                     </div>
 
-                    
+                
+                      
 
                     <div class="row mt-4">
                         <div class="col-sm-12">
@@ -160,6 +171,97 @@
     </div>
 </div>
 </div>
+ 
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
+
+<script>
+    var input = document.querySelector("#phone_number");
+
+    var iti = window.intlTelInput(input, {
+        initialCountry: "eg", // Default country
+        placeholderNumberType: "MOBILE",
+        preferredCountries: ['eg', 'sa', 'uae'],
+        separateDialCode: false, // Country code integrated into the input
+    });
+
+    function updateFullPhoneNumber() {
+        var fullPhoneNumber = input.value.trim(); // Get user input
+        
+        // If number already starts with '+', consider it valid
+        if (fullPhoneNumber.startsWith("+")) {
+            document.querySelector("#full_phone_number").value = fullPhoneNumber;
+            return;
+        }
+
+        // Get the country code for the selected country
+        var countryCode = iti.getSelectedCountryData().dialCode;
+
+        // Handle Egyptian numbers specifically
+        if (countryCode === "20" && fullPhoneNumber.startsWith("01")) {
+            // Keep the '01' prefix for local numbers
+            fullPhoneNumber = fullPhoneNumber.replace(/^0+/, ''); // Remove leading zero
+            var formattedPhoneNumber = '+' + countryCode + fullPhoneNumber;
+        } else {
+            // Default formatting for other countries
+            fullPhoneNumber = fullPhoneNumber.replace(/^\+?[0-9]{1,3}/, ''); // Remove any existing country code
+            var formattedPhoneNumber = '+' + countryCode + fullPhoneNumber;
+        }
+
+        // Update the hidden input field with the formatted phone number
+        document.querySelector("#full_phone_number").value = formattedPhoneNumber;
+    }
+
+    // Update the phone number when the form is submitted
+    document.querySelector("form").addEventListener("submit", function(event) {
+        updateFullPhoneNumber(); // Update hidden input before submission
+    });
+
+    // Listen for input changes to ensure the country code is always correctly handled
+    input.addEventListener('input', function() {
+        updateFullPhoneNumber();
+    });
+</script>
+
+  
+  
+<style>
+    /* Custom styling */
+    .iti {
+      width: 100% !important;
+    }
+
+    input#phone_number {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      color: #000; /* Set font color to black */
+      padding-left: 40px; /* Add padding to the left to make space for the flag */
+    }
+
+    input#phone_number:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    }
+
+    /* Optional: Make text color black for dropdown options as well */
+    .iti__country-list {
+      color: #000 !important; /* Black font color for the country list */
+    }
+
+    .iti__country {
+      color: #000 !important; /* Black font color for each country option */
+    }
+
+    /* Adjust flag size to fit well with the input field */
+    .iti__flag {
+      width: 20px;  /* Adjust flag width */
+      height: 20px; /* Adjust flag height */
+    }
+
+</style>
 
 
 <!--

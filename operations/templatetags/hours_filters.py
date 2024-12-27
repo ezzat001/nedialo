@@ -143,7 +143,23 @@ def duration_to_hms(duration):
 
 
 
+@register.filter
+def decimal_to_hms(decimal_hours):
+    """Converts decimal hours to HH:MM:SS format."""
+    if decimal_hours is None:
+        return "00:00:00"
+    
+    try:
+        # Calculate total seconds
+        total_seconds = int(decimal_hours * 3600)
+        
+        # Convert to HH:MM:SS
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
 
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+    except (ValueError, TypeError):
+        return "00:00:00"
 
 
 

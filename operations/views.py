@@ -1902,9 +1902,9 @@ def agents_moderation(request, month, year):
         salary = agent.hourly_rate * (total_payable_time_seconds/3600)
 
         agent_totals['leads_count'] = leads_count
-        agent_totals['usd_per_lead'] = salary / leads_count if leads_count != 0 else 0
+        agent_totals['usd_per_lead'] = salary / leads_count if leads_count != 0 else salary
         agent_totals['qa_dq_ratio'] = (qualified_count/qa_dq_count)*100 if qa_dq_count != 0 else 0
-        agent_totals['usd_per_qa'] = salary / qualified_count if qualified_count != 0 else 0
+        agent_totals['usd_per_qa'] = salary / qualified_count if qualified_count != 0 else salary
 
 
 
